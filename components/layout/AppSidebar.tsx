@@ -31,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/app/productor", icon: LayoutDashboard, roles: ["producer"] },
   { label: "Mi Carpeta", href: "/app/productor/carpeta", icon: FileText, roles: ["producer"] },
   { label: "Autorizaciones", href: "/app/productor/autorizaciones", icon: ShieldCheck, roles: ["producer"] },
+  { label: "Financiacion", href: "/app/productor/financiacion", icon: BarChart3, roles: ["producer"] },
 
   // Accountant
   { label: "Dashboard", href: "/app/contador", icon: LayoutDashboard, roles: ["accountant", "accounting_firm_admin"] },

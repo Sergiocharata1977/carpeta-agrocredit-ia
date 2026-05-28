@@ -1,0 +1,22 @@
+
+> carpeta-agrocredit-ia@0.1.0 dev C:\Users\Usuario\Documents\Proyectos\ISO -conjunto\carpeta-agrocredit-ia
+> next dev "--hostname" "127.0.0.1" "--port" "3000"
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Local:         http://127.0.0.1:3000
+   - Network:       http://127.0.0.1:3000
+
+ ✓ Starting...
+Creating turbopack project {
+  dir: 'C:\\Users\\Usuario\\Documents\\Proyectos\\ISO -conjunto\\carpeta-agrocredit-ia',
+  testMode: true
+}
+ ✓ Ready in 2.4s
+ ○ Compiling / ...
+ GET / 307 in 20.9s (compile: 19.4s, render: 1511ms)
+ GET / 307 in 16.4s (compile: 15.2s, render: 1168ms)
+ ○ Compiling /login ...
+ GET /login 200 in 11.3s (compile: 9.9s, render: 1431ms)
+ GET /login 200 in 11.8s (compile: 10.1s, render: 1728ms)
+ GET / 307 in 595ms (compile: 112ms, render: 483ms)
+ GET /login 200 in 417ms (compile: 26ms, render: 391ms)

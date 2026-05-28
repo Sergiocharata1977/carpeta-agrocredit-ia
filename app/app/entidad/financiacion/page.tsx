@@ -1,0 +1,153 @@
+"use client"
+
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { FinancingKanban } from "@/components/financing/FinancingKanban"
+import { FinancingRequestForm } from "@/components/financing/FinancingRequestForm"
+import { RoleGate } from "@/components/auth/RoleGate"
+import { SummaryCard } from "@/components/dashboard/SummaryCard"
+import { Skeleton } from "@/components/ui/skeleton"
+import { getIdToken } from "@/lib/firebase/auth-client"
+import { useSession } from "@/lib/auth/session"
+import { getActiveGrants, getGrantsForEntity } from "@/lib/services/access-grants"
+import {
+  createFinancingRequest,
+  getFinancingRequestsByEntity,
+  updateFinancingStatus,
+} from "@/lib/services/financing-requests"
+import { BarChart3, CheckCircle2, Clock, AlertCircle } from "lucide-react"
+import type { AccessGrant } from "@/types/access"
+import type { CreateFinancingRequestInput } from "@/lib/schemas/financing"
+import type { FinancingRequest, FinancingStatus } from "@/types/financing"
+
+export default function EntityFinancingPage() {
+  const { user, loading: sessionLoading } = useSession()
+  const [requests, setRequests] = useState<FinancingRequest[]>([])
+  const [grants, setGrants] = useState<AccessGrant[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const organizationId = user?.defaultOrganizationId ?? ""
+
+  const loadData = useCallback(async () => {
+    if (!organizationId) {
+      setLoadingData(false)
+      return
+    }
+
+    setLoadingData(true)
+    const [nextRequests, nextGrants] = await Promise.all([
+      getFinancingRequestsByEntity(organizationId),
+      getGrantsForEntity(organizationId),
+    ])
+    setRequests(nextRequests)
+    setGrants(nextGrants)
+    setLoadingData(false)
+  }, [organizationId])
+
+  useEffect(() => {
+    if (sessionLoading) return
+    loadData().catch((err) => {
+      setError(err instanceof Error ? err.message : "No se pudo cargar financiacion")
+      setLoadingData(false)
+    })
+  }, [loadData, sessionLoading])
+
+  const activeGrants = useMemo(() => getActiveGrants(grants), [grants])
+
+  async function submitFinancingRequest(data: CreateFinancingRequestInput) {
+    const token = await getIdToken()
+    if (!token) throw new Error("Sesion no disponible")
+
+    setSaving(true)
+    setError(null)
+    try {
+      await createFinancingRequest(data, token)
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear solicitud")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function changeStatus(request: FinancingRequest, status: FinancingStatus) {
+    const token = await getIdToken()
+    if (!token) throw new Error("Sesion no disponible")
+
+    setSaving(true)
+    setError(null)
+    try {
+      await updateFinancingStatus(request.id, status, token, "Actualizado desde Kanban")
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo actualizar estado")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <RoleGate allowedRoles={["bank_user", "agro_company_user", "admin_platform"]}>
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Financiacion</h1>
+          <p className="text-muted-foreground text-sm">
+            Tablero operativo de solicitudes crediticias y comerciales.
+          </p>
+        </div>
+
+        {error && <div className="rounded-md border border-destructive p-3 text-sm">{error}</div>}
+
+        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+          <section className="rounded-md border p-4">
+            <h2 className="mb-4 text-lg font-medium">Nueva solicitud</h2>
+            {organizationId ? (
+              <FinancingRequestForm
+                requesterOrganizationId={organizationId}
+                grants={activeGrants}
+                onSubmit={submitFinancingRequest}
+                isLoading={saving}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Tu usuario no tiene organizacion por defecto en custom claims.
+              </p>
+            )}
+          </section>
+
+          <section className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <SummaryCard title="Total" value={requests.length} icon={BarChart3} />
+              <SummaryCard
+                title="En analisis"
+                value={requests.filter((request) => request.status === "in_review").length}
+                icon={Clock}
+              />
+              <SummaryCard
+                title="Observadas"
+                value={requests.filter((request) => request.status === "observed").length}
+                icon={AlertCircle}
+              />
+              <SummaryCard
+                title="Aprobadas"
+                value={requests.filter((request) => request.status === "approved").length}
+                icon={CheckCircle2}
+              />
+            </div>
+
+            {sessionLoading || loadingData ? (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton key={index} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : (
+              <FinancingKanban requests={requests} onStatusChange={changeStatus} />
+            )}
+          </section>
+        </div>
+      </div>
+    </RoleGate>
+  )
+}

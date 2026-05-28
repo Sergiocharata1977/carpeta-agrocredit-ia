@@ -77,21 +77,21 @@
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `access_requests` | pending | `/app/entidad/accesos` · `/app/productor/autorizaciones` | `lib/services/access-requests.ts` | `access_requests` |
-| `access_grants` | pending | `/app/productor/autorizaciones` | `lib/services/access-grants.ts` | `access_grants` |
+| `access_requests` | ga | `/app/entidad/accesos` · `/app/productor/autorizaciones` | `lib/services/access-requests.ts` | `access_requests` |
+| `access_grants` | ga | `/app/productor/autorizaciones` | `lib/services/access-grants.ts` | `access_grants` |
 
 ### DOMINIO: FINANCIACIÓN
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `financing_requests` | pending | `/app/entidad/financiacion` · `/app/productor/financiacion` | `lib/services/financing-requests.ts` | `financing_requests` |
+| `financing_requests` | ga | `/app/entidad/financiacion` · `/app/productor/financiacion` | `lib/services/financing-requests.ts` | `financing_requests` |
 
 ### DOMINIO: AUDITORÍA Y NOTIFICACIONES
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `audit_logs` | beta | `/app/admin/auditoria` | `lib/firebase/audit.ts` | `audit_logs` |
-| `notifications` | pending | `/app/notificaciones` | `lib/services/notifications.ts` | `notifications` |
+| `audit_logs` | ga | `/app/admin/auditoria` | `lib/firebase/audit.ts` · `lib/services/audit-logs.ts` | `audit_logs` |
+| `notifications` | ga | `/app/notificaciones` | `lib/services/notifications.ts` | `notifications` |
 
 ---
 
@@ -113,7 +113,7 @@
 | Componente | Estado | Archivo |
 |---|---|---|
 | `AppSidebar` | ga | `components/layout/AppSidebar.tsx` |
-| `AppHeader` | beta | `components/layout/AppHeader.tsx` |
+| `AppHeader` | ga | `components/layout/AppHeader.tsx` |
 | `SummaryCard` | ga | `components/dashboard/SummaryCard.tsx` |
 | `AuthGuard` | ga | `components/auth/AuthGuard.tsx` |
 | `RoleGate` | ga | `components/auth/RoleGate.tsx` |
@@ -139,11 +139,11 @@
 | `assets` | assets_real_estate / assets_movable | ga | Bienes muebles e inmuebles |
 | `liabilities` | liabilities | ga | Deudas bancarias/comerciales |
 | `documents` | documents_upload | ga | Metadatos de archivos en Storage |
-| `access_requests` | access_requests | pending | Pedidos de acceso de entidades |
-| `access_grants` | access_grants | pending | Autorizaciones vigentes o históricas |
-| `financing_requests` | financing_requests | pending | Solicitudes de financiación |
-| `audit_logs` | audit_logs | beta | Auditoría inmutable lógica |
-| `notifications` | notifications | pending | Notificaciones internas |
+| `access_requests` | access_requests | ga | Pedidos de acceso de entidades |
+| `access_grants` | access_grants | ga | Autorizaciones vigentes o históricas |
+| `financing_requests` | financing_requests | ga | Solicitudes de financiación |
+| `audit_logs` | audit_logs | ga | Auditoría inmutable lógica |
+| `notifications` | notifications | ga | Notificaciones internas |
 
 ---
 

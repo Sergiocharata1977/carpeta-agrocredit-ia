@@ -1,8 +1,10 @@
 "use client"
 
+import Link from "next/link"
 import { useSession } from "@/lib/auth/session"
 import { SummaryCard } from "@/components/dashboard/SummaryCard"
 import { RoleGate } from "@/components/auth/RoleGate"
+import { Button } from "@/components/ui/button"
 import { FileText, ShieldCheck, AlertCircle, Clock } from "lucide-react"
 
 export default function ProducerDashboard() {
@@ -18,7 +20,6 @@ export default function ProducerDashboard() {
           </p>
         </div>
 
-        {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <SummaryCard
             title="Estado carpeta"
@@ -29,26 +30,30 @@ export default function ProducerDashboard() {
           <SummaryCard
             title="Autorizaciones activas"
             value="0"
-            description="Ninguna entidad autorizada"
+            description="Se actualiza al cargar datos"
             icon={ShieldCheck}
           />
           <SummaryCard
             title="Solicitudes pendientes"
             value="0"
-            description="Sin solicitudes de acceso"
+            description="Ver bandeja de autorizaciones"
             icon={AlertCircle}
           />
           <SummaryCard
-            title="Próximo vencimiento"
-            value="—"
-            description="Sin vencimientos próximos"
+            title="Proximo vencimiento"
+            value="-"
+            description="Sin vencimientos proximos"
             icon={Clock}
           />
         </div>
 
-        {/* Placeholder para Ola 4 */}
-        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-          Las autorizaciones y solicitudes de acceso se implementan en la próxima fase.
+        <div className="flex flex-wrap gap-3 rounded-lg border p-4">
+          <Button asChild>
+            <Link href="/app/productor/autorizaciones">Revisar autorizaciones</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/app/productor/financiacion">Ver financiacion</Link>
+          </Button>
         </div>
       </div>
     </RoleGate>
