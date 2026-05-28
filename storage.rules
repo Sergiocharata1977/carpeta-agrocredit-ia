@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && role in request.auth.token.get('roles', []);
+    }
+
+    // Documentos de productores organizados por organización
+    // Ruta: orgs/{orgId}/producers/{producerId}/periods/{periodId}/{docType}/{filename}
+    match /orgs/{orgId}/producers/{producerId}/{allPaths=**} {
+      // Lectura: usuarios autenticados con rol relevante (validación fina server-side)
+      allow read: if isAuthenticated() && (
+        hasRole('admin_platform') ||
+        hasRole('accountant') ||
+        hasRole('accounting_firm_admin') ||
+        hasRole('producer') ||
+        hasRole('bank_user') ||
+        hasRole('agro_company_user')
+      );
+      // Escritura: solo contadores y admin (vínculo real validado server-side)
+      allow write: if isAuthenticated() && (
+        hasRole('admin_platform') ||
+        hasRole('accountant') ||
+        hasRole('accounting_firm_admin')
+      );
+    }
+
+    // Denegar todo lo no declarado explícitamente
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

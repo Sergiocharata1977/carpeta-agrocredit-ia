@@ -1,0 +1,101 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "producers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "folderStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "producer_accountant_links",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "accountantUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "producer_accountant_links",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "producerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "accounting_periods",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "producerId", "order": "ASCENDING" },
+        { "fieldPath": "year", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "access_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "producerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "access_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "requesterOrganizationId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "access_grants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "producerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "access_grants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "grantedToOrganizationId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "financing_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "requesterOrganizationId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "financing_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "producerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "audit_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "producerId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recipientUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

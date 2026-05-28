@@ -1,0 +1,171 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && role in request.auth.token.get('roles', []);
+    }
+
+    function isAdminPlatform() {
+      return hasRole('admin_platform');
+    }
+
+    function isProducer() {
+      return hasRole('producer');
+    }
+
+    function isAccountant() {
+      return hasRole('accountant') || hasRole('accounting_firm_admin');
+    }
+
+    function isFinancialEntity() {
+      return hasRole('bank_user') || hasRole('agro_company_user');
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Perfil de usuario: solo el propio usuario puede leer/actualizar datos básicos.
+    // El Admin SDK maneja creación y cambio de roles.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdminPlatform();
+      allow update: if isOwner(uid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'status']);
+      allow create, delete: if false;
+    }
+
+    // Organizaciones: lectura para miembros autenticados, escritura solo Admin SDK
+    match /organizations/{orgId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminPlatform();
+    }
+
+    // Membresías: cada usuario lee las propias; admin ve todas
+    match /organization_members/{memberId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdminPlatform());
+      allow write: if isAdminPlatform();
+    }
+
+    // Productores: contadores y admins leen/escriben; productor propio lee
+    match /producers/{producerId} {
+      allow read: if isAuthenticated() && (isAccountant() || isAdminPlatform() || isProducer() || isFinancialEntity());
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    // Estudios contables
+    match /accounting_firms/{firmId} {
+      allow read: if isAuthenticated();
+      allow write: if isAccountant() || isAdminPlatform();
+    }
+
+    // Vínculos productor-contador
+    match /producer_accountant_links/{linkId} {
+      allow read: if isAuthenticated() && (isAccountant() || isProducer() || isAdminPlatform());
+      allow create, update: if isAdminPlatform() || isAccountant();
+      allow delete: if isAdminPlatform();
+    }
+
+    // Entidades financieras
+    match /financial_entities/{entityId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminPlatform();
+    }
+
+    // Empresas agrocomerciales
+    match /agro_companies/{companyId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdminPlatform();
+    }
+
+    // Períodos contables: contadores escriben, todos los roles leen (filtrado server-side)
+    match /accounting_periods/{periodId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    // Balances, resultados, documentos fiscales, bienes, deudas:
+    // mismo patrón — contador carga, validación de vínculo se hace server-side
+    match /balance_sheets/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    match /income_statements/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    match /tax_documents/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    match /assets/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    match /liabilities/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    match /documents/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAccountant() || isAdminPlatform();
+      allow delete: if isAdminPlatform();
+    }
+
+    // Solicitudes de acceso: entidades crean, productores deciden
+    match /access_requests/{requestId} {
+      allow read: if isAuthenticated() && (isProducer() || isFinancialEntity() || isAdminPlatform());
+      allow create: if isFinancialEntity();
+      allow update: if isProducer() || isAdminPlatform();
+      allow delete: if false;
+    }
+
+    // Grants: solo Admin SDK escribe (server-side), lecturas para partes involucradas
+    match /access_grants/{grantId} {
+      allow read: if isAuthenticated() && (isProducer() || isFinancialEntity() || isAdminPlatform());
+      allow write: if false;
+    }
+
+    // Solicitudes de financiación
+    match /financing_requests/{requestId} {
+      allow read: if isAuthenticated() && (isProducer() || isFinancialEntity() || isAdminPlatform());
+      allow create, update: if isFinancialEntity() || isAdminPlatform();
+      allow delete: if false;
+    }
+
+    // Audit logs: escritura solo server-side (Admin SDK); lectura solo admin
+    match /audit_logs/{logId} {
+      allow read: if isAdminPlatform();
+      allow write: if false;
+    }
+
+    // Notificaciones: cada usuario lee las propias
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.recipientUid == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow create, delete: if false;
+    }
+
+    // Catch-all: denegar todo lo no declarado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
