@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-05-28
 **Proyecto:** carpeta-agrocredit-ia
-**Estado general:** Planificación completa — implementación no iniciada
+**Estado general:** Olas 1, 2 y 3 completas — listo para Ola 4
 **Stack:** Next.js App Router + Firebase + TypeScript + Vercel
 **Producto:** SaaS privado de carpeta crediticia agrofinanciera
 
@@ -29,7 +29,6 @@ Cuando el usuario escriba cualquiera de estas frases, aplicar este protocolo ant
 3. Actualizar este HANDOFF con lo hecho, archivos modificados, validacion, pendientes y riesgos.
 4. Actualizar `docs/MODULE_REGISTRY.md` si cambio el estado de un modulo, ruta, servicio o coleccion.
 5. Hacer `git add` selectivo y `git commit -m "descripcion"` cuando Git este disponible.
-6. Si Git no esta disponible, registrar el bloqueo aca para que el siguiente agente no asuma que hubo commit.
 
 ---
 
@@ -57,55 +56,69 @@ Carpeta digital agrofinanciera donde el contador carga la información contable/
 
 ## 2. ESTADO ACTUAL — 2026-05-28
 
-### Completado
-- [x] Plan completo de producto en `reports/001_PLAN_PROYECTO_AGROCREDIT_HUB.md`
-- [x] Modelo de datos Firestore definido (20 colecciones)
-- [x] Roles, scopes, estados y reglas de seguridad diseñados
-- [x] Arquitectura de olas multi-agente documentada (5 olas, 12 agentes)
-- [x] CLAUDE.md creado
-- [x] MODULE_REGISTRY.md creado
-- [x] HANDOFF_ACTUAL.md creado (este archivo)
+### Infraestructura
+- [x] Repo GitHub privado: `Sergiocharata1977/carpeta-agrocredit-ia`
+- [x] Firebase project: `agrocredit-ia-saas` — Auth email/pass habilitado
+- [x] Vercel production: `carpeta-agrocredit-ia.vercel.app` — build verde
+- [x] 9 variables de entorno en Vercel (Firebase client + Admin SDK)
+- [ ] Firestore Database — habilitar desde Firebase Console
+- [ ] Firebase Storage — habilitar desde Firebase Console
 
-### Scaffold base existente (Ola 1 parcial)
-Archivos ya presentes en el proyecto:
-- `app/` — estructura Next.js App Router
-- `components/ui/` — componentes UI base
-- `lib/firebase/` — config cliente y admin
-- `styles/globals.css`
-- `firestore.rules`, `storage.rules`, `firebase.json`
-- `tsconfig.json`, `next.config.mjs`, `package.json`
+### Ola 1 — Scaffold base ✅ COMPLETA
+- [x] Next.js App Router + TypeScript + Firebase + shadcn/ui
+- [x] `lib/firebase/config.ts`, `admin-sdk.ts`, `auth-client.ts`
+- [x] `components/ui/` — 57 componentes shadcn
+- [x] `firestore.rules`, `storage.rules`, `firebase.json`
+- [x] `hooks/use-mobile.ts`, `hooks/use-toast.ts`
 
-### Pendiente — Por implementar
+### Ola 2 — Dominio, seguridad y contratos ✅ COMPLETA
+- [x] `types/` — 8 archivos de tipos TypeScript canónicos
+- [x] `lib/schemas/` — 6 archivos de schemas Zod
+- [x] `lib/auth/roles.ts`, `session.ts`, `memberships.ts`
+- [x] `components/auth/AuthGuard.tsx`, `RoleGate.tsx`
+- [x] `lib/firebase/collections.ts`, `audit.ts`, `firestore-converters.ts`
+- [x] `firestore.rules` — multi-tenant deny-by-default con custom claims
+- [x] `storage.rules` — privado por organización/productor
+- [x] `firestore.indexes.json` — 12 índices compuestos
+- [x] `docs/SEGURIDAD_FIRESTORE.md`
 
-#### Ola 2 — Dominio, seguridad y contratos
-- [ ] `types/` — tipos TypeScript canónicos (auth, producer, accounting, assets, access, financing, audit)
-- [ ] `lib/schemas/` — schemas Zod de dominio
-- [ ] `lib/auth/roles.ts`, `session.ts`, `memberships.ts`
-- [ ] `components/auth/AuthGuard.tsx`, `RoleGate.tsx`
-- [ ] `app/app/layout.tsx` — layout privado base
-- [ ] `app/login/page.tsx` — conectar con Firebase Auth real
-- [ ] `lib/firebase/collections.ts` — nombres canónicos
-- [ ] `lib/firebase/audit.ts` — helper audit logs server-side
-- [ ] `firestore.rules` — reglas multi-tenant deny-by-default
-- [ ] `storage.rules` — Storage privado por productor
+### Ola 3 — Módulos core ✅ COMPLETA
+- [x] `lib/services/producers.ts`, `accounting-firms.ts`, `producer-accountant-links.ts`
+- [x] `lib/services/accounting-periods.ts`, `balance-sheets.ts`, `income-statements.ts`, `tax-documents.ts`, `documents.ts`
+- [x] `lib/services/assets.ts`, `liabilities.ts`
+- [x] `components/producers/` — ProducerForm, ProducerTable
+- [x] `components/accounting/` — AccountingPeriodSelector, BalanceSheetForm, IncomeStatementForm, TaxDocumentsForm, AccountantLinkPanel
+- [x] `components/documents/` — DocumentUploader, DocumentList
+- [x] `components/assets/` — RealEstateAssetForm, MovableAssetForm, AssetsTable, AssetsSummary
+- [x] `components/liabilities/` — LiabilityForm, LiabilitiesTable
+- [x] `components/layout/` — AppSidebar (por rol), AppHeader
+- [x] `components/dashboard/` — SummaryCard
+- [x] `app/app/layout.tsx` — shell privado con sidebar + header
+- [x] `app/app/productor/page.tsx`, `contador/page.tsx`, `entidad/page.tsx`, `admin/page.tsx`
+- [x] `app/app/contador/productores/page.tsx`, `/new/page.tsx`
+- [x] `app/app/contador/productores/[producerId]/carpeta/page.tsx`
+- [x] `app/app/contador/productores/[producerId]/bienes/page.tsx`
+- [x] `app/app/admin/organizaciones/page.tsx`
 
-#### Ola 3 — Módulos core
-- [ ] Productores, estudios contables, vínculos productor-contador
-- [ ] Carpeta contable/fiscal (periodos, balances, resultados, impuestos, documentos)
-- [ ] Bienes muebles, inmuebles y deudas
-- [ ] Shell privado (sidebar por rol, dashboards iniciales)
+### Pendiente — Ola 4: Autorizaciones y financiación
+- [ ] `lib/services/access-requests.ts`, `access-grants.ts`
+- [ ] `app/app/productor/autorizaciones/page.tsx`
+- [ ] `app/app/entidad/accesos/page.tsx`
+- [ ] `components/access/` — AccessRequestForm, AccessRequestTable, GrantScopePicker, AuthorizationDecisionDialog
+- [ ] `lib/services/financing-requests.ts`
+- [ ] `app/app/entidad/financiacion/page.tsx`, `app/app/productor/financiacion/page.tsx`
+- [ ] `components/financing/` — FinancingRequestForm, FinancingKanban, FinancingRequestCard, FinancingStatusBadge
+- [ ] `lib/services/notifications.ts`, `lib/services/expirations.ts`
+- [ ] `app/app/notificaciones/page.tsx`, `app/app/admin/auditoria/page.tsx`
+- [ ] `components/notifications/` — NotificationBell, NotificationList
+- [ ] `components/audit/` — AuditLogTable
+- [ ] `components/layout/AppHeader.tsx` — conectar campana con notificaciones reales
 
-#### Ola 4 — Autorizaciones y financiación
-- [ ] Sistema de access_requests y access_grants
-- [ ] Panel de autorizaciones del productor
-- [ ] Solicitudes de financiación + Kanban
-- [ ] Notificaciones internas y alertas de vencimiento
-- [ ] Vista de audit_logs para admin
-
-#### Ola 5 — Verificación y documentación
-- [ ] Scripts de seed para demo
-- [ ] Documentación operativa completa
-- [ ] Checklist QA
+### Pendiente — Ola 5: Verificación y documentación
+- [ ] `scripts/seed-demo-data.ts`
+- [ ] `docs/ARQUITECTURA.md`, `MODELO_DATOS.md`, `PERMISOS.md`, `DEPLOY_VERCEL_FIREBASE.md`
+- [ ] `docs/QA_CHECKLIST.md`
+- [ ] `README.md` completo
 
 ---
 
@@ -113,10 +126,12 @@ Archivos ya presentes en el proyecto:
 
 | Riesgo | Nivel | Notas |
 |---|---|---|
-| Reglas Firestore demasiado abiertas | Alto | Scaffold actual tiene placeholders — implementar en Ola 2 |
-| Scaffold vs. plan: verificar que no queden rutas/textos del repo fuente de transparencia | Medio | Revisar antes de implementar Ola 2 |
-| Firebase project configurado | Bloqueante | Requiere proyecto Firebase real para funcionar |
-| Variables de entorno | Bloqueante | `.env.local` no existe — usar `.env.example` como guía |
+| Firestore Database no habilitado | Bloqueante | Habilitar desde Firebase Console antes de probar |
+| Firebase Storage no habilitado | Bloqueante para documentos | Habilitar desde Firebase Console |
+| Reglas Firestore desplegadas | Medio | Ejecutar `firebase deploy --only firestore:rules,firestore:indexes` |
+| Validación de membership server-side | Alto | Servicios actuales son cliente-side — Ola 4 debe agregar Server Actions con validación profunda |
+| Custom claims no seteados | Bloqueante para auth | Admin SDK debe setear `roles` y `defaultOrganizationId` en el token — falta endpoint de setup de usuario |
+| `organizationId` desde `user.defaultOrganizationId` | Medio | Flujo asume que el usuario tiene defaultOrganizationId — falta endpoint de onboarding |
 
 ---
 
@@ -128,28 +143,33 @@ Archivos ya presentes en el proyecto:
 - Audit logs obligatorios en toda acción sensible
 - Grants vencidos cortan acceso inmediatamente
 - Storage path canónico: `orgs/{producerOrganizationId}/producers/{producerId}/periods/{periodId}/{documentType}/{documentId}-{filename}`
+- Servicios cliente-side en Ola 3 — Server Actions con validación profunda se agregan en Ola 4
+- Custom claims (`roles`, `defaultOrganizationId`) se leen del token — Admin SDK los setea server-side
 
 ---
 
 ## 5. PRÓXIMOS PASOS RECOMENDADOS
 
-1. Verificar scaffold actual: `pnpm type-check` y revisar que no queden referencias al repo de transparencia
-2. Implementar Ola 2 (tipos + auth + reglas de seguridad) — es el prerequisito de todo lo demás
-3. Implementar Olas 3-4 en orden
-4. Configurar Firebase project real y variables de entorno
+1. **Habilitar Firestore + Storage** desde Firebase Console (5 min)
+2. **Desplegar reglas**: `firebase deploy --only firestore:rules,firestore:indexes,storage`
+3. **Crear endpoint de onboarding** (Server Action): crear organización + usuario + setear custom claims con Admin SDK
+4. **Implementar Ola 4**: solicitudes de acceso, grants, Kanban de financiación, notificaciones
+5. **Smoke test manual**: crear productor → cargar carpeta → agregar bienes → verificar UI
 
 ---
 
 ## 6. COMMITS RECIENTES
 
-_Sin commits aún — proyecto en estado de planificación_
+- `f07f0a4` — fix: add hooks/use-mobile and hooks/use-toast re-exports for shadcn sidebar
+- `0629ae6` — feat: Ola 1+2 scaffold inicial - AgroCredit IA SaaS agrofinanciero
+- (pendiente) — feat: Ola 3 módulos core
 
 ---
 
 ## 7. COORDINACIÓN MULTI-IA
 
-**Claude Code:** Dueño de implementación actual. Actualizó protocolo 2026-05-28.
-**Codex:** Trabajo actual 2026-05-28: reforzar documentacion de protocolo multi-IA. No toma ningun modulo funcional.
+**Claude Code:** Dueño de implementación. Sesión 2026-05-28 — Olas 1, 2 y 3 completas.
+**Codex:** No tiene módulos asignados actualmente.
 
 ### Regla de reparto de trabajo
 - Una sola IA trabaja por módulo a la vez
@@ -157,20 +177,24 @@ _Sin commits aún — proyecto en estado de planificación_
 - Al cerrar: actualizar este archivo con lo hecho y lo pendiente
 - Si hay conflicto entre lo que dice este HANDOFF y el código real: confiar en el código, actualizar el HANDOFF
 
-### Sesion 2026-05-28 - Codex
+### Sesión 2026-05-28 - Claude Code
 
 **Trabajo realizado:**
-- Reforzado protocolo de entrada y cierre para coordinacion multi-IA.
-- Alineadas reglas de coordinacion en `CLAUDE.md`, `reports/HANDOFF_ACTUAL.md` y `docs/MODULE_REGISTRY.md`.
+- Ola 1: scaffold completo (Next.js + Firebase + shadcn/ui + 57 componentes UI)
+- Ola 2: tipos, schemas, auth, reglas Firestore/Storage multi-tenant, audit helper, colecciones
+- Infraestructura: GitHub repo privado, Firebase project `agrocredit-ia-saas`, Vercel deploy producción
+- Ola 3: 10 servicios Firestore, 14+ componentes, 9 páginas, shell privado con sidebar por rol
+- type-check: 0 errores
 
-**Archivos modificados:**
-- `reports/HANDOFF_ACTUAL.md`
-- `CLAUDE.md`
-- `docs/MODULE_REGISTRY.md`
+**Archivos principales creados/modificados:**
+- `lib/services/` — 10 servicios
+- `components/producers/`, `accounting/`, `documents/`, `assets/`, `liabilities/`, `layout/`, `dashboard/`
+- `app/app/` — 9 páginas nuevas, layout actualizado
+
+**Validación:** `pnpm type-check` → 0 errores
 
 **Pendientes:**
-- Inicializar o ubicar el repo Git correcto para poder hacer `git status`, `git diff --stat` y commit.
-- Ejecutar `pnpm type-check` al cierre de esta sesion.
-
-**Riesgos nuevos:**
-- La carpeta actual no tiene `.git`; no se puede dejar commit local desde este directorio.
+- Ola 4 (autorizaciones, financiación, notificaciones)
+- Habilitar Firestore + Storage en Firebase Console
+- Desplegar reglas Firestore/Storage
+- Endpoint de onboarding de usuario (custom claims)

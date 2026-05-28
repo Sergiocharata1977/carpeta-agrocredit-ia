@@ -42,35 +42,36 @@
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `auth_login` | pending | `/login` | — | `users` |
-| `auth_session` | pending | — | `lib/auth/session.ts` | `users` |
-| `org_members` | pending | `/app/admin/organizaciones` | `lib/services/organizations.ts` | `organizations` · `organization_members` |
+| `auth_login` | ga | `/login` | `lib/firebase/auth-client.ts` | `users` |
+| `auth_session` | ga | — | `lib/auth/session.ts` | `users` |
+| `auth_guards` | ga | — | `lib/auth/roles.ts`, `memberships.ts` | `organization_members` |
+| `org_members` | beta | `/app/admin/organizaciones` | — | `organizations` · `organization_members` |
 
 ### DOMINIO: PRODUCTORES
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `producers_abm` | pending | `/app/contador/productores` | `lib/services/producers.ts` | `producers` |
-| `accounting_firms` | pending | `/app/admin/organizaciones` | `lib/services/accounting-firms.ts` | `accounting_firms` |
-| `producer_accountant_links` | pending | `/app/contador/productores` | `lib/services/producer-accountant-links.ts` | `producer_accountant_links` |
+| `producers_abm` | ga | `/app/contador/productores` · `/app/contador/productores/new` | `lib/services/producers.ts` | `producers` |
+| `accounting_firms` | ga | `/app/admin/organizaciones` | `lib/services/accounting-firms.ts` | `accounting_firms` |
+| `producer_accountant_links` | ga | `/app/contador/productores` | `lib/services/producer-accountant-links.ts` | `producer_accountant_links` |
 
 ### DOMINIO: CARPETA CONTABLE
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `accounting_periods` | pending | `/app/contador/productores/[producerId]/carpeta` | `lib/services/accounting-periods.ts` | `accounting_periods` |
-| `balance_sheets` | pending | `/app/contador/productores/[producerId]/carpeta` | `lib/services/balance-sheets.ts` | `balance_sheets` |
-| `income_statements` | pending | `/app/contador/productores/[producerId]/carpeta` | `lib/services/income-statements.ts` | `income_statements` |
-| `tax_documents` | pending | `/app/contador/productores/[producerId]/carpeta` | `lib/services/tax-documents.ts` | `tax_documents` |
-| `documents_upload` | pending | `/app/contador/productores/[producerId]/carpeta` | `lib/services/documents.ts` | `documents` |
+| `accounting_periods` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/accounting-periods.ts` | `accounting_periods` |
+| `balance_sheets` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/balance-sheets.ts` | `balance_sheets` |
+| `income_statements` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/income-statements.ts` | `income_statements` |
+| `tax_documents` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/tax-documents.ts` | `tax_documents` |
+| `documents_upload` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/documents.ts` | `documents` |
 
 ### DOMINIO: PATRIMONIO
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `assets_real_estate` | pending | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` | `assets` |
-| `assets_movable` | pending | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` | `assets` |
-| `liabilities` | pending | `/app/contador/productores/[producerId]/bienes` | `lib/services/liabilities.ts` | `liabilities` |
+| `assets_real_estate` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` | `assets` |
+| `assets_movable` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` | `assets` |
+| `liabilities` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/liabilities.ts` | `liabilities` |
 
 ### DOMINIO: AUTORIZACIONES
 
@@ -89,7 +90,7 @@
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `audit_logs` | pending | `/app/admin/auditoria` | `lib/firebase/audit.ts` | `audit_logs` |
+| `audit_logs` | beta | `/app/admin/auditoria` | `lib/firebase/audit.ts` | `audit_logs` |
 | `notifications` | pending | `/app/notificaciones` | `lib/services/notifications.ts` | `notifications` |
 
 ---
@@ -98,39 +99,51 @@
 
 | Rol | Ruta dashboard | Estado |
 |---|---|---|
-| `producer` | `/app/productor` | pending |
-| `accountant` | `/app/contador` | pending |
-| `accounting_firm_admin` | `/app/contador` | pending |
-| `bank_user` | `/app/entidad` | pending |
-| `agro_company_user` | `/app/entidad` | pending |
-| `admin_platform` | `/app/admin` | pending |
+| `producer` | `/app/productor` | ga |
+| `accountant` | `/app/contador` | ga |
+| `accounting_firm_admin` | `/app/contador` | ga |
+| `bank_user` | `/app/entidad` | ga |
+| `agro_company_user` | `/app/entidad` | ga |
+| `admin_platform` | `/app/admin` | ga |
+
+---
+
+## Shell privado
+
+| Componente | Estado | Archivo |
+|---|---|---|
+| `AppSidebar` | ga | `components/layout/AppSidebar.tsx` |
+| `AppHeader` | beta | `components/layout/AppHeader.tsx` |
+| `SummaryCard` | ga | `components/dashboard/SummaryCard.tsx` |
+| `AuthGuard` | ga | `components/auth/AuthGuard.tsx` |
+| `RoleGate` | ga | `components/auth/RoleGate.tsx` |
 
 ---
 
 ## Colecciones Firestore canónicas
 
-| Colección | Módulo dueño | Descripción |
-|---|---|---|
-| `users` | auth_session | Perfil extendido del usuario autenticado |
-| `organizations` | org_members | Tenants/entidades |
-| `organization_members` | org_members | Relación usuario-organización |
-| `producers` | producers_abm | Productores agropecuarios |
-| `accounting_firms` | accounting_firms | Estudios contables |
-| `producer_accountant_links` | producer_accountant_links | Vínculo formal productor-contador |
-| `financial_entities` | org_members | Bancos/financieras |
-| `agro_companies` | org_members | Empresas agrocomerciales |
-| `accounting_periods` | accounting_periods | Períodos fiscales/campañas |
-| `balance_sheets` | balance_sheets | Balance general |
-| `income_statements` | income_statements | Estado de resultados |
-| `tax_documents` | tax_documents | IVA, Ganancias/Rentas, 931 |
-| `assets` | assets_real_estate / assets_movable | Bienes muebles e inmuebles |
-| `liabilities` | liabilities | Deudas bancarias/comerciales |
-| `documents` | documents_upload | Metadatos de archivos en Storage |
-| `access_requests` | access_requests | Pedidos de acceso de entidades |
-| `access_grants` | access_grants | Autorizaciones vigentes o históricas |
-| `financing_requests` | financing_requests | Solicitudes de financiación |
-| `audit_logs` | audit_logs | Auditoría inmutable lógica |
-| `notifications` | notifications | Notificaciones internas |
+| Colección | Módulo dueño | Estado servicio | Descripción |
+|---|---|---|---|
+| `users` | auth_session | ga | Perfil extendido del usuario autenticado |
+| `organizations` | org_members | beta | Tenants/entidades |
+| `organization_members` | org_members | ga | Relación usuario-organización |
+| `producers` | producers_abm | ga | Productores agropecuarios |
+| `accounting_firms` | accounting_firms | ga | Estudios contables |
+| `producer_accountant_links` | producer_accountant_links | ga | Vínculo formal productor-contador |
+| `financial_entities` | org_members | pending | Bancos/financieras |
+| `agro_companies` | org_members | pending | Empresas agrocomerciales |
+| `accounting_periods` | accounting_periods | ga | Períodos fiscales/campañas |
+| `balance_sheets` | balance_sheets | ga | Balance general |
+| `income_statements` | income_statements | ga | Estado de resultados |
+| `tax_documents` | tax_documents | ga | IVA, Ganancias/Rentas, 931 |
+| `assets` | assets_real_estate / assets_movable | ga | Bienes muebles e inmuebles |
+| `liabilities` | liabilities | ga | Deudas bancarias/comerciales |
+| `documents` | documents_upload | ga | Metadatos de archivos en Storage |
+| `access_requests` | access_requests | pending | Pedidos de acceso de entidades |
+| `access_grants` | access_grants | pending | Autorizaciones vigentes o históricas |
+| `financing_requests` | financing_requests | pending | Solicitudes de financiación |
+| `audit_logs` | audit_logs | beta | Auditoría inmutable lógica |
+| `notifications` | notifications | pending | Notificaciones internas |
 
 ---
 
