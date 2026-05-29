@@ -5,7 +5,14 @@ import { FinancingKanban } from "@/components/financing/FinancingKanban"
 import { FinancingRequestForm } from "@/components/financing/FinancingRequestForm"
 import { RoleGate } from "@/components/auth/RoleGate"
 import { SummaryCard } from "@/components/dashboard/SummaryCard"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { getIdToken } from "@/lib/firebase/auth-client"
 import { useSession } from "@/lib/auth/session"
 import { getActiveGrants, getGrantsForEntity } from "@/lib/services/access-grants"
@@ -14,7 +21,7 @@ import {
   getFinancingRequestsByEntity,
   updateFinancingStatus,
 } from "@/lib/services/financing-requests"
-import { BarChart3, CheckCircle2, Clock, AlertCircle } from "lucide-react"
+import { BarChart3, CheckCircle2, Clock, AlertCircle, Plus } from "lucide-react"
 import type { AccessGrant } from "@/types/access"
 import type { CreateFinancingRequestInput } from "@/lib/schemas/financing"
 import type { FinancingRequest, FinancingStatus } from "@/types/financing"
@@ -26,6 +33,7 @@ export default function EntityFinancingPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showDialog, setShowDialog] = useState(false)
 
   const organizationId = user?.defaultOrganizationId ?? ""
 
@@ -64,6 +72,7 @@ export default function EntityFinancingPage() {
     try {
       await createFinancingRequest(data, token)
       await loadData()
+      setShowDialog(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo crear solicitud")
     } finally {
@@ -90,18 +99,61 @@ export default function EntityFinancingPage() {
   return (
     <RoleGate allowedRoles={["bank_user", "agro_company_user", "admin_platform"]}>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Financiacion</h1>
-          <p className="text-muted-foreground text-sm">
-            Tablero operativo de solicitudes crediticias y comerciales.
-          </p>
+        {/* header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Financiacion</h1>
+            <p className="text-muted-foreground text-sm">
+              Tablero operativo de solicitudes crediticias y comerciales.
+            </p>
+          </div>
+          <Button onClick={() => setShowDialog(true)} disabled={!organizationId}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva solicitud
+          </Button>
         </div>
 
-        {error && <div className="rounded-md border border-destructive p-3 text-sm">{error}</div>}
+        {error && (
+          <div className="rounded-md border border-destructive p-3 text-sm">{error}</div>
+        )}
 
-        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-          <section className="rounded-md border p-4">
-            <h2 className="mb-4 text-lg font-medium">Nueva solicitud</h2>
+        {/* summary cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard title="Total" value={requests.length} icon={BarChart3} />
+          <SummaryCard
+            title="En analisis"
+            value={requests.filter((r) => r.status === "in_review").length}
+            icon={Clock}
+          />
+          <SummaryCard
+            title="Observadas"
+            value={requests.filter((r) => r.status === "observed").length}
+            icon={AlertCircle}
+          />
+          <SummaryCard
+            title="Aprobadas"
+            value={requests.filter((r) => r.status === "approved").length}
+            icon={CheckCircle2}
+          />
+        </div>
+
+        {/* kanban */}
+        {sessionLoading || loadingData ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : (
+          <FinancingKanban requests={requests} onStatusChange={changeStatus} />
+        )}
+
+        {/* modal */}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nueva solicitud de financiacion</DialogTitle>
+            </DialogHeader>
             {organizationId ? (
               <FinancingRequestForm
                 requesterOrganizationId={organizationId}
@@ -114,39 +166,8 @@ export default function EntityFinancingPage() {
                 Tu usuario no tiene organizacion por defecto en custom claims.
               </p>
             )}
-          </section>
-
-          <section className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <SummaryCard title="Total" value={requests.length} icon={BarChart3} />
-              <SummaryCard
-                title="En analisis"
-                value={requests.filter((request) => request.status === "in_review").length}
-                icon={Clock}
-              />
-              <SummaryCard
-                title="Observadas"
-                value={requests.filter((request) => request.status === "observed").length}
-                icon={AlertCircle}
-              />
-              <SummaryCard
-                title="Aprobadas"
-                value={requests.filter((request) => request.status === "approved").length}
-                icon={CheckCircle2}
-              />
-            </div>
-
-            {sessionLoading || loadingData ? (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Skeleton key={index} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : (
-              <FinancingKanban requests={requests} onStatusChange={changeStatus} />
-            )}
-          </section>
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </RoleGate>
   )

@@ -7,11 +7,17 @@ import { RoleGate } from "@/components/auth/RoleGate"
 import { SummaryCard } from "@/components/dashboard/SummaryCard"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { getIdToken } from "@/lib/firebase/auth-client"
 import { useSession } from "@/lib/auth/session"
 import { createAccessRequest, getAccessRequestsForEntity } from "@/lib/services/access-requests"
 import { getActiveGrants, getGrantsForEntity } from "@/lib/services/access-grants"
-import { ShieldCheck, Clock, AlertCircle, FileText } from "lucide-react"
+import { ShieldCheck, Clock, AlertCircle, FileText, Plus } from "lucide-react"
 import type { AccessGrant, AccessRequest } from "@/types/access"
 import type { CreateAccessRequestInput } from "@/lib/schemas/access"
 
@@ -22,6 +28,7 @@ export default function EntityAccessPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showDialog, setShowDialog] = useState(false)
 
   const organizationId = user?.defaultOrganizationId ?? ""
 
@@ -60,6 +67,7 @@ export default function EntityAccessPage() {
     try {
       await createAccessRequest(data, token)
       await loadData()
+      setShowDialog(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo solicitar acceso")
     } finally {
@@ -70,23 +78,56 @@ export default function EntityAccessPage() {
   return (
     <RoleGate allowedRoles={["bank_user", "agro_company_user", "admin_platform"]}>
       <div className="p-6 space-y-6">
-        <div className="flex items-start justify-between gap-4">
+        {/* header */}
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Accesos</h1>
             <p className="text-muted-foreground text-sm">
               Solicita acceso a carpetas y consulta grants vigentes.
             </p>
           </div>
-          <Button variant="outline" disabled>
-            Org {organizationId || "sin claims"}
+          <Button onClick={() => setShowDialog(true)} disabled={!organizationId}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva solicitud
           </Button>
         </div>
 
-        {error && <div className="rounded-md border border-destructive p-3 text-sm">{error}</div>}
+        {error && (
+          <div className="rounded-md border border-destructive p-3 text-sm">{error}</div>
+        )}
 
-        <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-          <section className="rounded-md border p-4">
-            <h2 className="mb-4 text-lg font-medium">Nueva solicitud</h2>
+        {/* summary cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard title="Solicitudes" value={requests.length} icon={FileText} />
+          <SummaryCard
+            title="Pendientes"
+            value={requests.filter((r) => r.status === "requested").length}
+            icon={AlertCircle}
+          />
+          <SummaryCard title="Grants activos" value={activeGrants.length} icon={ShieldCheck} />
+          <SummaryCard title="Historicos" value={grants.length} icon={Clock} />
+        </div>
+
+        {/* table */}
+        {sessionLoading || loadingData ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : (
+          <AccessRequestTable
+            requests={requests}
+            emptyMessage="Todavia no hay solicitudes creadas por esta entidad."
+          />
+        )}
+
+        {/* modal */}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nueva solicitud de acceso</DialogTitle>
+            </DialogHeader>
             {organizationId ? (
               <AccessRequestForm
                 requesterOrganizationId={organizationId}
@@ -98,34 +139,8 @@ export default function EntityAccessPage() {
                 Tu usuario no tiene organizacion por defecto en custom claims.
               </p>
             )}
-          </section>
-
-          <section className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <SummaryCard title="Solicitudes" value={requests.length} icon={FileText} />
-              <SummaryCard
-                title="Pendientes"
-                value={requests.filter((request) => request.status === "requested").length}
-                icon={AlertCircle}
-              />
-              <SummaryCard title="Grants activos" value={activeGrants.length} icon={ShieldCheck} />
-              <SummaryCard title="Historicos" value={grants.length} icon={Clock} />
-            </div>
-
-            {sessionLoading || loadingData ? (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Skeleton key={index} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : (
-              <AccessRequestTable
-                requests={requests}
-                emptyMessage="Todavia no hay solicitudes creadas por esta entidad."
-              />
-            )}
-          </section>
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </RoleGate>
   )
