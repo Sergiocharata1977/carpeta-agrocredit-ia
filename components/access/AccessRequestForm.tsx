@@ -8,6 +8,7 @@ import {
   type CreateAccessRequestInput,
 } from "@/lib/schemas/access"
 import { GrantScopePicker } from "@/components/access/GrantScopePicker"
+import { DurationPicker } from "@/components/access/DurationPicker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,13 +32,16 @@ export function AccessRequestForm({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<CreateAccessRequestInput>({
     resolver: zodResolver(createAccessRequestSchema),
     defaultValues: {
       requesterOrganizationId,
+      targetOrganizationId: "",
+      targetScope: "single_organization" as const,
       requestedScopes: scopes,
-      requestedExpirationDays: 90,
+      requestedDays: 90,
       purpose: "",
     },
   })
@@ -56,15 +60,15 @@ export function AccessRequestForm({
       />
 
       <div className="space-y-1.5">
-        <Label htmlFor="producerId">ID del productor</Label>
+        <Label htmlFor="targetOrganizationId">ID de organización objetivo</Label>
         <Input
-          id="producerId"
-          placeholder="producerId de la carpeta"
-          {...register("producerId")}
-          aria-invalid={!!errors.producerId}
+          id="targetOrganizationId"
+          placeholder="ID de la carpeta a solicitar"
+          {...register("targetOrganizationId")}
+          aria-invalid={!!errors.targetOrganizationId}
         />
-        {errors.producerId && (
-          <p className="text-xs text-destructive">{errors.producerId.message}</p>
+        {errors.targetOrganizationId && (
+          <p className="text-xs text-destructive">{errors.targetOrganizationId.message}</p>
         )}
       </div>
 
@@ -82,18 +86,13 @@ export function AccessRequestForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="requestedExpirationDays">Vigencia solicitada</Label>
-        <Input
-          id="requestedExpirationDays"
-          type="number"
-          min={1}
-          max={365}
-          {...register("requestedExpirationDays", { valueAsNumber: true })}
-          aria-invalid={!!errors.requestedExpirationDays}
+        <DurationPicker
+          value={watch("requestedDays")}
+          onChange={(value) => setValue("requestedDays", value, { shouldValidate: true })}
         />
-        {errors.requestedExpirationDays && (
+        {errors.requestedDays && (
           <p className="text-xs text-destructive">
-            {errors.requestedExpirationDays.message}
+            {errors.requestedDays.message}
           </p>
         )}
       </div>

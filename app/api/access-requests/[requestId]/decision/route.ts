@@ -1,18 +1,18 @@
 import { FieldValue } from "firebase-admin/firestore"
 import { z } from "zod"
-import { assertCanDecideProducerAccess, notifyOrganizationUsers } from "@/lib/auth/server-access"
+import { assertCanDecideAccess, notifyOrganizationUsers } from "@/lib/auth/server-access"
 import { getAuthErrorResponse, verifyRequestSession } from "@/lib/auth/server-session"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import { approveAccessRequestSchema } from "@/lib/schemas/access"
-import type { AccessRequest } from "@/types/access"
+import type { AccessRequest, AccessScope } from "@/types/access"
 
 const decisionSchema = z.discriminatedUnion("decision", [
   z.object({
     decision: z.literal("approved"),
     allowedScopes: approveAccessRequestSchema.shape.allowedScopes,
-    expirationDays: approveAccessRequestSchema.shape.expirationDays,
+    approvedDays: approveAccessRequestSchema.shape.approvedDays,
   }),
   z.object({
     decision: z.literal("rejected"),
@@ -37,7 +37,7 @@ export async function POST(
     }
 
     const accessRequest = { id: requestSnap.id, ...requestSnap.data() } as AccessRequest
-    const producer = await assertCanDecideProducerAccess(session, accessRequest.producerId)
+    const targetOrg = await assertCanDecideAccess(session, accessRequest.targetOrganizationId)
 
     if (accessRequest.status !== "requested") {
       return Response.json({ error: "La solicitud ya fue decidida" }, { status: 409 })
@@ -58,8 +58,10 @@ export async function POST(
         action: "access_request.rejected",
         targetType: "access_request",
         targetId: requestId,
-        producerId: accessRequest.producerId,
-        metadata: { reason: input.rejectionReason ?? null },
+        metadata: {
+          targetOrganizationId: accessRequest.targetOrganizationId,
+          reason: input.rejectionReason ?? null,
+        },
       })
 
       await notifyOrganizationUsers({
@@ -67,15 +69,14 @@ export async function POST(
         type: "access_request_rejected",
         payload: {
           accessRequestId: requestId,
-          producerId: accessRequest.producerId,
-          producerOrganizationId: producer.organizationId,
+          targetOrganizationId: accessRequest.targetOrganizationId,
         },
       })
 
       return Response.json({ id: requestId, status: "rejected" })
     }
 
-    const allowedScopes = input.allowedScopes.filter((scope) =>
+    const allowedScopes = input.allowedScopes.filter((scope: AccessScope) =>
       accessRequest.requestedScopes.includes(scope),
     )
 
@@ -84,20 +85,22 @@ export async function POST(
     }
 
     const now = new Date()
-    const expiresAt = new Date(now)
-    expiresAt.setDate(expiresAt.getDate() + input.expirationDays)
+    const expiresAt = new Date(now.getTime() + input.approvedDays * 24 * 60 * 60 * 1000)
 
     const grantRef = db.collection(COLLECTIONS.ACCESS_GRANTS).doc()
     const batch = db.batch()
 
     batch.update(requestRef, {
       status: "approved",
+      approvedDays: input.approvedDays,
       decidedBy: session.uid,
       decidedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     })
+
     batch.set(grantRef, {
-      producerId: accessRequest.producerId,
+      targetOrganizationId: accessRequest.targetOrganizationId,
+      targetScope: accessRequest.targetScope,
       accessRequestId: requestId,
       grantedToOrganizationId: accessRequest.requesterOrganizationId,
       allowedScopes,
@@ -118,8 +121,7 @@ export async function POST(
       action: "access_request.approved",
       targetType: "access_request",
       targetId: requestId,
-      producerId: accessRequest.producerId,
-      metadata: { allowedScopes, grantId: grantRef.id },
+      metadata: { allowedScopes, grantId: grantRef.id, targetOrganizationId: targetOrg.id },
     })
     await writeAuditLog({
       actorUid: session.uid,
@@ -127,8 +129,7 @@ export async function POST(
       action: "access_grant.created",
       targetType: "access_grant",
       targetId: grantRef.id,
-      producerId: accessRequest.producerId,
-      metadata: { accessRequestId: requestId, expiresAt: expiresAt.toISOString() },
+      metadata: { accessRequestId: requestId, expiresAt: expiresAt.toISOString(), approvedDays: input.approvedDays },
     })
 
     await notifyOrganizationUsers({
@@ -137,7 +138,7 @@ export async function POST(
       payload: {
         accessRequestId: requestId,
         grantId: grantRef.id,
-        producerId: accessRequest.producerId,
+        targetOrganizationId: accessRequest.targetOrganizationId,
         expiresAt: expiresAt.toISOString(),
       },
     })

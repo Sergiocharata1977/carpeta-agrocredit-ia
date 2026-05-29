@@ -13,7 +13,6 @@ interface WriteAuditLogParams {
   action: AuditAction
   targetType: string
   targetId: string
-  producerId?: string
   metadata?: Record<string, unknown>
 }
 
@@ -26,7 +25,6 @@ export async function writeAuditLog(params: WriteAuditLogParams): Promise<void> 
       action: params.action,
       targetType: params.targetType,
       targetId: params.targetId,
-      producerId: params.producerId ?? null,
       metadata: params.metadata ?? {},
       createdAt: FieldValue.serverTimestamp(),
     })

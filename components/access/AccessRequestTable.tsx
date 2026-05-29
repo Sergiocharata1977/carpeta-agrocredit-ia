@@ -78,7 +78,7 @@ export function AccessRequestTable({
       <TableBody>
         {requests.map((request) => (
           <TableRow key={request.id}>
-            <TableCell className="font-mono text-xs">{request.producerId}</TableCell>
+            <TableCell className="font-mono text-xs">{request.targetOrganizationId}</TableCell>
             <TableCell>{request.purpose}</TableCell>
             <TableCell>
               <ScopeList scopes={request.requestedScopes} />

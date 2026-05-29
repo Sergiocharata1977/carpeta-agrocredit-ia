@@ -30,7 +30,7 @@ export interface FinancingStatusEvent {
 // Solicitud de financiación (colección: financing_requests)
 export interface FinancingRequest {
   id: string
-  producerId: string
+  targetOrganizationId: string   // ID en organizations (system_user o system_user_entity)
   requesterOrganizationId: string
   grantId: string | null // access_grant asociado
   financingType: FinancingType

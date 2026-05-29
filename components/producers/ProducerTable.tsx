@@ -21,6 +21,7 @@ const FOLDER_STATUS_LABELS: Record<FolderStatus, string> = {
   complete: "Completa",
   under_review: "En revisión",
   archived: "Archivada",
+  outdated: "Desactualizada",
 }
 
 const FOLDER_STATUS_CLASSES: Record<FolderStatus, string> = {
@@ -29,6 +30,7 @@ const FOLDER_STATUS_CLASSES: Record<FolderStatus, string> = {
   complete: "bg-green-100 text-green-800",
   under_review: "bg-blue-100 text-blue-800",
   archived: "bg-gray-100 text-gray-500",
+  outdated: "bg-orange-100 text-orange-700",
 }
 
 const ACTIVITY_LABELS: Record<Producer["activity"], string> = {

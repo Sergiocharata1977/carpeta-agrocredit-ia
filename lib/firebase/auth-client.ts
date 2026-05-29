@@ -41,4 +41,10 @@ export async function getIdToken(): Promise<string | null> {
   return auth.currentUser.getIdToken()
 }
 
+export async function getFreshIdToken(): Promise<string | null> {
+  const auth = getFirebaseAuth()
+  if (!auth?.currentUser) return null
+  return auth.currentUser.getIdToken(true)
+}
+
 export type { User }

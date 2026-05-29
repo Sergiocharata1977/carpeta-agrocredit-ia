@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore"
 import { z } from "zod"
-import { assertCanDecideProducerAccess, notifyOrganizationUsers } from "@/lib/auth/server-access"
+import { assertCanDecideAccess, notifyOrganizationUsers } from "@/lib/auth/server-access"
 import { getAuthErrorResponse, verifyRequestSession } from "@/lib/auth/server-session"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
@@ -28,7 +28,7 @@ export async function POST(
     }
 
     const grant = { id: grantSnap.id, ...grantSnap.data() } as AccessGrant
-    await assertCanDecideProducerAccess(session, grant.producerId)
+    await assertCanDecideAccess(session, grant.targetOrganizationId)
 
     await grantRef.update({
       status: "revoked",
@@ -50,8 +50,10 @@ export async function POST(
       action: "access_grant.revoked",
       targetType: "access_grant",
       targetId: grantId,
-      producerId: grant.producerId,
-      metadata: { reason: input.reason ?? null },
+      metadata: {
+        targetOrganizationId: grant.targetOrganizationId,
+        reason: input.reason ?? null,
+      },
     })
 
     await notifyOrganizationUsers({
@@ -60,7 +62,7 @@ export async function POST(
       payload: {
         grantId,
         accessRequestId: grant.accessRequestId,
-        producerId: grant.producerId,
+        targetOrganizationId: grant.targetOrganizationId,
         reason: input.reason ?? null,
       },
     })

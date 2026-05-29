@@ -39,7 +39,7 @@ export function FinancingRequestCard({
     <Card className="shadow-none">
       <CardHeader className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-sm font-medium">Productor {request.producerId}</CardTitle>
+          <CardTitle className="text-sm font-medium">Solicitud {request.targetOrganizationId}</CardTitle>
           <FinancingStatusBadge status={request.status} />
         </div>
         <div className="flex flex-wrap gap-2">

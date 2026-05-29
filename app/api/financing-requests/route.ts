@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore"
 import { z } from "zod"
-import { assertGrantIsActive, getProducerForServer, notifyOrganizationUsers } from "@/lib/auth/server-access"
+import { assertGrantIsActive, getTargetOrganizationForServer, notifyOrganizationUsers } from "@/lib/auth/server-access"
 import { assertActiveMembership, getAuthErrorResponse, isFinancialEntity, requireDefaultOrganization, verifyRequestSession } from "@/lib/auth/server-session"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const session = await verifyRequestSession(request)
 
     if (!isFinancialEntity(session)) {
-      return Response.json({ error: "Solo bancos y empresas pueden crear solicitudes" }, { status: 403 })
+      return Response.json({ error: "Solo entidades solicitantes pueden crear solicitudes" }, { status: 403 })
     }
 
     const requesterOrganizationId = requireDefaultOrganization(session)
@@ -23,7 +23,8 @@ export async function POST(request: Request) {
       ...(await request.json()),
       requesterOrganizationId,
     })
-    const producer = await getProducerForServer(input.producerId)
+
+    const targetOrg = await getTargetOrganizationForServer(input.targetOrganizationId)
     const db = getAdminDb()
 
     if (input.grantId) {
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
 
       if (
         grant.grantedToOrganizationId !== requesterOrganizationId ||
-        grant.producerId !== input.producerId
+        grant.targetOrganizationId !== input.targetOrganizationId
       ) {
         return Response.json({ error: "El grant no corresponde a esta solicitud" }, { status: 403 })
       }
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     const initialStatus = input.grantId ? "requested" : "pending_authorization"
     const now = new Date().toISOString()
     const ref = await db.collection(COLLECTIONS.FINANCING_REQUESTS).add({
-      producerId: input.producerId,
+      targetOrganizationId: input.targetOrganizationId,
       requesterOrganizationId,
       grantId: input.grantId,
       financingType: input.financingType,
@@ -77,8 +78,8 @@ export async function POST(request: Request) {
       action: "financing_request.created",
       targetType: "financing_request",
       targetId: ref.id,
-      producerId: input.producerId,
       metadata: {
+        targetOrganizationId: input.targetOrganizationId,
         amount: input.amount,
         currency: input.currency,
         financingType: input.financingType,
@@ -86,12 +87,14 @@ export async function POST(request: Request) {
       },
     })
 
+    // Notificar a los miembros de la org objetivo o su raíz
+    const notifyOrgId = targetOrg.parentOrganizationId ?? targetOrg.id
     await notifyOrganizationUsers({
-      organizationId: producer.organizationId,
+      organizationId: notifyOrgId,
       type: "financing_request_received",
       payload: {
         financingRequestId: ref.id,
-        producerId: input.producerId,
+        targetOrganizationId: input.targetOrganizationId,
         requesterOrganizationId,
         amount: input.amount,
         currency: input.currency,

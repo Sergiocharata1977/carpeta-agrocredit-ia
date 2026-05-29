@@ -40,7 +40,7 @@ export function AuthorizationDecisionDialog({
   useEffect(() => {
     if (!request) return
     setAllowedScopes(request.requestedScopes)
-    setExpirationDays(request.requestedExpirationDays)
+    setExpirationDays(request.requestedDays)
     setRejectionReason("")
   }, [request])
 

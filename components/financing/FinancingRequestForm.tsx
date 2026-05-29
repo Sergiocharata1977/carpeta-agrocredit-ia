@@ -89,10 +89,10 @@ export function FinancingRequestForm({
       />
 
       <div className="space-y-1.5">
-        <Label htmlFor="producerId">ID del productor</Label>
-        <Input id="producerId" {...register("producerId")} />
-        {errors.producerId && (
-          <p className="text-xs text-destructive">{errors.producerId.message}</p>
+        <Label htmlFor="targetOrganizationId">ID de organización objetivo</Label>
+        <Input id="targetOrganizationId" {...register("targetOrganizationId")} />
+        {errors.targetOrganizationId && (
+          <p className="text-xs text-destructive">{errors.targetOrganizationId.message}</p>
         )}
       </div>
 
@@ -111,7 +111,7 @@ export function FinancingRequestForm({
             <SelectItem value="none">Sin grant vigente</SelectItem>
             {grants.map((grant) => (
               <SelectItem key={grant.id} value={grant.id}>
-                {grant.producerId} · vence {new Date(grant.expiresAt).toLocaleDateString("es-AR")}
+                {grant.targetOrganizationId} · vence {new Date(grant.expiresAt).toLocaleDateString("es-AR")}
               </SelectItem>
             ))}
           </SelectContent>

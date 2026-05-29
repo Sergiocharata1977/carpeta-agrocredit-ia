@@ -7,57 +7,88 @@ import {
   isProducerRole,
   type ServerSession,
 } from "@/lib/auth/server-session"
-import type { Producer } from "@/types/producer"
+import type { Organization } from "@/types/auth"
 import type { AccessGrant } from "@/types/access"
 
-export async function getProducerForServer(producerId: string): Promise<Producer> {
-  const snap = await getAdminDb().collection(COLLECTIONS.PRODUCERS).doc(producerId).get()
+// Obtiene la organización objetivo (system_user o system_user_entity) server-side
+export async function getTargetOrganizationForServer(targetOrganizationId: string): Promise<Organization> {
+  const snap = await getAdminDb().collection(COLLECTIONS.ORGANIZATIONS).doc(targetOrganizationId).get()
 
   if (!snap.exists) {
-    throw new AuthError("Productor no encontrado", 404)
+    throw new AuthError("Organización no encontrada", 404)
   }
 
-  return { id: snap.id, ...snap.data() } as Producer
+  const org = { id: snap.id, ...snap.data() } as Organization
+  if (org.type !== "system_user" && org.type !== "system_user_entity") {
+    throw new AuthError("La organización no es un usuario del sistema", 400)
+  }
+
+  return org
 }
 
-export async function assertCanDecideProducerAccess(
+// Verifica que la sesión puede decidir accesos sobre una organización target
+// - Admin: siempre puede
+// - system_user: solo si es member activo de la org target
+// - Contador con canAuthorize=true: si tiene vínculo activo con el system_user raíz
+export async function assertCanDecideAccess(
   session: ServerSession,
-  producerId: string,
-): Promise<Producer> {
-  const producer = await getProducerForServer(producerId)
+  targetOrganizationId: string,
+): Promise<Organization> {
+  const targetOrg = await getTargetOrganizationForServer(targetOrganizationId)
 
-  if (isAdminPlatform(session)) return producer
+  if (isAdminPlatform(session)) return targetOrg
 
-  if (
-    isProducerRole(session) &&
-    session.defaultOrganizationId === producer.organizationId
-  ) {
-    return producer
+  // system_user que es member de la org target
+  if (isProducerRole(session)) {
+    const memberId = `${targetOrganizationId}_${session.uid}`
+    const memberSnap = await getAdminDb()
+      .collection(COLLECTIONS.ORGANIZATION_MEMBERS)
+      .doc(memberId)
+      .get()
+
+    if (memberSnap.exists && memberSnap.data()?.status === "active") {
+      return targetOrg
+    }
+
+    // Si la org es system_user_entity, verificar membresía en la org raíz
+    if (targetOrg.parentOrganizationId) {
+      const rootMemberId = `${targetOrg.parentOrganizationId}_${session.uid}`
+      const rootMemberSnap = await getAdminDb()
+        .collection(COLLECTIONS.ORGANIZATION_MEMBERS)
+        .doc(rootMemberId)
+        .get()
+
+      if (rootMemberSnap.exists && rootMemberSnap.data()?.status === "active") {
+        return targetOrg
+      }
+    }
   }
 
+  // Contador con delegación canAuthorize=true
   if (isAccountantRole(session)) {
+    const systemUserOrgId = targetOrg.parentOrganizationId ?? targetOrganizationId
     const delegated = await getAdminDb()
       .collection(COLLECTIONS.PRODUCER_ACCOUNTANT_LINKS)
-      .where("producerId", "==", producerId)
+      .where("systemUserOrganizationId", "==", systemUserOrgId)
       .where("accountantUid", "==", session.uid)
       .where("status", "==", "active")
       .where("canAuthorize", "==", true)
       .limit(1)
       .get()
 
-    if (!delegated.empty) return producer
+    if (!delegated.empty) return targetOrg
   }
 
-  throw new AuthError("No podes decidir accesos para este productor", 403)
+  throw new AuthError("No tenés permisos para decidir accesos sobre esta organización", 403)
 }
 
 export function assertGrantIsActive(grant: AccessGrant): void {
   if (grant.status !== "approved") {
-    throw new AuthError("El grant no esta aprobado", 403)
+    throw new AuthError("El grant no está aprobado", 403)
   }
 
   if (new Date(grant.expiresAt) <= new Date()) {
-    throw new AuthError("El grant esta vencido", 403)
+    throw new AuthError("El grant está vencido", 403)
   }
 }
 

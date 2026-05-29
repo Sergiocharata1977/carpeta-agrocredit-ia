@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore"
 import { z } from "zod"
-import { getProducerForServer, notifyOrganizationUsers } from "@/lib/auth/server-access"
+import { getTargetOrganizationForServer, notifyOrganizationUsers } from "@/lib/auth/server-access"
 import { getAuthErrorResponse, isAdminPlatform, isFinancialEntity, verifyRequestSession } from "@/lib/auth/server-session"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
@@ -60,24 +60,24 @@ export async function POST(
       action: "financing_request.status_changed",
       targetType: "financing_request",
       targetId: requestId,
-      producerId: financingRequest.producerId,
       metadata: {
+        targetOrganizationId: financingRequest.targetOrganizationId,
         previousStatus: financingRequest.status,
         nextStatus: input.status,
         note: input.note ?? null,
       },
     })
 
-    const producer = await getProducerForServer(financingRequest.producerId)
+    const targetOrg = await getTargetOrganizationForServer(financingRequest.targetOrganizationId)
     await notifyOrganizationUsers({
-      organizationId: producer.organizationId,
+      organizationId: targetOrg.parentOrganizationId ?? targetOrg.id,
       type:
         input.status === "observed"
           ? "financing_request_observed"
           : "financing_request_status_changed",
       payload: {
         financingRequestId: requestId,
-        producerId: financingRequest.producerId,
+        targetOrganizationId: financingRequest.targetOrganizationId,
         previousStatus: financingRequest.status,
         nextStatus: input.status,
       },

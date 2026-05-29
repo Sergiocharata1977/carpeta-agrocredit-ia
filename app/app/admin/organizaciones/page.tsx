@@ -19,11 +19,10 @@ import type { Organization } from "@/types/auth"
 
 const ORG_TYPE_LABELS: Record<Organization["type"], string> = {
   platform: "Plataforma",
-  producer: "Productor",
+  system_user: "Usuario del Sistema",
+  system_user_entity: "Empresa (entidad hijo)",
   accounting_firm: "Estudio Contable",
-  bank: "Banco",
-  financial_entity: "Entidad Financiera",
-  agro_company: "Empresa Agropecuaria",
+  requesting_entity: "Entidad Solicitante",
 }
 
 const ORG_STATUS_LABELS: Record<Organization["status"], string> = {

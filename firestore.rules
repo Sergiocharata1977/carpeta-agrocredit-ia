@@ -19,7 +19,7 @@ service cloud.firestore {
       return hasRole('admin_platform');
     }
 
-    function isProducer() {
+    function isSystemUser() {
       return hasRole('producer');
     }
 
@@ -27,7 +27,7 @@ service cloud.firestore {
       return hasRole('accountant') || hasRole('accounting_firm_admin');
     }
 
-    function isFinancialEntity() {
+    function isRequestingEntity() {
       return hasRole('bank_user') || hasRole('agro_company_user');
     }
 
@@ -35,118 +35,122 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    function producerOrgId(producerId) {
-      return get(/databases/$(database)/documents/producers/$(producerId)).data.organizationId;
+    // Verifica que el usuario es miembro activo de una organización
+    // ID de membership: {orgId}_{uid}
+    function isMemberOf(orgId) {
+      let memberId = orgId + '_' + request.auth.uid;
+      return exists(/databases/$(database)/documents/organization_members/$(memberId))
+        && get(/databases/$(database)/documents/organization_members/$(memberId)).data.status == 'active';
     }
 
-    function canReadProducerData(producerId) {
+    // Verifica si hay un access_grant activo y no vencido para el solicitante sobre esa org
+    // Nota: validación fina de scopes se hace server-side en API routes
+    function isRequestingEntityWithDefaultOrg() {
+      return isRequestingEntity() && defaultOrgId() != null;
+    }
+
+    // Puede leer datos de carpeta de una organización si:
+    // - Es admin de plataforma
+    // - Es contador con membership activa en cualquier org (acceso server-side valida el vínculo)
+    // - Es miembro activo de esa organización (system_user viendo su propia carpeta)
+    // - Es entidad solicitante (server-side valida el grant activo y los scopes)
+    function canReadFolderData(folderOwnerOrgId) {
       return isAuthenticated() && (
         isAdminPlatform() ||
         isAccountant() ||
-        (isProducer() && producerOrgId(producerId) == defaultOrgId())
+        isMemberOf(folderOwnerOrgId) ||
+        isRequestingEntityWithDefaultOrg()
       );
     }
 
+    // ─── USUARIOS ───────────────────────────────────────────────────────────────
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdminPlatform();
       allow update: if isOwner(uid)
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'status']);
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['roles', 'status', 'defaultOrganizationId']);
       allow create, delete: if false;
     }
 
+    // ─── ORGANIZACIONES ─────────────────────────────────────────────────────────
+    // Todas las entidades (system_user, accounting_firm, requesting_entity, etc.)
     match /organizations/{orgId} {
       allow read: if isAuthenticated();
-      allow write: if isAdminPlatform();
+      allow create, update, delete: if false; // solo via API con Admin SDK
+    }
+
+    match /organization_profiles/{orgId} {
+      allow read: if isAuthenticated() && (isMemberOf(orgId) || isAdminPlatform());
+      allow create, update, delete: if false;
     }
 
     match /organization_members/{memberId} {
-      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdminPlatform());
-      allow write: if isAdminPlatform();
-    }
-
-    match /producers/{producerId} {
       allow read: if isAuthenticated() && (
-        isAccountant() ||
-        isAdminPlatform() ||
-        (isProducer() && resource.data.organizationId == defaultOrgId())
+        resource.data.uid == request.auth.uid || isAdminPlatform()
       );
-      allow create, update: if isAccountant() || isAdminPlatform();
-      allow delete: if isAdminPlatform();
+      allow create, update, delete: if false; // solo via API
     }
 
-    match /accounting_firms/{firmId} {
-      allow read: if isAuthenticated();
-      allow write: if isAccountant() || isAdminPlatform();
-    }
-
+    // ─── VÍNCULOS CONTADOR-CLIENTE ───────────────────────────────────────────────
     match /producer_accountant_links/{linkId} {
-      allow read: if isAuthenticated() && (isAccountant() || isProducer() || isAdminPlatform());
-      allow create, update: if isAdminPlatform() || isAccountant();
-      allow delete: if isAdminPlatform();
+      allow read: if isAuthenticated() && (isAccountant() || isSystemUser() || isAdminPlatform());
+      allow create, update, delete: if false; // solo via API
     }
 
-    match /financial_entities/{entityId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdminPlatform();
-    }
-
-    match /agro_companies/{companyId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdminPlatform();
-    }
-
-    match /accounting_periods/{periodId} {
-      allow read: if canReadProducerData(resource.data.producerId);
+    // ─── CARPETA CONTABLE ────────────────────────────────────────────────────────
+    match /accounting_periods/{docId} {
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
       allow create, update: if isAccountant() || isAdminPlatform();
       allow delete: if isAdminPlatform();
     }
 
     match /balance_sheets/{docId} {
-      allow read: if canReadProducerData(resource.data.producerId);
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
       allow create, update: if isAccountant() || isAdminPlatform();
       allow delete: if isAdminPlatform();
     }
 
     match /income_statements/{docId} {
-      allow read: if canReadProducerData(resource.data.producerId);
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
       allow create, update: if isAccountant() || isAdminPlatform();
       allow delete: if isAdminPlatform();
     }
 
     match /tax_documents/{docId} {
-      allow read: if canReadProducerData(resource.data.producerId);
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
       allow create, update: if isAccountant() || isAdminPlatform();
       allow delete: if isAdminPlatform();
     }
 
     match /assets/{docId} {
-      allow read: if canReadProducerData(resource.data.producerId);
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
       allow create, update: if isAccountant() || isAdminPlatform();
       allow delete: if isAdminPlatform();
     }
 
     match /liabilities/{docId} {
-      allow read: if canReadProducerData(resource.data.producerId);
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
       allow create, update: if isAccountant() || isAdminPlatform();
       allow delete: if isAdminPlatform();
     }
 
     match /documents/{docId} {
-      allow read: if canReadProducerData(resource.data.producerId);
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
       allow create, update: if isAccountant() || isAdminPlatform();
       allow delete: if isAdminPlatform();
     }
 
+    // ─── AUTORIZACIONES ──────────────────────────────────────────────────────────
     match /access_requests/{requestId} {
       allow read: if isAuthenticated() && (
         isAdminPlatform() ||
         resource.data.requesterOrganizationId == defaultOrgId() ||
-        producerOrgId(resource.data.producerId) == defaultOrgId()
+        isMemberOf(resource.data.targetOrganizationId)
       );
-      allow create: if isFinancialEntity()
-                    && request.resource.data.requesterOrganizationId == defaultOrgId();
+      allow create: if isRequestingEntity()
+        && request.resource.data.requesterOrganizationId == defaultOrgId();
       allow update: if isAdminPlatform()
-                    || (isProducer() && producerOrgId(resource.data.producerId) == defaultOrgId());
+        || (isSystemUser() && isMemberOf(resource.data.targetOrganizationId));
       allow delete: if false;
     }
 
@@ -154,38 +158,41 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (
         isAdminPlatform() ||
         resource.data.grantedToOrganizationId == defaultOrgId() ||
-        producerOrgId(resource.data.producerId) == defaultOrgId()
+        isMemberOf(resource.data.targetOrganizationId)
       );
-      allow write: if false;
+      allow write: if false; // solo via Admin SDK server-side
     }
 
+    // ─── FINANCIACIÓN ────────────────────────────────────────────────────────────
     match /financing_requests/{requestId} {
       allow read: if isAuthenticated() && (
         isAdminPlatform() ||
         resource.data.requesterOrganizationId == defaultOrgId() ||
-        producerOrgId(resource.data.producerId) == defaultOrgId()
+        isMemberOf(resource.data.targetOrganizationId)
       );
-      allow create: if isFinancialEntity()
-                    && request.resource.data.requesterOrganizationId == defaultOrgId();
-      allow update: if isFinancialEntity()
-                    && resource.data.requesterOrganizationId == defaultOrgId()
-                    && request.resource.data.requesterOrganizationId == resource.data.requesterOrganizationId;
+      allow create: if isRequestingEntity()
+        && request.resource.data.requesterOrganizationId == defaultOrgId();
+      allow update: if isRequestingEntity()
+        && resource.data.requesterOrganizationId == defaultOrgId()
+        && request.resource.data.requesterOrganizationId == resource.data.requesterOrganizationId;
       allow delete: if false;
     }
 
+    // ─── SISTEMA ─────────────────────────────────────────────────────────────────
     match /audit_logs/{logId} {
       allow read: if isAdminPlatform();
-      allow write: if false;
+      allow write: if false; // solo server-side con Admin SDK
     }
 
     match /notifications/{notifId} {
       allow read: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
       allow update: if isAuthenticated()
-                    && resource.data.recipientUid == request.auth.uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+        && resource.data.recipientUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       allow create, delete: if false;
     }
 
+    // ─── DENY BY DEFAULT ─────────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

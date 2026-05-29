@@ -19,16 +19,22 @@ export type AccessRequestStatus =
   | "revoked"
   | "expired"
 
+// Alcance del target del acceso
+export type AccessTargetScope = "single_organization" | "group"
+
 // Solicitud de acceso (colección: access_requests)
 export interface AccessRequest {
   id: string
-  producerId: string
+  // Campo canónico nuevo — ID en organizations (system_user o system_user_entity)
+  targetOrganizationId: string
+  targetScope: AccessTargetScope  // single_organization = solo esa org, group = system_user y todas sus hijas
   requesterOrganizationId: string
   requestedScopes: AccessScope[]
   purpose: string
-  requestedExpirationDays: number
+  requestedDays: number           // días de acceso solicitados por la entidad
+  approvedDays?: number           // días aprobados por el usuario (puede diferir de requestedDays)
   status: AccessRequestStatus
-  decidedBy?: string // uid del productor que decidió
+  decidedBy?: string
   decidedAt?: string
   rejectionReason?: string
   createdAt: string
@@ -39,15 +45,18 @@ export interface AccessRequest {
 // Grant de acceso (colección: access_grants)
 export interface AccessGrant {
   id: string
-  producerId: string
+  targetOrganizationId: string    // ID en organizations
+  targetScope: AccessTargetScope
+  // Snapshot de orgs incluidas si targetScope === "group" (se guarda al aprobar)
+  includedOrganizationIds?: string[]
   accessRequestId: string
   grantedToOrganizationId: string
   allowedScopes: AccessScope[]
   purpose: string
   startsAt: string
-  expiresAt: string
+  expiresAt: string               // calculado server-side: startsAt + approvedDays
   status: AccessRequestStatus
-  grantedBy: string // uid del productor
+  grantedBy: string
   revokedBy?: string
   revokedAt?: string
   createdAt: string

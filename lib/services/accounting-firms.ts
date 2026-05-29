@@ -15,7 +15,7 @@ export async function getAccountingFirmById(
 ): Promise<AccountingFirm | null> {
   const db = getFirebaseDb()
   if (!db) return null
-  const snap = await getDoc(doc(db, COLLECTIONS.ACCOUNTING_FIRMS, firmId))
+  const snap = await getDoc(doc(db, COLLECTIONS.ORGANIZATIONS, firmId))
   if (!snap.exists()) return null
   return { id: snap.id, ...snap.data() } as AccountingFirm
 }
@@ -26,7 +26,7 @@ export async function createAccountingFirm(
 ): Promise<string> {
   const db = getFirebaseDb()
   if (!db) throw new Error("Firebase no configurado")
-  const ref = await addDoc(collection(db, COLLECTIONS.ACCOUNTING_FIRMS), {
+  const ref = await addDoc(collection(db, COLLECTIONS.ORGANIZATIONS), {
     ...data,
     createdBy,
     status: "active",
@@ -42,7 +42,7 @@ export async function updateAccountingFirm(
 ): Promise<void> {
   const db = getFirebaseDb()
   if (!db) throw new Error("Firebase no configurado")
-  await updateDoc(doc(db, COLLECTIONS.ACCOUNTING_FIRMS, firmId), {
+  await updateDoc(doc(db, COLLECTIONS.ORGANIZATIONS, firmId), {
     ...data,
     updatedAt: serverTimestamp(),
   })

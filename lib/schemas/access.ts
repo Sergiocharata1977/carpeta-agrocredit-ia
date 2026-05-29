@@ -14,15 +14,12 @@ const ACCESS_SCOPES = [
 
 // Schema para crear una solicitud de acceso
 export const createAccessRequestSchema = z.object({
-  producerId: z.string().min(1, "El ID del productor es requerido"),
-  requesterOrganizationId: z
-    .string()
-    .min(1, "El ID de la organización solicitante es requerido"),
-  requestedScopes: z
-    .array(z.enum(ACCESS_SCOPES))
-    .min(1, "Debe seleccionar al menos un scope de acceso"),
+  targetOrganizationId: z.string().min(1, "El ID de la organización objetivo es requerido"),
+  targetScope: z.enum(["single_organization", "group"]),
+  requesterOrganizationId: z.string().min(1, "El ID de la organización solicitante es requerido"),
+  requestedScopes: z.array(z.enum(ACCESS_SCOPES)).min(1, "Seleccioná al menos un scope de acceso"),
   purpose: z.string().min(1, "El propósito es requerido").max(500),
-  requestedExpirationDays: z
+  requestedDays: z
     .number()
     .int("Debe ser un número entero de días")
     .min(1, "El plazo mínimo es 1 día")
@@ -34,10 +31,8 @@ export type CreateAccessRequestInput = z.infer<typeof createAccessRequestSchema>
 // Schema para aprobar una solicitud de acceso
 export const approveAccessRequestSchema = z.object({
   accessRequestId: z.string().min(1, "El ID de la solicitud es requerido"),
-  allowedScopes: z
-    .array(z.enum(ACCESS_SCOPES))
-    .min(1, "Debe aprobar al menos un scope de acceso"),
-  expirationDays: z
+  allowedScopes: z.array(z.enum(ACCESS_SCOPES)).min(1, "Aprobá al menos un scope de acceso"),
+  approvedDays: z
     .number()
     .int("Debe ser un número entero de días")
     .min(1, "El plazo mínimo es 1 día")

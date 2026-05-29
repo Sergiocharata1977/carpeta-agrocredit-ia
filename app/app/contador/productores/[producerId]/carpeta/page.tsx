@@ -54,7 +54,7 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
       const db = getFirebaseDb()
       if (!db) return
       try {
-        const snap = await getDoc(doc(db, COLLECTIONS.PRODUCERS, producerId))
+        const snap = await getDoc(doc(db, COLLECTIONS.ORGANIZATIONS, producerId))
         if (snap.exists()) {
           setProducer({ id: snap.id, ...snap.data() } as Producer)
         }

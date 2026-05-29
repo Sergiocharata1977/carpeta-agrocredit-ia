@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore"
 import { z } from "zod"
-import { assertActiveMembership, getAuthErrorResponse, isFinancialEntity, requireDefaultOrganization, verifyRequestSession } from "@/lib/auth/server-session"
-import { getProducerForServer, notifyOrganizationUsers } from "@/lib/auth/server-access"
+import { getAuthErrorResponse, isFinancialEntity, requireDefaultOrganization, verifyRequestSession } from "@/lib/auth/server-session"
+import { getTargetOrganizationForServer, notifyOrganizationUsers } from "@/lib/auth/server-access"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { writeAuditLog } from "@/lib/firebase/audit"
@@ -12,25 +12,26 @@ export async function POST(request: Request) {
     const session = await verifyRequestSession(request)
 
     if (!isFinancialEntity(session)) {
-      return Response.json({ error: "Solo bancos y empresas pueden solicitar acceso" }, { status: 403 })
+      return Response.json({ error: "Solo entidades solicitantes pueden pedir acceso" }, { status: 403 })
     }
 
     const requesterOrganizationId = requireDefaultOrganization(session)
-    await assertActiveMembership(session, requesterOrganizationId)
 
     const body = await request.json()
     const input = createAccessRequestSchema.parse({
       ...body,
       requesterOrganizationId,
     })
-    const producer = await getProducerForServer(input.producerId)
+
+    const targetOrg = await getTargetOrganizationForServer(input.targetOrganizationId)
 
     const ref = await getAdminDb().collection(COLLECTIONS.ACCESS_REQUESTS).add({
-      producerId: input.producerId,
+      targetOrganizationId: input.targetOrganizationId,
+      targetScope: input.targetScope,
       requesterOrganizationId,
       requestedScopes: input.requestedScopes,
       purpose: input.purpose,
-      requestedExpirationDays: input.requestedExpirationDays,
+      requestedDays: input.requestedDays,
       status: "requested",
       createdBy: session.uid,
       createdAt: FieldValue.serverTimestamp(),
@@ -43,19 +44,22 @@ export async function POST(request: Request) {
       action: "access_request.created",
       targetType: "access_request",
       targetId: ref.id,
-      producerId: input.producerId,
       metadata: {
+        targetOrganizationId: input.targetOrganizationId,
         requesterOrganizationId,
         requestedScopes: input.requestedScopes,
+        requestedDays: input.requestedDays,
       },
     })
 
+    // Notificar a los miembros de la org objetivo (system_user o su raíz)
+    const notifyOrgId = targetOrg.parentOrganizationId ?? targetOrg.id
     await notifyOrganizationUsers({
-      organizationId: producer.organizationId,
+      organizationId: notifyOrgId,
       type: "access_request_received",
       payload: {
         accessRequestId: ref.id,
-        producerId: input.producerId,
+        targetOrganizationId: input.targetOrganizationId,
         requesterOrganizationId,
         purpose: input.purpose,
       },

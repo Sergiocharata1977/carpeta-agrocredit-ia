@@ -1,12 +1,13 @@
+// Nombres canónicos de colecciones Firestore — fuente de verdad
+// Ver reports/002_REORGANIZACION_BASE_DATOS.md para el modelo de datos completo
+// ELIMINADAS: producers, accounting_firms, financial_entities, agro_companies
+// Todas las entidades viven en organizations (con type + subtype)
 export const COLLECTIONS = {
   USERS: "users",
   ORGANIZATIONS: "organizations",
   ORGANIZATION_MEMBERS: "organization_members",
-  PRODUCERS: "producers",
-  ACCOUNTING_FIRMS: "accounting_firms",
+  ORGANIZATION_PROFILES: "organization_profiles",
   PRODUCER_ACCOUNTANT_LINKS: "producer_accountant_links",
-  FINANCIAL_ENTITIES: "financial_entities",
-  AGRO_COMPANIES: "agro_companies",
   ACCOUNTING_PERIODS: "accounting_periods",
   BALANCE_SHEETS: "balance_sheets",
   INCOME_STATEMENTS: "income_statements",

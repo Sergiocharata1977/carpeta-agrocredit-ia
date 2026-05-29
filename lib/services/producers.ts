@@ -17,7 +17,7 @@ export async function getProducersByOrg(organizationId: string): Promise<Produce
   const db = getFirebaseDb()
   if (!db) return []
   const q = query(
-    collection(db, COLLECTIONS.PRODUCERS),
+    collection(db, COLLECTIONS.ORGANIZATIONS),
     where("organizationId", "==", organizationId),
   )
   const snap = await getDocs(q)
@@ -27,7 +27,7 @@ export async function getProducersByOrg(organizationId: string): Promise<Produce
 export async function getProducerById(producerId: string): Promise<Producer | null> {
   const db = getFirebaseDb()
   if (!db) return null
-  const snap = await getDoc(doc(db, COLLECTIONS.PRODUCERS, producerId))
+  const snap = await getDoc(doc(db, COLLECTIONS.ORGANIZATIONS, producerId))
   if (!snap.exists()) return null
   return { id: snap.id, ...snap.data() } as Producer
 }
@@ -38,7 +38,7 @@ export async function createProducer(
 ): Promise<string> {
   const db = getFirebaseDb()
   if (!db) throw new Error("Firebase no configurado")
-  const ref = await addDoc(collection(db, COLLECTIONS.PRODUCERS), {
+  const ref = await addDoc(collection(db, COLLECTIONS.ORGANIZATIONS), {
     ...data,
     createdBy,
     folderStatus: "incomplete",
@@ -54,7 +54,7 @@ export async function updateProducer(
 ): Promise<void> {
   const db = getFirebaseDb()
   if (!db) throw new Error("Firebase no configurado")
-  await updateDoc(doc(db, COLLECTIONS.PRODUCERS, producerId), {
+  await updateDoc(doc(db, COLLECTIONS.ORGANIZATIONS, producerId), {
     ...data,
     updatedAt: serverTimestamp(),
   })

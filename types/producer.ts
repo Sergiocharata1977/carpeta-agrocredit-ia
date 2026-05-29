@@ -1,24 +1,9 @@
-import type { UserRole } from "./auth"
-
-// Estado de la carpeta del productor
-export type FolderStatus =
-  | "incomplete"
-  | "in_progress"
-  | "complete"
-  | "under_review"
-  | "archived"
+import type { AgroActivity, FolderStatus, UserRole } from "./auth"
 
 // Tipo de persona jurídica
 export type PersonType = "physical" | "legal"
 
-// Actividad agropecuaria principal
-export type AgroActivity =
-  | "agriculture"
-  | "livestock"
-  | "mixed"
-  | "horticulture"
-  | "forestry"
-  | "other"
+export type { AgroActivity, FolderStatus }
 
 // Productor agropecuario (colección: producers)
 export interface Producer {
@@ -57,10 +42,11 @@ export interface AccountingFirm {
 // Vínculo productor-contador (colección: producer_accountant_links)
 export interface ProducerAccountantLink {
   id: string
-  producerId: string
+  producerId?: string
+  systemUserOrganizationId?: string
   accountingFirmId: string
-  accountantUid: string
-  status: "active" | "inactive" | "pending"
+  accountantUid?: string
+  status: "active" | "inactive" | "pending" | "rejected"
   isMain: boolean // contador principal
   canUpload: boolean // puede cargar documentos
   canAuthorize: boolean // puede autorizar accesos (delegación explícita, requiere audit)

@@ -25,7 +25,7 @@ const CURRENCIES = ["ARS", "USD"] as const
 
 // Schema para crear una solicitud de financiación
 export const createFinancingRequestSchema = z.object({
-  producerId: z.string().min(1, "El ID del productor es requerido"),
+  targetOrganizationId: z.string().min(1, "El ID de la organización objetivo es requerido"),
   requesterOrganizationId: z
     .string()
     .min(1, "El ID de la organización solicitante es requerido"),

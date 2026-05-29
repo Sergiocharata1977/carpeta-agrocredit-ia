@@ -33,7 +33,13 @@ export default function ProductoresPage() {
 
     async function fetchProducers() {
       const links = await getLinksForAccountant(user!.uid)
-      const producerIds = [...new Set(links.map((l) => l.producerId))]
+      const producerIds = [
+        ...new Set(
+          links
+            .map((link) => link.systemUserOrganizationId ?? link.producerId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ]
       const results = await Promise.all(producerIds.map((id) => getProducerById(id)))
       setProducers(results.filter(Boolean) as Producer[])
       setLoadingData(false)
@@ -52,13 +58,13 @@ export default function ProductoresPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Productores</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Usuarios</h1>
           <p className="text-muted-foreground text-sm">
             Carpetas asignadas a tu estudio contable
           </p>
         </div>
         <Button asChild>
-          <Link href="/app/contador/productores/new">Nueva carpeta</Link>
+          <Link href="/app/contador/productores/new">Nuevo Usuario</Link>
         </Button>
       </div>
 
@@ -71,16 +77,16 @@ export default function ProductoresPage() {
       ) : producers.length === 0 ? (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>Sin productores asignados</EmptyTitle>
+            <EmptyTitle>Sin Usuarios asignados</EmptyTitle>
             <EmptyContent>
               <EmptyDescription>
-                Aun no tenés productores vinculados a tu cuenta. Creá la primera
+                Aun no tenes Usuarios vinculados a tu cuenta. Crea la primera
                 carpeta para comenzar.
               </EmptyDescription>
             </EmptyContent>
           </EmptyHeader>
           <Button asChild>
-            <Link href="/app/contador/productores/new">Nueva carpeta</Link>
+            <Link href="/app/contador/productores/new">Nuevo Usuario</Link>
           </Button>
         </Empty>
       ) : (
