@@ -78,10 +78,15 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden min-h-screen w-[20rem] shrink-0 border-r border-[var(--brand-line)] bg-[var(--sidebar)] shadow-[16px_0_34px_rgba(17,33,50,0.06)] lg:flex lg:flex-col">
-      <div className="px-6 pb-8 pt-7">
-        <Link href="/app" className="block">
-          <p className="text-[2rem] font-black tracking-tight text-[var(--brand-green)]">AgroCredit Hub</p>
-          <p className="mt-1 text-lg text-[var(--brand-muted)]">Fintech Agricultural</p>
+      <div className="flex h-16 shrink-0 items-center border-b border-[var(--brand-line)] px-5">
+        <Link href="/app" className="flex items-center gap-2.5">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-[#063c31] text-white shadow-sm">
+            <Sprout className="size-4" />
+          </div>
+          <div>
+            <p className="text-sm font-extrabold leading-tight tracking-tight text-[var(--brand-ink)]">AgroCredit IA</p>
+            <p className="text-[10px] font-medium leading-none text-[var(--brand-muted)]">Carpeta agrofinanciera</p>
+          </div>
         </Link>
       </div>
 
