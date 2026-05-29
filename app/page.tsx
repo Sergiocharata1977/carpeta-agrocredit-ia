@@ -55,31 +55,31 @@ const flowSteps = [
 
 const roleCards = [
   {
-    title: "Cliente agro",
+    title: "Soy Productor / Cliente",
     description:
-      "Solicita financiamiento, autoriza accesos y sigue el estado de cada pedido desde su cuenta.",
+      "Solicita financiamiento, autoriza accesos temporales y seguí el estado de cada pedido desde tu cuenta.",
     href: "/registro/usuario",
-    button: "Registrarme como cliente",
+    button: "Registrarme como productor",
     image:
       "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1200&q=80",
     tone: "green",
   },
   {
-    title: "Estudio contable",
+    title: "Soy Contador",
     description:
-      "Crea clientes, mantiene carpetas actualizadas y envia informacion validada a financistas.",
+      "Administra carpetas de tus clientes desde un panel unificado y envia informacion validada a financistas.",
     href: "/registro/contador",
-    button: "Registrar estudio",
+    button: "Registrar mi estudio",
     image:
       "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80",
     tone: "amber",
   },
   {
-    title: "Financista",
+    title: "Soy Financista o empresa Agro",
     description:
-      "Pide acceso, revisa indicadores y evalua carpetas con permisos temporizados.",
+      "Solicita acceso a carpetas, evalua indicadores y gestioná credito o ventas a plazo con permisos temporizados.",
     href: "/registro/entidad",
-    button: "Registrar entidad",
+    button: "Registrar mi entidad",
     image:
       "https://images.unsplash.com/photo-1518186233392-c232efbf2373?auto=format&fit=crop&w=1200&q=80",
     tone: "blue",
