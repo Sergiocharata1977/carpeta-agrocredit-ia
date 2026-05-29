@@ -135,6 +135,26 @@ Pendientes principales:
 ## Validacion de esta sesion
 
 - `pnpm type-check` ejecutado el 2026-05-29: OK.
+- `pnpm type-check` ejecutado el 2026-05-29 tras redisenar landing publica: OK.
+- Verificacion visual con `agent-browser` en desktop y mobile sobre `http://127.0.0.1:3000`: pagina carga, contenido visible, sin overlay de Next ni errores de consola.
+
+## Cambios de esta sesion - Landing publica
+
+Archivo principal:
+
+- `app/page.tsx`
+
+Cambios realizados:
+
+- Landing alineada al diseno provisto por el usuario con hero agricola, navegacion superior, propuesta de valor, flujo operativo, cards de ingreso, bloque de metricas y footer.
+- Mensaje comercial actualizado para explicar que clientes y contadores cargan/envian la informacion a financistas con permisos trazables.
+- Hero y propuesta de valor enfocados en evitar viajes de hasta 100 kilometros para entregar o actualizar documentacion.
+- Accesos principales conectados a rutas existentes: `/registro`, `/registro/usuario`, `/registro/contador`, `/registro/entidad`, `/login` y `/app`.
+
+Pendientes/riesgos:
+
+- No se tocaron APIs, colecciones, permisos ni modulos privados.
+- El dev server quedo levantado para prueba local en `http://127.0.0.1:3000`.
 
 ---
 
