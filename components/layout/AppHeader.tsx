@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { usePathname } from "next/navigation"
 import { CalendarDays } from "lucide-react"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
+import { AppUserMenu } from "@/components/layout/AppUserMenu"
 import { useSession } from "@/lib/auth/session"
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
@@ -65,7 +66,7 @@ export function AppHeader() {
       <div className="flex flex-wrap items-center gap-3 lg:justify-end">
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--brand-line)] bg-[var(--brand-surface-strong)] px-4 py-3 text-[var(--brand-ink)]">
           <span className="h-3.5 w-3.5 rounded-full bg-[var(--brand-success)]" />
-          <span className="text-sm font-semibold lg:text-base">124 Usuarios Activos</span>
+          <span className="text-sm font-semibold lg:text-base">Sesion activa</span>
         </div>
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--brand-line)] bg-white px-4 py-3 text-[var(--brand-ink)]">
           <CalendarDays className="h-5 w-5" />
@@ -74,6 +75,7 @@ export function AppHeader() {
         <div className="rounded-2xl border border-[var(--brand-line)] bg-white p-1 shadow-sm">
           <NotificationBell />
         </div>
+        <AppUserMenu />
       </div>
     </header>
   )

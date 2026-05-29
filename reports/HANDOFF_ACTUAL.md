@@ -156,6 +156,29 @@ Pendientes/riesgos:
 - No se tocaron APIs, colecciones, permisos ni modulos privados.
 - El dev server quedo levantado para prueba local en `http://127.0.0.1:3000`.
 
+## Cambios de esta sesion - Menu de usuario tipo 9001
+
+Archivos principales:
+
+- `components/layout/AppUserMenu.tsx`
+- `components/layout/AppHeader.tsx`
+- `components/layout/AppSidebar.tsx`
+
+Cambios realizados:
+
+- Se agrego un menu de usuario arriba a la derecha del shell privado, similar al patron de `9001app-firebase`: avatar circular con iniciales, dropdown de identidad, accesos rapidos y cierre de sesion.
+- Se movio el cierre de sesion y la tarjeta de identidad fuera del sidebar para que todo lo relativo al usuario quede en el header.
+- Se mantuvo el boton operativo del sidebar (`Nueva Solicitud`, `Nueva Carpeta`, etc.) y se cambio el chip superior a `Sesion activa`.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- Browser sobre `/app`: redirecciona a `/login` sin overlay de Next ni errores de navegador cuando no hay sesion activa.
+
+Pendientes/riesgos:
+
+- No se tocaron APIs, permisos, roles ni colecciones Firestore.
+
 ---
 
 ## Riesgos y notas
