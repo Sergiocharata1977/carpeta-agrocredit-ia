@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "@/lib/auth/session"
-import { getLinksForAccountant } from "@/lib/services/producer-accountant-links"
-import { getProducerById } from "@/lib/services/producers"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { ProducerTable } from "@/components/producers/ProducerTable"
 import { ProducerCard } from "@/components/producers/ProducerCard"
 import { NuevoProductorDialog } from "@/components/producers/NuevoProductorDialog"
@@ -18,7 +17,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from "@/components/ui/empty"
-import { LayoutGrid, LayoutList, Plus } from "lucide-react"
+import { AlertCircle, LayoutGrid, LayoutList, Plus } from "lucide-react"
 import type { Producer } from "@/types/producer"
 
 type ViewMode = "list" | "grid"
@@ -28,24 +27,44 @@ export default function ProductoresPage() {
   const router = useRouter()
   const [producers, setProducers] = useState<Producer[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [showDialog, setShowDialog] = useState(false)
   const [search, setSearch] = useState("")
 
   const fetchProducers = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      setProducers([])
+      setLoadingData(false)
+      return
+    }
+
     setLoadingData(true)
-    const links = await getLinksForAccountant(user.uid)
-    const ids = [
-      ...new Set(
-        links
-          .map((l) => l.systemUserOrganizationId ?? l.producerId)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ]
-    const results = await Promise.all(ids.map((id) => getProducerById(id)))
-    setProducers(results.filter(Boolean) as Producer[])
-    setLoadingData(false)
+    setLoadError(null)
+
+    try {
+      const token = await getFreshIdToken()
+      if (!token) throw new Error("No se pudo validar la sesion")
+
+      const response = await fetch("/api/contador/productores", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(payload?.error ?? "No se pudieron cargar los usuarios")
+      }
+
+      const payload = (await response.json()) as { producers: Producer[] }
+      setProducers(payload.producers)
+    } catch (error) {
+      console.error("[contador/productores] Error:", error)
+      setProducers([])
+      setLoadError(error instanceof Error ? error.message : "No se pudieron cargar los usuarios")
+    } finally {
+      setLoadingData(false)
+    }
   }, [user])
 
   useEffect(() => {
@@ -112,6 +131,13 @@ export default function ProductoresPage() {
           </Button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{loadError}</span>
+        </div>
+      )}
 
       {/* content */}
       {isLoading ? (

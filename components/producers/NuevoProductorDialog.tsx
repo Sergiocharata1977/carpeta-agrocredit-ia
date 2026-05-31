@@ -48,14 +48,11 @@ export function NuevoProductorDialog({ open, onOpenChange, onSuccess }: NuevoPro
             activity: data.activity,
             province: data.province,
             city: data.city,
+            address: data.address || undefined,
             phone: data.phone || undefined,
             email: data.email || undefined,
           },
           entities: [],
-          // Vincula automáticamente al estudio contable del contador logueado
-          accountant: user.defaultOrganizationId
-            ? { accountingFirmId: user.defaultOrganizationId }
-            : undefined,
         }),
       })
 

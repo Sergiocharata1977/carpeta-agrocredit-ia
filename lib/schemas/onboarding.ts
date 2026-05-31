@@ -16,6 +16,7 @@ export const systemUserOrgSchema = z.object({
   activity: z.enum(["agriculture", "livestock", "mixed", "horticulture", "forestry", "other"]),
   province: z.string().min(2),
   city: z.string().min(2),
+  address: z.string().max(300).optional(),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
 })

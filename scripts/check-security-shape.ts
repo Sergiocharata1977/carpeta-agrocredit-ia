@@ -26,7 +26,8 @@ const requiredRuleMarkers = [
   "match /notifications",
   "allow write: if false;",
   "requesterOrganizationId == defaultOrgId()",
-  "producerOrgId(resource.data.producerId) == defaultOrgId()",
+  "isMemberOf(resource.data.targetOrganizationId)",
+  "canReadFolderData(resource.data.folderOwnerOrganizationId)",
 ]
 
 let failed = false

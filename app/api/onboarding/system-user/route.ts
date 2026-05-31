@@ -3,7 +3,14 @@ import { z } from "zod"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
-import { verifyRequestSession } from "@/lib/auth/server-session"
+import {
+  AuthError,
+  assertActiveMembership,
+  getAuthErrorResponse,
+  isAccountantRole,
+  requireDefaultOrganization,
+  verifyRequestSession,
+} from "@/lib/auth/server-session"
 import { systemUserOnboardingSchema } from "@/lib/schemas/onboarding"
 import { FieldValue } from "firebase-admin/firestore"
 
@@ -15,9 +22,18 @@ export async function POST(request: NextRequest) {
 
     // El contador puede crear clientes directamente (vínculo activo)
     const createdByAccountant = request.nextUrl.searchParams.get("createdByAccountant") === "true"
-    const isAccountantCreating = createdByAccountant && session.roles.some(
-      (r) => r === "accountant" || r === "accounting_firm_admin"
-    )
+    let isAccountantCreating = false
+    let accountingFirmIdForLink = data.accountant?.accountingFirmId ?? null
+
+    if (createdByAccountant) {
+      if (!isAccountantRole(session)) {
+        throw new AuthError("Solo un contador puede crear clientes desde este endpoint", 403)
+      }
+
+      accountingFirmIdForLink = requireDefaultOrganization(session)
+      await assertActiveMembership(session, accountingFirmIdForLink)
+      isAccountantCreating = true
+    }
 
     const db = getAdminDb()
     const batch = db.batch()
@@ -33,6 +49,7 @@ export async function POST(request: NextRequest) {
       activity: data.organization.activity,
       province: data.organization.province,
       city: data.organization.city,
+      address: data.organization.address ?? null,
       phone: data.organization.phone ?? null,
       email: data.organization.email ?? null,
       status: "active",
@@ -43,16 +60,18 @@ export async function POST(request: NextRequest) {
     })
 
     // Membresía del usuario en su org raíz
-    const memberRef = db.collection(COLLECTIONS.ORGANIZATION_MEMBERS).doc(`${orgRef.id}_${session.uid}`)
-    batch.set(memberRef, {
-      organizationId: orgRef.id,
-      uid: session.uid,
-      role: "producer",
-      status: "active",
-      invitedBy: isAccountantCreating ? session.uid : null,
-      createdAt: now,
-      updatedAt: now,
-    })
+    if (!isAccountantCreating) {
+      const memberRef = db.collection(COLLECTIONS.ORGANIZATION_MEMBERS).doc(`${orgRef.id}_${session.uid}`)
+      batch.set(memberRef, {
+        organizationId: orgRef.id,
+        uid: session.uid,
+        role: "producer",
+        status: "active",
+        invitedBy: null,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
 
     // Empresas hijas (system_user_entity)
     const entityIds: string[] = []
@@ -77,13 +96,13 @@ export async function POST(request: NextRequest) {
 
     // Vínculo con estudio contable (opcional)
     let linkId: string | null = null
-    if (data.accountant?.accountingFirmId) {
+    if (accountingFirmIdForLink) {
       const linkRef = db.collection(COLLECTIONS.PRODUCER_ACCOUNTANT_LINKS).doc()
       const linkStatus = isAccountantCreating ? "active" : "pending"
       batch.set(linkRef, {
         systemUserOrganizationId: orgRef.id,
-        accountingFirmId: data.accountant.accountingFirmId,
-        accountantUid: isAccountantCreating ? session.uid : (data.accountant.accountantUid ?? null),
+        accountingFirmId: accountingFirmIdForLink,
+        accountantUid: isAccountantCreating ? session.uid : (data.accountant?.accountantUid ?? null),
         status: linkStatus,
         isMain: true,
         canUpload: true,
@@ -114,17 +133,20 @@ export async function POST(request: NextRequest) {
 
     await writeAuditLog({
       actorUid: session.uid,
-      actorOrganizationId: orgRef.id,
+      actorOrganizationId: isAccountantCreating ? accountingFirmIdForLink : orgRef.id,
       action: "organization.system_user_created",
       targetType: "organization",
       targetId: orgRef.id,
-      metadata: { entityIds, linkId, isAccountantCreating },
+      metadata: { entityIds, linkId, isAccountantCreating, accountingFirmId: accountingFirmIdForLink },
     })
 
     return Response.json({ organizationId: orgRef.id, entityIds, linkId }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return Response.json({ error: "Datos inválidos", issues: error.issues }, { status: 400 })
+    }
+    if (error instanceof AuthError) {
+      return getAuthErrorResponse(error)
     }
     console.error("[onboarding/system-user] Error:", error)
     return Response.json({ error: "Error interno al crear el usuario del sistema" }, { status: 500 })

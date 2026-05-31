@@ -15,6 +15,7 @@ export interface SystemUserOrgStep {
   activity: AgroActivity
   province: string
   city: string
+  address?: string
   phone?: string
   email?: string
 }

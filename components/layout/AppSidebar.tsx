@@ -72,7 +72,7 @@ export function AppSidebar() {
     <aside className="hidden min-h-screen w-[20rem] shrink-0 border-r border-[var(--brand-line)] bg-[var(--sidebar)] shadow-[16px_0_34px_rgba(17,33,50,0.06)] lg:flex lg:flex-col">
       <div className="flex h-16 shrink-0 items-center border-b border-[var(--brand-line)] px-5">
         <Link href="/app" className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-[#063c31] text-white shadow-sm">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-white shadow-sm">
             <Sprout className="size-4" />
           </div>
           <div>
@@ -93,7 +93,7 @@ export function AppSidebar() {
               className={cn(
                 "flex h-14 items-center gap-4 rounded-2xl px-5 text-[1.05rem] font-medium transition",
                 isActive
-                  ? "bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)] shadow-[0_12px_24px_rgba(111,132,246,0.2)]"
+                  ? "bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)] shadow-[0_12px_24px_var(--brand-accent-shadow)]"
                   : "text-[var(--brand-ink)] hover:bg-white hover:shadow-sm"
               )}
             >

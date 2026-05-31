@@ -181,6 +181,39 @@ Pendientes/riesgos:
 
 ---
 
+## Cambios de esta sesion - Alta de Usuario desde Contador y paletas por rol
+
+Archivos principales:
+
+- `app/api/onboarding/system-user/route.ts`
+- `app/api/contador/productores/route.ts`
+- `app/app/contador/productores/page.tsx`
+- `components/producers/NuevoProductorDialog.tsx`
+- `components/layout/AppShell.tsx`
+- `styles/globals.css`
+
+Cambios realizados:
+
+- El alta de un cliente desde el perfil Contador sigue usando `/api/onboarding/system-user?createdByAccountant=true`, pero ahora el backend deriva `accountingFirmId` desde la sesion validada y verifica membership activa del estudio contable.
+- Para clientes creados por contador ya no se crea membership `producer` para el contador dentro de la organizacion del cliente.
+- Se agrego `GET /api/contador/productores` con Admin SDK para listar/refrescar usuarios vinculados al estudio sin depender de lecturas Firestore desde el browser.
+- `/app/contador/productores` ahora refresca contra esa API y captura errores en UI, evitando `FirebaseError: Missing or insufficient permissions` durante el refresh posterior al guardado.
+- Se persiste `address` en el alta de system_user.
+- Se agregaron paletas reales por rol en el shell privado: Productor, Contador/Estudio, Entidad solicitante y Admin. El tema se aplica tambien al `body` para cubrir dialogs/portals.
+- `scripts/check-security-shape.ts` actualiza el marcador legacy `producerOrgId(resource.data.producerId)` al modelo vigente `targetOrganizationId` / `folderOwnerOrganizationId`.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+
+Pendientes/riesgos:
+
+- No se ejecuto build completo local.
+- Quedan archivos sin trackear previos a esta sesion: `reports/005_ROADMAP_INTEGRATION_CORE.md`, `reports/stitch_agro_financial_credit_hub/` y `vercel.json`.
+
+---
+
 ## Riesgos y notas
 
 - El proyecto aun conserva rutas y servicios con nombre `productor` por compatibilidad. En UI nueva usar "Usuario del sistema" o "Usuario"; no introducir nuevas superficies con el nombre funcional viejo.

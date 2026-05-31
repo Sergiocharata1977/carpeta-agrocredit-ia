@@ -51,7 +51,7 @@
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `producers_abm` | ga | `/app/contador/productores` · `/app/contador/productores/new` | `lib/services/producers.ts` | `producers` |
+| `producers_abm` | ga | `/app/contador/productores` · `/app/contador/productores/new` | `lib/services/producers.ts` · `app/api/contador/productores` | `producers` |
 | `accounting_firms` | ga | `/app/admin/organizaciones` | `lib/services/accounting-firms.ts` | `accounting_firms` |
 | `producer_accountant_links` | ga | `/app/contador/productores` | `lib/services/producer-accountant-links.ts` | `producer_accountant_links` |
 

@@ -41,6 +41,11 @@
   --brand-green-soft: #d9f4e7;
   --brand-blue: #6f84f6;
   --brand-blue-soft: #dfe6ff;
+  --brand-primary: #063c31;
+  --brand-accent: #6f84f6;
+  --brand-primary-rgb: 6 60 49;
+  --brand-accent-rgb: 111 132 246;
+  --brand-accent-shadow: rgba(111, 132, 246, 0.2);
   --brand-surface: #f5f8ff;
   --brand-surface-strong: #edf2ff;
   --brand-ink: #112132;
@@ -83,6 +88,123 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+}
+
+[data-role-theme="producer"] {
+  --background: #f5f0e8;
+  --primary: #1e3a1e;
+  --secondary: #b8860b;
+  --muted: #ede5d8;
+  --accent: #fff7e6;
+  --border: #d8cdbd;
+  --input: #d8cdbd;
+  --ring: #b8860b;
+  --sidebar: #eef4e8;
+  --sidebar-primary: #2d6a4f;
+  --sidebar-ring: #2d6a4f;
+  --brand-green: #1e3a1e;
+  --brand-green-soft: #dcebd8;
+  --brand-blue: #b8860b;
+  --brand-blue-soft: #fff0cc;
+  --brand-primary: #1e3a1e;
+  --brand-accent: #b8860b;
+  --brand-primary-rgb: 30 58 30;
+  --brand-accent-rgb: 184 134 11;
+  --brand-accent-shadow: rgba(45, 106, 79, 0.22);
+  --brand-surface: #f5f0e8;
+  --brand-surface-strong: #ede5d8;
+  --brand-ink: #1a2b1a;
+  --brand-muted: #65705f;
+  --brand-line: #d8cdbd;
+  --brand-success: #2f9e73;
+}
+
+[data-role-theme="accountant"],
+[data-role-theme="accounting_firm_admin"] {
+  --background: #f3f6fa;
+  --primary: #1e2a3a;
+  --secondary: #3b4fcf;
+  --muted: #e8eef7;
+  --accent: #edf1ff;
+  --border: #c8d3e3;
+  --input: #c8d3e3;
+  --ring: #3b4fcf;
+  --sidebar: #e8eef7;
+  --sidebar-primary: #3b4fcf;
+  --sidebar-ring: #3b4fcf;
+  --brand-green: #1e2a3a;
+  --brand-green-soft: #dbe4f0;
+  --brand-blue: #3b4fcf;
+  --brand-blue-soft: #dfe4ff;
+  --brand-primary: #1e2a3a;
+  --brand-accent: #3b4fcf;
+  --brand-primary-rgb: 30 42 58;
+  --brand-accent-rgb: 59 79 207;
+  --brand-accent-shadow: rgba(59, 79, 207, 0.18);
+  --brand-surface: #f3f6fa;
+  --brand-surface-strong: #e8eef7;
+  --brand-ink: #152235;
+  --brand-muted: #607084;
+  --brand-line: #c8d3e3;
+  --brand-success: #2f9e73;
+}
+
+[data-role-theme="requesting_entity"] {
+  --background: #f1f6f8;
+  --primary: #0a1628;
+  --secondary: #0e7490;
+  --muted: #e2edf1;
+  --accent: #e6f7fb;
+  --border: #c4d7df;
+  --input: #c4d7df;
+  --ring: #0e7490;
+  --sidebar: #e7f0f4;
+  --sidebar-primary: #0e7490;
+  --sidebar-ring: #0e7490;
+  --brand-green: #0a1628;
+  --brand-green-soft: #d9e6ec;
+  --brand-blue: #0e7490;
+  --brand-blue-soft: #d5f2f8;
+  --brand-primary: #0a1628;
+  --brand-accent: #0e7490;
+  --brand-primary-rgb: 10 22 40;
+  --brand-accent-rgb: 14 116 144;
+  --brand-accent-shadow: rgba(14, 116, 144, 0.2);
+  --brand-surface: #f1f6f8;
+  --brand-surface-strong: #e2edf1;
+  --brand-ink: #102033;
+  --brand-muted: #5b6e78;
+  --brand-line: #c4d7df;
+  --brand-success: #2f9e73;
+}
+
+[data-role-theme="admin_platform"] {
+  --background: #f6f7f9;
+  --primary: #263238;
+  --secondary: #2f6f73;
+  --muted: #eaedf0;
+  --accent: #e8f4f4;
+  --border: #cfd7dc;
+  --input: #cfd7dc;
+  --ring: #2f6f73;
+  --sidebar: #eceff2;
+  --sidebar-primary: #2f6f73;
+  --sidebar-ring: #2f6f73;
+  --brand-green: #263238;
+  --brand-green-soft: #dde5e7;
+  --brand-blue: #2f6f73;
+  --brand-blue-soft: #dceeee;
+  --brand-primary: #263238;
+  --brand-accent: #2f6f73;
+  --brand-primary-rgb: 38 50 56;
+  --brand-accent-rgb: 47 111 115;
+  --brand-accent-shadow: rgba(47, 111, 115, 0.18);
+  --brand-surface: #f6f7f9;
+  --brand-surface-strong: #eaedf0;
+  --brand-ink: #1c2529;
+  --brand-muted: #606b72;
+  --brand-line: #cfd7dc;
+  --brand-success: #2f9e73;
 }
 
 @theme inline {
@@ -167,8 +289,8 @@
 
   .ag-shell-bg {
     background:
-      radial-gradient(circle at top left, rgba(111, 132, 246, 0.12), transparent 26rem),
-      radial-gradient(circle at bottom right, rgba(6, 60, 49, 0.08), transparent 24rem),
+      radial-gradient(circle at top left, rgb(var(--brand-accent-rgb) / 0.12), transparent 26rem),
+      radial-gradient(circle at bottom right, rgb(var(--brand-primary-rgb) / 0.08), transparent 24rem),
       var(--brand-surface);
   }
 

@@ -46,24 +46,24 @@ function initials(name: string) {
 export function ProducerCard({ producer, onSelect }: ProducerCardProps) {
   return (
     <div
-      className={`rounded-xl border border-[#dde4dc] bg-white p-5 shadow-sm transition hover:shadow-md space-y-4 ${
+      className={`space-y-4 rounded-xl border border-[var(--brand-line)] bg-white p-5 shadow-sm transition hover:shadow-md ${
         onSelect ? "cursor-pointer" : ""
       }`}
       onClick={() => onSelect?.(producer)}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#dcefe5] text-sm font-bold text-[#063c31]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--brand-green-soft)] text-sm font-bold text-[var(--brand-green)]">
           {initials(producer.legalName)}
         </div>
         <div className="min-w-0">
-          <p className="truncate font-semibold text-[#10221c]">{producer.legalName}</p>
-          <p className="text-xs text-[#59675f]">CUIT: {producer.taxId}</p>
+          <p className="truncate font-semibold text-[var(--brand-ink)]">{producer.legalName}</p>
+          <p className="text-xs text-[var(--brand-muted)]">CUIT: {producer.taxId}</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <span className="text-[#59675f]">{ACTIVITY_LABELS[producer.activity]}</span>
-        <span className="text-[#59675f]">{producer.province}</span>
+        <span className="text-[var(--brand-muted)]">{ACTIVITY_LABELS[producer.activity]}</span>
+        <span className="text-[var(--brand-muted)]">{producer.province}</span>
       </div>
 
       <div className="flex items-center justify-between">
@@ -73,7 +73,7 @@ export function ProducerCard({ producer, onSelect }: ProducerCardProps) {
           {FOLDER_STATUS_LABELS[producer.folderStatus]}
         </span>
         {producer.city && (
-          <span className="text-xs text-[#59675f]">{producer.city}</span>
+          <span className="text-xs text-[var(--brand-muted)]">{producer.city}</span>
         )}
       </div>
     </div>
