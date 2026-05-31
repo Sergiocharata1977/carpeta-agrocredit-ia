@@ -41,6 +41,7 @@ export function NuevoProductorDialog({ open, onOpenChange, onSuccess }: NuevoPro
         user.uid,
       )
       toast.success("Productor creado exitosamente")
+      onOpenChange(false)
       onSuccess?.()
     } catch (err) {
       console.error(err)

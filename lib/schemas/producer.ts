@@ -15,9 +15,8 @@ const AGRO_ACTIVITIES = [
 // Formato esperado: 20-12345678-9 o 20123456789
 const CUIT_REGEX = /^\d{11}$/
 
-// Schema para crear un productor
+// Schema para crear un productor — organizationId se inyecta en el servicio, no es campo del form
 export const createProducerSchema = z.object({
-  organizationId: z.string().min(1, "El ID de organización es requerido"),
   taxId: z
     .string()
     .regex(CUIT_REGEX, "El CUIT debe contener exactamente 11 dígitos numéricos"),
@@ -31,7 +30,7 @@ export const createProducerSchema = z.object({
   city: z.string().min(1, "La localidad es requerida").max(100),
   address: z.string().max(300).optional(),
   phone: z.string().max(50).optional(),
-  email: z.string().email("Ingrese un email válido").optional(),
+  email: z.union([z.string().email("Ingrese un email válido"), z.literal("")]).optional(),
 })
 
 export type CreateProducerInput = z.infer<typeof createProducerSchema>

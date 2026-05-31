@@ -1,12 +1,16 @@
 "use client"
 
+import { useState } from "react"
 import { SummaryCard } from "@/components/dashboard/SummaryCard"
 import { RoleGate } from "@/components/auth/RoleGate"
-import { Users, FileText, AlertCircle, CheckCircle } from "lucide-react"
+import { NuevoProductorDialog } from "@/components/producers/NuevoProductorDialog"
+import { Users, FileText, AlertCircle, CheckCircle, Plus } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 export default function ContadorDashboard() {
+  const [showDialog, setShowDialog] = useState(false)
+
   return (
     <RoleGate allowedRoles={["accountant", "accounting_firm_admin", "admin_platform"]}>
       <div className="p-6 space-y-6">
@@ -15,8 +19,9 @@ export default function ContadorDashboard() {
             <h1 className="text-2xl font-semibold">Panel Contador</h1>
             <p className="text-muted-foreground text-sm">Gestión de carpetas de productores</p>
           </div>
-          <Button asChild>
-            <Link href="/app/contador/productores/new">Nuevo productor</Link>
+          <Button onClick={() => setShowDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo productor
           </Button>
         </div>
 
@@ -41,6 +46,11 @@ export default function ContadorDashboard() {
           </p>
         </div>
       </div>
+
+      <NuevoProductorDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+      />
     </RoleGate>
   )
 }
