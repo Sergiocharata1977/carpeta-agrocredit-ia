@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { useSession } from "@/lib/auth/session"
-import { createProducer } from "@/lib/services/producers"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { ProducerForm } from "./ProducerForm"
 import {
   Dialog,
@@ -28,24 +28,48 @@ export function NuevoProductorDialog({ open, onOpenChange, onSuccess }: NuevoPro
       toast.error("Debes estar autenticado para crear un productor")
       return
     }
-    const organizationId = user.defaultOrganizationId
-    if (!organizationId) {
-      toast.error("No se encontró la organización del usuario")
-      return
-    }
 
     setIsLoading(true)
     try {
-      await createProducer(
-        { ...data, organizationId, folderStatus: "incomplete", createdBy: user.uid },
-        user.uid,
-      )
+      const token = await getFreshIdToken()
+      if (!token) throw new Error("No se pudo obtener el token de sesión")
+
+      const response = await fetch("/api/onboarding/system-user?createdByAccountant=true", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          organization: {
+            legalName: data.legalName,
+            taxId: data.taxId,
+            personType: data.personType,
+            activity: data.activity,
+            province: data.province,
+            city: data.city,
+            phone: data.phone || undefined,
+            email: data.email || undefined,
+          },
+          entities: [],
+          // Vincula automáticamente al estudio contable del contador logueado
+          accountant: user.defaultOrganizationId
+            ? { accountingFirmId: user.defaultOrganizationId }
+            : undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.error ?? "Error al crear el productor")
+      }
+
       toast.success("Productor creado exitosamente")
       onOpenChange(false)
       onSuccess?.()
     } catch (err) {
       console.error(err)
-      toast.error("Error al crear el productor. Intentá de nuevo.")
+      toast.error(err instanceof Error ? err.message : "Error al crear el productor. Intentá de nuevo.")
     } finally {
       setIsLoading(false)
     }
