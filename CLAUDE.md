@@ -154,3 +154,4 @@ Al terminar cada sesion:
 3. Actualizar `reports/HANDOFF_ACTUAL.md` con lo hecho, archivos modificados, pendientes, riesgos y validacion.
 4. Actualizar `docs/MODULE_REGISTRY.md` si cambio el estado de algun modulo, ruta, servicio o coleccion.
 5. Hacer `git add` selectivo y `git commit -m "descripcion"` cuando el directorio sea un repo Git.
+6. Ejecutar `git push origin master` — SIEMPRE pushear al terminar. El deploy en Vercel es automatico desde master.
