@@ -214,6 +214,39 @@ Pendientes/riesgos:
 
 ---
 
+## Cambios de esta sesion - Rubros de EECC en Balance y Resultados
+
+Archivos principales:
+
+- `lib/accounting/statement-fields.ts`
+- `lib/schemas/accounting.ts`
+- `types/accounting.ts`
+- `components/accounting/BalanceSheetForm.tsx`
+- `components/accounting/IncomeStatementForm.tsx`
+
+Cambios realizados:
+
+- `balance_sheets` mantiene los totales historicos (`assetsTotal`, `liabilitiesTotal`, `equityTotal`) y agrega `details` con rubros de Estado de Situacion Patrimonial.
+- El formulario de Balance ahora permite cargar Activo corriente, Activo no corriente, Pasivo corriente, Pasivo no corriente y Patrimonio neto. Total activo y total pasivo se calculan automaticamente.
+- Se conserva validacion visual de cuadre: Activo = Pasivo + Patrimonio neto.
+- `income_statements` mantiene `sales`, `grossResult` y `netResult`, y agrega `details` con conceptos del Estado de Resultados.
+- El formulario de Resultados calcula resultado bruto, resultado antes de impuesto, resultado ordinario, operaciones discontinuadas y ganancia/perdida del ejercicio.
+- Queda respondida como proxima etapa posible la carga de PDF/imagen/Excel con IA/OCR para prellenar esos campos y revisar antes de guardar.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `curl -I http://127.0.0.1:3000/app/contador/productores/test/carpeta`: 200 OK.
+
+Pendientes/riesgos:
+
+- No se implemento aun extraccion automatica desde archivos; requiere endpoint de upload + OCR/IA + pantalla de previsualizacion editable.
+- El modelo comparativo `Actual/Anterior` del PDF queda representado por periodo seleccionado; si se quiere dos columnas en una misma carga, hay que agregar columna comparativa `previousDetails`.
+- No se ejecuto build completo local.
+
+---
+
 ## Riesgos y notas
 
 - El proyecto aun conserva rutas y servicios con nombre `productor` por compatibilidad. En UI nueva usar "Usuario del sistema" o "Usuario"; no introducir nuevas superficies con el nombre funcional viejo.

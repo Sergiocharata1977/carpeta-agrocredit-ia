@@ -1,4 +1,9 @@
-// Estado de validación de un período o documento contable
+import type {
+  BalanceSheetDetails,
+  IncomeStatementDetails,
+} from "@/lib/accounting/statement-fields"
+
+// Estado de validacion de un periodo o documento contable
 export type ValidationStatus =
   | "draft"
   | "pending_review"
@@ -6,20 +11,20 @@ export type ValidationStatus =
   | "observed"
   | "rejected"
 
-// Tipo de período
+// Tipo de periodo
 export type PeriodType = "fiscal_year" | "campaign" | "semester" | "quarter"
 
-// Estado del período
+// Estado del periodo
 export type PeriodStatus = "open" | "closed" | "archived"
 
-// Período fiscal/campaña (colección: accounting_periods)
+// Periodo fiscal/campana (coleccion: accounting_periods)
 export interface AccountingPeriod {
   id: string
   producerId: string
   organizationId: string
   year: number
   periodType: PeriodType
-  label: string // ej: "2024", "Campaña 2023/2024"
+  label: string
   status: PeriodStatus
   closedAt: string | null
   createdAt: string
@@ -27,12 +32,13 @@ export interface AccountingPeriod {
   createdBy: string
 }
 
-// Balance general (colección: balance_sheets)
+// Balance general / estado de situacion patrimonial (coleccion: balance_sheets)
 export interface BalanceSheet {
   id: string
   producerId: string
   organizationId: string
   periodId: string
+  details?: BalanceSheetDetails
   assetsTotal: number
   liabilitiesTotal: number
   equityTotal: number
@@ -45,12 +51,13 @@ export interface BalanceSheet {
   createdBy: string
 }
 
-// Estado de resultados (colección: income_statements)
+// Estado de resultados (coleccion: income_statements)
 export interface IncomeStatement {
   id: string
   producerId: string
   organizationId: string
   periodId: string
+  details?: IncomeStatementDetails
   sales: number
   grossResult: number
   netResult: number
@@ -68,18 +75,18 @@ export type TaxDocumentType =
   | "iva_monthly"
   | "income_tax_annual"
   | "income_tax_advance"
-  | "social_security" // 931
+  | "social_security"
   | "gross_income"
   | "other"
 
-// Documento fiscal/impositivo (colección: tax_documents)
+// Documento fiscal/impositivo (coleccion: tax_documents)
 export interface TaxDocument {
   id: string
   producerId: string
   organizationId: string
   periodId: string
   taxType: TaxDocumentType
-  fiscalPeriod: string // ej: "2024-03", "2024"
+  fiscalPeriod: string
   amount: number
   currency: "ARS" | "USD"
   validationStatus: ValidationStatus
