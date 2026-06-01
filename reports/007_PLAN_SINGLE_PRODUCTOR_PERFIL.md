@@ -231,11 +231,21 @@ interface OrganizationProfile {
 
 | Ola | Contenido |
 |-----|-----------|
-| **1** | Schema `organization_profiles` + tipos + servicio cliente + API GET/PATCH |
-| **2** | Pantalla raíz del productor + sub-navegación (Perfil / Carpeta / Patrimonio / Documentos) |
+| **1** | Schema `organization_profiles` + tipos + servicio cliente vía API + API GET/PATCH |
+| **2** | Layout raíz del productor + sub-navegación compartida (Perfil / Carpeta / Patrimonio / Documentos) |
 | **3** | Carpeta contable con selector de entidad (empresa hija) |
 | **4** | Formulario de perfil extendido completo |
 | **5** | Checklist de documentación + migrar bienes/maquinaria al patrimonial |
+
+### Estado de ejecución
+
+| Ola | Estado | Nota |
+|-----|--------|------|
+| **1** | Implementada | Tipos, schema, servicio vía API y endpoint GET/PATCH server-side con validación de vínculo contador-cliente. |
+| **2** | Implementada | Layout compartido, header, sub-nav, página raíz de perfil y ajuste de navegación desde la lista de usuarios. |
+| **3** | Pendiente | Debe respetar la aclaración M:N con campo libre "Titulares" en v1 y `entity_ownership` en v2. |
+| **4** | Pendiente | Formulario editable completo del perfil extendido. |
+| **5** | Pendiente | Checklist documental completo. Existe ruta base para no romper la sub-navegación. |
 
 ---
 
@@ -247,11 +257,11 @@ Crear el contrato de datos para el perfil extendido sin tocar UI.
 ### Archivos a crear
 - `types/producer-profile.ts` — tipo `OrganizationProfile` completo.
 - `lib/schemas/producer-profile.ts` — schema Zod para crear/actualizar el perfil.
-- `lib/services/producer-profile.ts` — `getProducerProfile(orgId)` y `upsertProducerProfile(orgId, data)` vía Firestore cliente (accountant puede escribir).
+- `lib/services/producer-profile.ts` — `getProducerProfile(orgId)` y `upsertProducerProfile(orgId, data)` vía API server-side con token.
 - `app/api/producer-profile/[orgId]/route.ts` — GET y PATCH server-side (para validar acceso).
 
 ### Archivos a modificar
-- `firestore.rules` — permitir lectura y escritura de `organization_profiles` para contadores y admin.
+- `firestore.rules` — mantener escritura directa cerrada; los contadores operan por API con Admin SDK y validación de vínculo.
 
 ### Prompt para el agente
 ```text
@@ -264,18 +274,18 @@ Lee el plan completo antes de implementar.
 Contexto:
 - `ORGANIZATION_PROFILES` ya está en `lib/firebase/collections.ts`.
 - El perfil tiene el mismo ID que la organización (producerId).
-- Firestore rules actuales deniegan escritura de `organization_profiles` desde el cliente.
+- Firestore rules actuales deniegan escritura de `organization_profiles` desde el cliente, y eso debe mantenerse.
 - Contador (accountant/accounting_firm_admin) debe poder leer y actualizar el perfil.
 
 Implementar:
 1. Crear `types/producer-profile.ts` con el tipo `OrganizationProfile` del plan.
 2. Crear `lib/schemas/producer-profile.ts` con schema Zod (todos los campos opcionales excepto organizationId).
 3. Crear `lib/services/producer-profile.ts`:
-   - `getProducerProfile(orgId)`: lee `organization_profiles/{orgId}`.
-   - `upsertProducerProfile(orgId, data)`: crea o actualiza con merge.
-4. Actualizar `firestore.rules` para `organization_profiles`:
-   - read: `canReadFolderData` o `isMemberOf` o `isAccountant`.
-   - write: `isAccountant() || isAdminPlatform()`.
+   - `getProducerProfile(orgId)`: llama `GET /api/producer-profile/{orgId}`.
+   - `upsertProducerProfile(orgId, data)`: llama `PATCH /api/producer-profile/{orgId}`.
+4. Mantener `firestore.rules` para `organization_profiles` con escritura directa denegada:
+   - read directo solo para miembro o admin.
+   - write directo `false`; la escritura del contador entra por API server-side.
 5. `pnpm type-check` OK.
 
 No hacer: No crear UI todavía.
@@ -290,6 +300,7 @@ Crear la ficha del productor como punto de entrada, con sub-nav que reemplaza la
 
 ### Archivos a crear
 - `app/app/contador/productores/[producerId]/page.tsx` — ficha del productor (actualmente no existe, va directo a /carpeta).
+- `app/app/contador/productores/[producerId]/layout.tsx` — encabezado y sub-navegación compartidos para todas las rutas hijas.
 - `components/producers/ProducerSubNav.tsx` — sub-navegación: Perfil / Carpeta / Patrimonio / Documentos.
 - `components/producers/ProducerHeader.tsx` — encabezado con nombre, CUIT, estado, rol.
 
@@ -311,21 +322,23 @@ Contexto:
 - El sub-nav permite cambiar de sección sin perder el contexto del productor.
 
 Implementar:
-1. Crear `app/app/contador/productores/[producerId]/page.tsx`:
+1. Crear `app/app/contador/productores/[producerId]/layout.tsx`:
    - Mostrar `ProducerHeader` con datos básicos.
    - Mostrar `ProducerSubNav` con tabs: Perfil | Carpeta contable | Patrimonio | Documentos.
+   - Renderizar `children` debajo de la sub-navegación.
+2. Crear `app/app/contador/productores/[producerId]/page.tsx`:
    - Por defecto aterrizá en la sección Perfil con los datos básicos actuales.
    - Si el perfil extendido existe, mostrar resumen de datos productivos y fiscales.
 
-2. Crear `ProducerHeader`:
+3. Crear `ProducerHeader`:
    - Nombre, CUIT, tipo de persona, actividad, estado de carpeta.
    - Badge de condición fiscal si está en el perfil.
 
-3. Crear `ProducerSubNav`:
+4. Crear `ProducerSubNav`:
    - Links: `/app/contador/productores/[id]` | `/app/contador/productores/[id]/carpeta` | `/app/contador/productores/[id]/bienes` | `/app/contador/productores/[id]/documentos`
    - Resaltar el activo según la ruta actual.
 
-4. `pnpm type-check` OK. Commit y push.
+5. `pnpm type-check` OK. Commit y push.
 ```
 
 ---
@@ -362,6 +375,7 @@ Implementar:
    - Primer chip: "Declaración personal" (usa el producerId raíz).
    - Un chip por cada empresa hija.
    - Botón "+ Empresa" que abre un mini-form modal para agregar (POST a la misma API).
+   - Incluir campo libre "Titulares" para registrar nombre + CUIT de socios externos o registrados hasta que exista `entity_ownership`.
    - Al seleccionar: cambiar el `activeEntityId` en state local.
 3. Cuando `activeEntityId` cambia: recargar períodos, balance, resultados con ese ID.
 4. Impuestos (grilla IVA/Rentas/931) solo se muestran cuando `activeEntityId === producerId` raíz.

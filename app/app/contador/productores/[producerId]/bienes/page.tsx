@@ -29,14 +29,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 
 type DialogMode =
   | { type: "real_estate"; asset?: Asset }
@@ -123,40 +115,7 @@ export default function BienesPage({ params }: PageProps) {
   }
 
   return (
-    <div className="container max-w-6xl py-6 space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/app/contador/productores">
-              Productores
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href={`/app/contador/productores/${producerId}`}
-            >
-              {producer?.legalName ?? "Productor"}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Patrimonio</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {producer ? `${producer.legalName} — Patrimonio` : "Gestión patrimonial"}
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Bienes muebles, inmuebles y deudas del productor
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />

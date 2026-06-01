@@ -6,7 +6,6 @@ import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { AccountingPeriodSelector } from "@/components/accounting/AccountingPeriodSelector"
 import { BalanceSheetForm } from "@/components/accounting/BalanceSheetForm"
 import { IncomeStatementForm } from "@/components/accounting/IncomeStatementForm"
@@ -102,42 +101,7 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-6 p-6">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-muted-foreground">
-        <span>Productores</span>
-        <span className="mx-2">/</span>
-        {loadingProducer ? (
-          <Skeleton className="inline-block h-4 w-32" />
-        ) : (
-          <span>{producer?.legalName ?? producerId}</span>
-        )}
-        <span className="mx-2">/</span>
-        <span className="text-foreground font-medium">Carpeta contable</span>
-      </nav>
-
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          {loadingProducer ? (
-            <>
-              <Skeleton className="mb-2 h-7 w-64" />
-              <Skeleton className="h-4 w-32" />
-            </>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold tracking-tight">{producer?.legalName ?? "Productor"}</h1>
-              <p className="text-sm text-muted-foreground">CUIT: {producer?.taxId ?? "—"}</p>
-            </>
-          )}
-        </div>
-        {producer && (
-          <Badge variant="outline" className="capitalize">
-            {producer.folderStatus.replace("_", " ")}
-          </Badge>
-        )}
-      </div>
-
+    <div className="space-y-6">
       {/* Selector de período */}
       {!loadingProducer && (
         <Card>

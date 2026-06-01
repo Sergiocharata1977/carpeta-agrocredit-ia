@@ -1,5 +1,6 @@
 export * from "./auth"
 export * from "./producer"
+export * from "./producer-profile"
 export * from "./accounting"
 export * from "./assets"
 export * from "./access"

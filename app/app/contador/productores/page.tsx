@@ -77,7 +77,7 @@ export default function ProductoresPage() {
   }, [user, sessionLoading, fetchProducers])
 
   function handleSelectProducer(producer: Producer) {
-    router.push(`/app/contador/productores/${producer.id}/carpeta`)
+    router.push(`/app/contador/productores/${producer.id}`)
   }
 
   const filtered = producers.filter(

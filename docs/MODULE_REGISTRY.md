@@ -52,6 +52,7 @@
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
 | `producers_abm` | ga | `/app/contador/productores` · `/app/contador/productores/new` | `lib/services/producers.ts` · `app/api/contador/productores` | `producers` |
+| `producer_profile_extended` | beta | `/app/contador/productores/[producerId]` | `lib/services/producer-profile.ts` · `app/api/producer-profile/[orgId]` | `organization_profiles` |
 | `accounting_firms` | ga | `/app/admin/organizaciones` | `lib/services/accounting-firms.ts` | `accounting_firms` |
 | `producer_accountant_links` | ga | `/app/contador/productores` | `lib/services/producer-accountant-links.ts` | `producer_accountant_links` |
 
@@ -127,6 +128,7 @@
 | `users` | auth_session | ga | Perfil extendido del usuario autenticado |
 | `organizations` | org_members | beta | Tenants/entidades |
 | `organization_members` | org_members | ga | Relación usuario-organización |
+| `organization_profiles` | producer_profile_extended | beta | Perfil extendido del productor/contribuyente |
 | `producers` | producers_abm | ga | Productores agropecuarios |
 | `accounting_firms` | accounting_firms | ga | Estudios contables |
 | `producer_accountant_links` | producer_accountant_links | ga | Vínculo formal productor-contador |

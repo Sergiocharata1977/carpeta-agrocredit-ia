@@ -273,6 +273,49 @@ Pendientes/riesgos:
 
 ---
 
+## Cambios de esta sesion - Plan 007 Olas 1 y 2 perfil productor
+
+Archivos principales:
+
+- `reports/007_PLAN_SINGLE_PRODUCTOR_PERFIL.md`
+- `types/producer-profile.ts`
+- `lib/schemas/producer-profile.ts`
+- `lib/services/producer-profile.ts`
+- `app/api/producer-profile/[orgId]/route.ts`
+- `components/producers/ProducerHeader.tsx`
+- `components/producers/ProducerSubNav.tsx`
+- `app/app/contador/productores/[producerId]/layout.tsx`
+- `app/app/contador/productores/[producerId]/page.tsx`
+- `app/app/contador/productores/[producerId]/documentos/page.tsx`
+- `app/app/contador/productores/[producerId]/carpeta/page.tsx`
+- `app/app/contador/productores/[producerId]/bienes/page.tsx`
+- `app/app/contador/productores/page.tsx`
+- `docs/MODULE_REGISTRY.md`
+
+Cambios realizados:
+
+- Se ajusto el Plan 007 antes de implementar: el perfil extendido se opera via API server-side, no con escritura directa desde Firestore cliente.
+- Se mantuvo la aclaracion de dominio M:N empresa-contribuyente: v1 usa `parentOrganizationId` como titular gestor principal y Ola 3 debe incluir campo libre "Titulares"; v2 queda para `entity_ownership`.
+- Ola 1 implementada: tipos, schema Zod, servicio cliente via API y endpoint `GET/PATCH /api/producer-profile/[orgId]` con validacion de sesion, membership del estudio contable y link activo al usuario/productor raiz.
+- Ola 2 implementada: layout compartido del productor, header, sub-navegacion, pagina raiz de perfil, ruta base de documentos y redireccion desde la lista de usuarios hacia el nuevo single.
+- Se quitaron encabezados duplicados de Carpeta y Patrimonio para que usen el layout compartido.
+- Se registro `producer_profile_extended` en `docs/MODULE_REGISTRY.md`.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- Dev server local en `http://localhost:3000`: rutas `/app/contador/productores/test`, `/app/contador/productores/test/carpeta` y `/app/contador/productores/test/documentos` responden 200; `/api/producer-profile/test` sin token responde 401 esperado.
+
+Pendientes/riesgos:
+
+- Ola 3 pendiente: selector de entidad en carpeta, respetando empresas con varios titulares y contribuyentes externos.
+- Ola 4 pendiente: formulario editable completo del perfil extendido.
+- Ola 5 pendiente: checklist documental completo; la ruta base existe para que la sub-navegacion no rompa.
+- Quedan archivos sin trackear previos: `reports/005_ROADMAP_INTEGRATION_CORE.md`, `reports/stitch_agro_financial_credit_hub/` y `vercel.json`.
+
+---
+
 ## Riesgos y notas
 
 - El proyecto aun conserva rutas y servicios con nombre `productor` por compatibilidad. En UI nueva usar "Usuario del sistema" o "Usuario"; no introducir nuevas superficies con el nombre funcional viejo.
