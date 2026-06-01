@@ -116,7 +116,7 @@ Otros cambios:
 - `components/access/AccessRequestForm.tsx` usa `DurationPicker`.
 - `app/app/contador/productores/page.tsx` soporta `systemUserOrganizationId ?? producerId` y cambia textos visibles a Usuario.
 
-### Ola 3 - Acceso temporizado y guard de carpeta
+### Ola 3 - Acceso temporizado y guard de carpeta (plan 004)
 
 Pendiente. Se adelanto `DurationPicker` y su uso en `AccessRequestForm`, pero falta cerrar el resto.
 
@@ -129,6 +129,49 @@ Pendientes principales:
 - `components/access/GrantExpiredBlocker.tsx`
 - Vista de carpeta para entidad con guard por scope.
 - Integrar `ClienteNuevoDialog` y `VinculoPendienteCard` en el dashboard real del contador.
+
+---
+
+## Cambios de esta sesion - Plan 007 Olas 3, 4 y 5
+
+**Fecha:** 2026-06-01  
+**Plan de referencia:** `reports/007_PLAN_SINGLE_PRODUCTOR_PERFIL.md`  
+**pnpm type-check:** OK
+
+### Archivos modificados
+
+- `app/api/organizations/[orgId]/entities/route.ts` — validacion de vinculo activo contador-cliente antes de listar/crear empresas hijas; campo `entityOwnersText` (titulares en texto libre) en GET y POST.
+- `app/app/contador/productores/[producerId]/carpeta/page.tsx` — selector de entidad activa integrado; impuestos solo visibles cuando `activeEntityId === producerId` raiz; recarga de periodos, balance y resultados al cambiar entidad.
+- `app/app/contador/productores/[producerId]/page.tsx` — formulario completo de perfil extendido (Ola 4).
+- `app/app/contador/productores/[producerId]/documentos/page.tsx` — pagina de checklist documental (Ola 5).
+- `lib/schemas/onboarding.ts` — ajustes de tipos para soportar `entityOwnersText`.
+- `types/auth.ts` — campo `entityOwnersText` agregado al tipo `Organization`.
+- `docs/MODULE_REGISTRY.md` — modulos `entity_selector`, `producer_profile_form` y `document_checklist` registrados como `ga`.
+- `reports/007_PLAN_SINGLE_PRODUCTOR_PERFIL.md` — olas 3, 4 y 5 marcadas como implementadas.
+
+### Archivos nuevos
+
+- `components/producers/EntitySelector.tsx` — chips de entidad (declaracion personal / empresas hijas / + Empresa) con modal de alta y campo titulares.
+- `components/producers/ProducerProfileForm.tsx` — formulario extendido en 4 secciones: fiscal, productivo, financiero estimado, patrimonial resumen. react-hook-form + zod.
+- `components/producers/DocumentChecklist.tsx` — tabla de 7 tipos de documentos con estado presentado/pendiente/vencido, suba puntual via `DocumentUploader`. El formulario 931 solo aparece si `hasEmployees === true`.
+
+### Estado del plan 007
+
+| Ola | Estado |
+|-----|--------|
+| 1 | Implementada (sesion anterior) |
+| 2 | Implementada (sesion anterior) |
+| 3 | Implementada |
+| 4 | Implementada |
+| 5 | Implementada |
+
+**Plan 007 completo.**
+
+### Proximos pendientes
+
+- Plan 004 Ola 3 (acceso temporizado): `ScopeGuard`, `GrantStatusBanner`, `GrantExpiredBlocker`, vista carpeta entidad con guard.
+- Plan 005 Ola 4 (API de integracion): endpoint `/api/hub/*`, colecciones `integrations`, `api_keys`, `sync_logs`.
+- Archivos sin trackear previos: `reports/005_ROADMAP_INTEGRATION_CORE.md`, `reports/stitch_agro_financial_credit_hub/`, `vercel.json`.
 
 ---
 

@@ -243,9 +243,9 @@ interface OrganizationProfile {
 |-----|--------|------|
 | **1** | Implementada | Tipos, schema, servicio vía API y endpoint GET/PATCH server-side con validación de vínculo contador-cliente. |
 | **2** | Implementada | Layout compartido, header, sub-nav, página raíz de perfil y ajuste de navegación desde la lista de usuarios. |
-| **3** | Pendiente | Debe respetar la aclaración M:N con campo libre "Titulares" en v1 y `entity_ownership` en v2. |
-| **4** | Pendiente | Formulario editable completo del perfil extendido. |
-| **5** | Pendiente | Checklist documental completo. Existe ruta base para no romper la sub-navegación. |
+| **3** | Implementada | Carpeta contable con selector local de entidad, empresas hijas por API y campo libre "Titulares" en v1; `entity_ownership` queda v2. |
+| **4** | Implementada | Formulario editable completo del perfil extendido en la pagina raiz del productor. |
+| **5** | Implementada | Checklist documental separado en `/documentos`; bienes/maquinaria quedan fuera de los tabs contables y se consultan en patrimonio/perfil. |
 
 ---
 

@@ -52,7 +52,8 @@
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
 | `producers_abm` | ga | `/app/contador/productores` · `/app/contador/productores/new` | `lib/services/producers.ts` · `app/api/contador/productores` | `producers` |
-| `producer_profile_extended` | beta | `/app/contador/productores/[producerId]` | `lib/services/producer-profile.ts` · `app/api/producer-profile/[orgId]` | `organization_profiles` |
+| `producer_profile_extended` | beta | `/app/contador/productores/[producerId]` · `/app/contador/productores/[producerId]/documentos` | `lib/services/producer-profile.ts` · `app/api/producer-profile/[orgId]` · `components/producers/ProducerProfileForm.tsx` · `components/producers/DocumentChecklist.tsx` | `organization_profiles` · `documents` |
+| `system_user_entities` | beta | `/app/contador/productores/[producerId]/carpeta` | `components/producers/EntitySelector.tsx` · `app/api/organizations/[orgId]/entities` | `organizations` |
 | `accounting_firms` | ga | `/app/admin/organizaciones` | `lib/services/accounting-firms.ts` | `accounting_firms` |
 | `producer_accountant_links` | ga | `/app/contador/productores` | `lib/services/producer-accountant-links.ts` | `producer_accountant_links` |
 
@@ -64,7 +65,7 @@
 | `balance_sheets` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/balance-sheets.ts` | `balance_sheets` |
 | `income_statements` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/income-statements.ts` | `income_statements` |
 | `tax_documents` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/tax-documents.ts` | `tax_documents` |
-| `documents_upload` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/documents.ts` | `documents` |
+| `documents_upload` | ga | `/app/contador/productores/[producerId]/carpeta` · `/app/contador/productores/[producerId]/documentos` | `lib/services/documents.ts` | `documents` |
 
 ### DOMINIO: PATRIMONIO
 

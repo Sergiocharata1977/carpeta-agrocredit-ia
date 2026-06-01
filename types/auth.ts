@@ -74,6 +74,8 @@ export interface Organization {
   plan?: "free" | "basic" | "pro" | "enterprise"
   // Campos extendidos para system_user y system_user_entity
   activity?: AgroActivity
+  // V1: texto libre para titulares/socios externos o registrados. V2: entity_ownership.
+  entityOwnersText?: string
   province?: string
   city?: string
   address?: string

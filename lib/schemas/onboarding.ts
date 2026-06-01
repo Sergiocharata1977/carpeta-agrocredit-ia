@@ -27,6 +27,7 @@ export const systemUserEntitySchema = z.object({
   activity: z.enum(["agriculture", "livestock", "mixed", "horticulture", "forestry", "other"]),
   province: z.string().min(2),
   city: z.string().min(2),
+  entityOwnersText: z.string().trim().max(1000).optional().or(z.literal("")),
 })
 
 export const accountantSelectionSchema = z.object({
@@ -79,6 +80,7 @@ export const addEntitySchema = z.object({
   activity: z.enum(["agriculture", "livestock", "mixed", "horticulture", "forestry", "other"]),
   province: z.string().min(2),
   city: z.string().min(2),
+  entityOwnersText: z.string().trim().max(1000).optional().or(z.literal("")),
 })
 
 // Schema para la solicitud de acceso con duración en días
