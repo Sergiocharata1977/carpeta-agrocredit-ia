@@ -4,12 +4,6 @@ import { useEffect } from "react"
 import { useForm, type Path } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -59,6 +53,16 @@ function formatAmount(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
+}
+
+function getBalanceGroupTotal(
+  path: (typeof BALANCE_FIELD_GROUPS)[number]["path"],
+  totals: ReturnType<typeof calculateBalanceTotals>,
+): number {
+  if (path === "currentAssets") return totals.currentAssetsTotal
+  if (path === "nonCurrentAssets") return totals.nonCurrentAssetsTotal
+  if (path === "currentLiabilities") return totals.currentLiabilitiesTotal
+  return totals.nonCurrentLiabilitiesTotal
 }
 
 export function BalanceSheetForm({
@@ -152,39 +156,28 @@ export function BalanceSheetForm({
           />
         </div>
 
-        <Accordion
-          type="multiple"
-          defaultValue={["currentAssets", "nonCurrentAssets", "currentLiabilities", "nonCurrentLiabilities"]}
-          className="rounded-md border"
-        >
+        <div className="space-y-4">
           {BALANCE_FIELD_GROUPS.map((group) => {
-            const groupTotal =
-              group.path === "currentAssets"
-                ? totals.currentAssetsTotal
-                : group.path === "nonCurrentAssets"
-                  ? totals.nonCurrentAssetsTotal
-                  : group.path === "currentLiabilities"
-                    ? totals.currentLiabilitiesTotal
-                    : totals.nonCurrentLiabilitiesTotal
+            const groupTotal = getBalanceGroupTotal(group.path, totals)
 
             return (
-              <AccordionItem key={group.path} value={group.path} className="px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <span>{group.title}</span>
-                  <span className="ml-auto mr-4 text-sm text-muted-foreground">
+              <section key={group.path} className="rounded-md border p-4">
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="text-sm font-semibold">{group.title}</h3>
+                  <span className="text-sm font-medium text-muted-foreground">
                     {formatAmount(groupTotal)}
                   </span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {group.fields.map((field) => (
-                      <FormField
-                        key={`${group.path}.${field.name}`}
-                        control={form.control}
-                        name={`details.${group.path}.${field.name}` as Path<CreateBalanceSheetInput>}
-                        render={({ field: formField }) => (
-                          <FormItem>
-                            <FormLabel>{field.label}</FormLabel>
+                </div>
+                <div className="grid gap-3">
+                  {group.fields.map((field) => (
+                    <FormField
+                      key={`${group.path}.${field.name}`}
+                      control={form.control}
+                      name={`details.${group.path}.${field.name}` as Path<CreateBalanceSheetInput>}
+                      render={({ field: formField }) => (
+                        <FormItem className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
+                          <FormLabel className="text-sm font-normal">{field.label}</FormLabel>
+                          <div>
                             <FormControl>
                               <Input
                                 type="number"
@@ -198,16 +191,16 @@ export function BalanceSheetForm({
                               />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+              </section>
             )
           })}
-        </Accordion>
+        </div>
 
         <div className="grid gap-4 rounded-md border bg-muted/25 p-4 md:grid-cols-4">
           <div>

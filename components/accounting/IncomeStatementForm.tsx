@@ -4,12 +4,6 @@ import { useEffect } from "react"
 import { useForm, type Path } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -30,7 +24,6 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import {
   DEFAULT_INCOME_STATEMENT_DETAILS,
-  INCOME_FIELD_GROUPS,
   calculateIncomeTotals,
 } from "@/lib/accounting/statement-fields"
 import {
@@ -48,6 +41,38 @@ interface IncomeStatementFormProps {
   onSuccess: (id: string) => void
 }
 
+type IncomeDetailField = keyof CreateIncomeStatementInput["details"]
+
+interface MoneyFieldConfig {
+  name: IncomeDetailField
+  label: string
+}
+
+const CONTINUING_OPERATION_FIELDS: MoneyFieldConfig[] = [
+  { name: "netSales", label: "Ventas netas de bienes o servicios" },
+  { name: "costOfGoodsSold", label: "Costo de los bienes vendidos o servicios prestados" },
+  { name: "inventoryValuationResult", label: "Resultado por valuacion de bienes de cambio al VNR" },
+  { name: "sellingExpenses", label: "Gastos de comercializacion" },
+  { name: "administrativeExpenses", label: "Gastos de administracion" },
+  { name: "otherExpenses", label: "Otros gastos" },
+  { name: "relatedInvestmentResults", label: "Resultados de inversiones en entes relacionados" },
+  { name: "otherInvestmentResults", label: "Resultados de otras inversiones" },
+  { name: "financialResultsGeneratedByAssets", label: "Resultados financieros por tenencia - generados por activos" },
+  { name: "financialResultsGeneratedByLiabilities", label: "Resultados financieros por tenencia - generados por pasivos" },
+  { name: "otherIncomeAndExpenses", label: "Otros ingresos y egresos" },
+  { name: "incomeTax", label: "Impuesto a las ganancias" },
+]
+
+const DISCONTINUED_OPERATION_FIELDS: MoneyFieldConfig[] = [
+  { name: "discontinuedOperationsResult", label: "Resultados de las operaciones en discontinuacion" },
+  { name: "discontinuedDisposalResult", label: "Resultados por disposicion de activos y liquidacion de deudas" },
+]
+
+const EXTRAORDINARY_FIELD: MoneyFieldConfig = {
+  name: "extraordinaryResults",
+  label: "Resultados de las operaciones extraordinarias",
+}
+
 function toNumber(value: string): number {
   const numberValue = Number(value)
   return Number.isFinite(numberValue) ? numberValue : 0
@@ -58,6 +83,17 @@ function formatAmount(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
+}
+
+function ResultRow({ label, value, strong = false }: { label: string; value: number; strong?: boolean }) {
+  return (
+    <div className="grid gap-2 rounded-md bg-muted/35 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
+      <p className={strong ? "text-sm font-semibold" : "text-sm font-medium"}>{label}</p>
+      <p className={strong ? "text-right text-base font-semibold" : "text-right text-sm font-medium"}>
+        {formatAmount(value)}
+      </p>
+    </div>
+  )
 }
 
 export function IncomeStatementForm({
@@ -117,14 +153,44 @@ export function IncomeStatementForm({
     }
   }
 
+  function renderMoneyField(field: MoneyFieldConfig) {
+    return (
+      <FormField
+        key={field.name}
+        control={form.control}
+        name={`details.${field.name}` as Path<CreateIncomeStatementInput>}
+        render={({ field: formField }) => (
+          <FormItem className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
+            <FormLabel className="text-sm font-normal">{field.label}</FormLabel>
+            <div>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  inputMode="decimal"
+                  name={formField.name}
+                  onBlur={formField.onBlur}
+                  ref={formField.ref}
+                  value={typeof formField.value === "number" ? formField.value : 0}
+                  onChange={(event) => formField.onChange(toNumber(event.target.value))}
+                />
+              </FormControl>
+              <FormMessage />
+            </div>
+          </FormItem>
+        )}
+      />
+    )
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        <div className="grid gap-4 md:grid-cols-[1fr_220px]">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
           <div>
             <p className="text-sm font-medium">Estado de resultados</p>
             <p className="text-xs text-muted-foreground">
-              Carga los conceptos del modelo. Resultado bruto, ordinario y final se calculan solos.
+              Carga los conceptos en orden vertical. Los resultados se calculan automaticamente.
             </p>
           </div>
 
@@ -151,78 +217,29 @@ export function IncomeStatementForm({
           />
         </div>
 
-        <Accordion
-          type="multiple"
-          defaultValue={["Operaciones que continuan", "Operaciones en discontinuacion y extraordinarias"]}
-          className="rounded-md border"
-        >
-          {INCOME_FIELD_GROUPS.map((group) => (
-            <AccordionItem key={group.title} value={group.title} className="px-4">
-              <AccordionTrigger className="hover:no-underline">
-                {group.title}
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {group.fields.map((field) => (
-                    <FormField
-                      key={field.name}
-                      control={form.control}
-                      name={`details.${field.name}` as Path<CreateIncomeStatementInput>}
-                      render={({ field: formField }) => (
-                        <FormItem>
-                          <FormLabel>{field.label}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              inputMode="decimal"
-                              name={formField.name}
-                              onBlur={formField.onBlur}
-                              ref={formField.ref}
-                              value={typeof formField.value === "number" ? formField.value : 0}
-                              onChange={(event) => formField.onChange(toNumber(event.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <section className="space-y-3 rounded-md border p-4">
+          <h3 className="text-sm font-semibold">Resultados de las operaciones que continuan</h3>
+          {renderMoneyField(CONTINUING_OPERATION_FIELDS[0])}
+          {renderMoneyField(CONTINUING_OPERATION_FIELDS[1])}
+          <ResultRow label="Ganancia / perdida bruta" value={totals.grossResult} strong />
+          {CONTINUING_OPERATION_FIELDS.slice(2, 11).map(renderMoneyField)}
+          <ResultRow label="Ganancia / perdida antes del impuesto a las ganancias" value={totals.continuingBeforeTax} />
+          {renderMoneyField(CONTINUING_OPERATION_FIELDS[11])}
+          <ResultRow label="Ganancia / perdida ordinaria de las operaciones que continuan" value={totals.continuingOrdinaryResult} strong />
+        </section>
 
-        <div className="grid gap-4 rounded-md border bg-muted/25 p-4 md:grid-cols-3">
-          <div>
-            <p className="text-xs text-muted-foreground">Ganancia / perdida bruta</p>
-            <p className="text-lg font-semibold">{formatAmount(totals.grossResult)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Ganancia / perdida ordinaria</p>
-            <p className="text-lg font-semibold">{formatAmount(totals.ordinaryResult)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Ganancia / perdida del ejercicio</p>
-            <p className="text-lg font-semibold">{formatAmount(totals.netResult)}</p>
-          </div>
-        </div>
+        <section className="space-y-3 rounded-md border p-4">
+          <h3 className="text-sm font-semibold">Resultados por las operaciones en discontinuacion</h3>
+          {DISCONTINUED_OPERATION_FIELDS.map(renderMoneyField)}
+          <ResultRow label="Ganancia / perdida por las operaciones en discontinuacion" value={totals.discontinuedResult} strong />
+        </section>
 
-        <div className="grid gap-3 rounded-md border p-4 text-sm md:grid-cols-3">
-          <div>
-            <p className="text-muted-foreground">Antes de impuesto a las ganancias</p>
-            <p className="font-medium">{formatAmount(totals.continuingBeforeTax)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Operaciones que continuan</p>
-            <p className="font-medium">{formatAmount(totals.continuingOrdinaryResult)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Operaciones en discontinuacion</p>
-            <p className="font-medium">{formatAmount(totals.discontinuedResult)}</p>
-          </div>
-        </div>
+        <section className="space-y-3 rounded-md border p-4">
+          <h3 className="text-sm font-semibold">Resultados de las operaciones extraordinarias</h3>
+          {renderMoneyField(EXTRAORDINARY_FIELD)}
+          <ResultRow label="Ganancia / perdida de las operaciones ordinarias" value={totals.ordinaryResult} />
+          <ResultRow label="Ganancia / perdida del ejercicio" value={totals.netResult} strong />
+        </section>
 
         <FormField
           control={form.control}
