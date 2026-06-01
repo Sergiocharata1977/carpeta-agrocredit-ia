@@ -5,6 +5,66 @@
 
 ---
 
+## Regla de dominio fundamental — Empresa y Contribuyente
+
+> Aclaración explícita del modelo de negocio, registrada el 2026-06-01.
+
+Una **empresa** (`system_user_entity`) puede pertenecer a **uno o varios contribuyentes**.
+Un **contribuyente** puede tener participación en **una o varias empresas**.
+La relación es **muchos a muchos**.
+
+Además, un contribuyente **no necesita estar registrado en el sistema** para figurar como
+titular o socio de una empresa. Puede ser una persona o entidad externa que el contador
+simplemente referencia por nombre y CUIT.
+
+Ejemplos reales:
+- "Agro XYZ S.R.L." tiene dos socios: Juan Pérez (registrado en el sistema) y Carlos Díaz (externo, no registrado).
+- Juan Pérez (registrado) es socio de "Agro XYZ S.R.L." y de "El Ceibo S.A." simultáneamente.
+- El contador trabaja con Juan Pérez y puede cargar la carpeta de ambas empresas, aunque Carlos Díaz no tenga cuenta.
+
+### Implicancias para el modelo de datos
+
+| Caso | Modelo actual | Modelo correcto |
+|------|--------------|-----------------|
+| Empresa con un dueño (en el sistema) | `system_user_entity.parentOrganizationId` → OK | OK, no cambia |
+| Empresa con varios dueños | No soportado — `parentOrganizationId` es un solo ID | Necesita tabla de titulares |
+| Contribuyente externo (no registrado) | No soportado | Solo nombre + CUIT, sin UID |
+
+### Solución a implementar (Ola futura: `entity_ownership`)
+
+Agregar una colección `entity_ownership` que modele la participación:
+
+```typescript
+interface EntityOwnership {
+  id: string
+  entityOrganizationId: string     // la empresa (system_user_entity)
+  ownerOrganizationId?: string     // si el dueño está en el sistema (system_user)
+  ownerName: string                // nombre del titular (siempre, incluso si está en el sistema)
+  ownerTaxId: string               // CUIT del titular
+  ownershipPercentage?: number     // % de participación, opcional
+  role?: string                    // "socio gerente", "accionista", "titular", etc.
+  isInSystem: boolean              // true si ownerOrganizationId apunta a un registro real
+  notes?: string
+  createdAt: string
+  createdBy: string
+}
+```
+
+Esta colección reemplaza la relación 1:N implícita de `parentOrganizationId` por una relación
+explícita M:N, sin romper el modelo actual.
+
+### Qué NO cambia en esta versión
+
+Por ahora, el sistema sigue usando `parentOrganizationId` como enlace principal entre una empresa
+y el contribuyente "dueño registrado" que la gestiona. Esta es la versión v1 funcional.
+
+La tabla `entity_ownership` es **v2** y se planifica implementar después del plan 007.
+Lo importante es que la arquitectura no quede diseñada para excluir el caso multi-titular,
+y que el formulario de empresa tenga un campo "Titulares" desde el inicio aunque en v1
+sea solo texto libre.
+
+---
+
 ## Diagnóstico del estado actual
 
 ### Lo que ya existe y está bien
@@ -408,3 +468,6 @@ Implementar:
 | Perfil extendido | En `organization_profiles` con el mismo ID que la org. Singleton por productor. |
 | URL con selector de empresa | El producerId en la URL siempre es el raíz. El selector de empresa es estado local. |
 | Datos financieros estimados | Son soft-data para la ficha crediticia, no datos contables duros. Van en el perfil, no en balance. |
+| Relación empresa-contribuyente | M:N. Una empresa puede tener varios titulares; un titular puede estar en varias empresas. Implementación v1 usa `parentOrganizationId` (1:N). V2 agrega `entity_ownership`. |
+| Contribuyente externo | No necesita cuenta en el sistema. Se referencia por nombre + CUIT en el campo titulares de la empresa. El contador lo carga como texto. |
+| `parentOrganizationId` actual | Se mantiene como el "titular gestor principal" (el que está registrado y cuya carpeta gestiona el contador). No se elimina; se complementa con `entity_ownership` en v2. |
