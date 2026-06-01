@@ -247,6 +247,32 @@ Pendientes/riesgos:
 
 ---
 
+## Cambios de esta sesion - Plan OCR/IA para carga de EECC por archivo
+
+Archivos principales:
+
+- `reports/006_PLAN_OCR_IA_EECC.md`
+
+Cambios realizados:
+
+- Se analizo el flujo OCR existente en `9001app-firebase`: provider intercambiable, endpoint de extraccion de facturas, upload a Storage, borrador intermedio, preview editable y confirmacion separada.
+- Se documento que el provider actual de 9001 es `MockOCRProvider`; la arquitectura es reutilizable, pero no hay motor OCR/IA productivo copiable tal cual.
+- Se creo un plan multi-agente por olas para Agro-Credit con upload PDF/imagen/Excel, extraccion OCR/IA, mapper a rubros contables, previsualizacion editable y aplicacion manual a Balance/Resultados.
+- El plan define la coleccion propuesta `financial_statement_imports`, endpoints server-side, validacion contador-cliente, reglas Firestore/Storage, componentes UI y cierre con validacion.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+
+Pendientes/riesgos:
+
+- No se implemento aun el flujo OCR/IA; queda como plan ejecutable.
+- Antes de produccion hay que definir provider IA real y variables de entorno. El mock solo sirve para desarrollo.
+- La carga comparativa `Actual/Anterior` sigue como decision futura: el sistema actual guarda por periodo seleccionado.
+
+---
+
 ## Riesgos y notas
 
 - El proyecto aun conserva rutas y servicios con nombre `productor` por compatibilidad. En UI nueva usar "Usuario del sistema" o "Usuario"; no introducir nuevas superficies con el nombre funcional viejo.
