@@ -17,9 +17,11 @@ export const COLLECTIONS = {
   DOCUMENTS: "documents",
   ACCESS_REQUESTS: "access_requests",
   ACCESS_GRANTS: "access_grants",
+  ACCESS_INVITATIONS: "access_invitations",
   FINANCING_REQUESTS: "financing_requests",
   AUDIT_LOGS: "audit_logs",
   NOTIFICATIONS: "notifications",
+  FINANCIAL_STATEMENT_IMPORTS: "financial_statement_imports",
 } as const
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS]

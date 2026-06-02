@@ -163,6 +163,22 @@ service cloud.firestore {
       allow write: if false; // solo via Admin SDK server-side
     }
 
+    // ─── INVITACIONES DE ACCESO ─────────────────────────────────────────────────
+    match /access_invitations/{invitationId} {
+      allow read: if isAuthenticated() && (
+        isAdminPlatform() ||
+        resource.data.senderUid == request.auth.uid ||
+        isMemberOf(resource.data.ownerOrganizationId)
+      );
+      allow write: if false; // solo via Admin SDK server-side
+    }
+
+    // ─── IMPORTACIONES CONTABLES ─────────────────────────────────────────────────
+    match /financial_statement_imports/{docId} {
+      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId);
+      allow write: if false; // solo via Admin SDK server-side
+    }
+
     // ─── FINANCIACIÓN ────────────────────────────────────────────────────────────
     match /financing_requests/{requestId} {
       allow read: if isAuthenticated() && (

@@ -27,6 +27,16 @@ export type AuditAction =
   | "user.logout"
   | "organization.created"
   | "organization.updated"
+  | "access_invitation.created"
+  | "access_invitation.sent"
+  | "access_invitation.approved"
+  | "access_invitation.accepted"
+  | "access_invitation.revoked"
+  | "access_invitation.expired"
+  | "statement_import.extracted"
+  | "statement_import.reviewed"
+  | "statement_import.applied"
+  | "statement_import.rejected"
 
 // Entrada de auditoría (colección: audit_logs)
 export interface AuditLog {

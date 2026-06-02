@@ -48,3 +48,22 @@ export const revokeAccessGrantSchema = z.object({
 })
 
 export type RevokeAccessGrantInput = z.infer<typeof revokeAccessGrantSchema>
+
+const RECIPIENT_SUBTYPES = [
+  "bank", "financial_entity", "agro_company",
+  "maquinaria_agricola", "insumos_agricolas", "other_authorized_viewer",
+] as const
+
+export const createAccessInvitationSchema = z.object({
+  targetOrganizationId: z.string().min(1),
+  targetScope: z.enum(["single_organization", "group"]),
+  recipientEmail: z.string().email("Email inválido"),
+  recipientName: z.string().max(200).optional(),
+  recipientOrganizationName: z.string().max(200).optional(),
+  recipientSubtype: z.enum(RECIPIENT_SUBTYPES),
+  requestedScopes: z.array(z.enum(ACCESS_SCOPES)).min(1, "Seleccioná al menos un scope"),
+  approvedDays: z.number().int().min(1).max(365),
+  purpose: z.string().min(1).max(500),
+})
+
+export type CreateAccessInvitationInput = z.infer<typeof createAccessInvitationSchema>

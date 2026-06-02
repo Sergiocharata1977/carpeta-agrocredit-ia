@@ -19,9 +19,11 @@ import {
   getGrantsForProducer,
   revokeAccessGrant,
 } from "@/lib/services/access-grants"
-import { ShieldCheck, Clock, AlertCircle, Ban } from "lucide-react"
-import type { AccessGrant, AccessRequest, AccessScope } from "@/types/access"
+import { ShieldCheck, Clock, AlertCircle, Ban, Send } from "lucide-react"
+import type { AccessGrant, AccessInvitation, AccessRequest, AccessScope } from "@/types/access"
 import type { Producer } from "@/types/producer"
+import { AccessInvitationTable } from "@/components/access/AccessInvitationTable"
+import { CreateAccessInvitationDialog } from "@/components/access/CreateAccessInvitationDialog"
 
 export default function ProducerAuthorizationsPage() {
   const { user, loading: sessionLoading } = useSession()
@@ -29,8 +31,11 @@ export default function ProducerAuthorizationsPage() {
   const [requests, setRequests] = useState<AccessRequest[]>([])
   const [grants, setGrants] = useState<AccessGrant[]>([])
   const [selectedRequest, setSelectedRequest] = useState<AccessRequest | null>(null)
+  const [invitations, setInvitations] = useState<AccessInvitation[]>([])
+  const [showInviteDialog, setShowInviteDialog] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [revoking, setRevoking] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
@@ -51,6 +56,19 @@ export default function ProducerAuthorizationsPage() {
       ])
       setRequests(nextRequests)
       setGrants(nextGrants)
+
+      // Cargar invitaciones
+      const token = await getIdToken()
+      if (token) {
+        const res = await fetch(
+          `/api/access-invitations?ownerOrganizationId=${user?.defaultOrganizationId}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        if (res.ok) {
+          const json = await res.json()
+          setInvitations(json.invitations ?? [])
+        }
+      }
     }
 
     setLoadingData(false)
@@ -123,16 +141,53 @@ export default function ProducerAuthorizationsPage() {
     }
   }
 
+  async function revokeInvitation(invitationId: string) {
+    const token = await getIdToken()
+    if (!token) return
+    setRevoking(invitationId)
+    try {
+      await fetch(`/api/access-invitations/${invitationId}/revoke`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      })
+      await loadData()
+    } finally {
+      setRevoking(null)
+    }
+  }
+
+  async function approveInvitation(invitationId: string) {
+    const token = await getIdToken()
+    if (!token) return
+    try {
+      await fetch(`/api/access-invitations/${invitationId}/approve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      })
+      await loadData()
+    } catch { /* no-op */ }
+  }
+
   const isLoading = sessionLoading || loadingData
 
   return (
     <RoleGate allowedRoles={["producer", "admin_platform"]}>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Autorizaciones</h1>
-          <p className="text-muted-foreground text-sm">
-            Bandeja de solicitudes, grants activos y revocaciones.
-          </p>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Autorizaciones</h1>
+            <p className="text-muted-foreground text-sm">
+              Solicitudes recibidas, links de acceso y grants activos.
+            </p>
+          </div>
+          {producer && (
+            <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
+              <Send className="size-4" />
+              Compartir carpeta
+            </Button>
+          )}
         </div>
 
         {error && <div className="rounded-md border border-destructive p-3 text-sm">{error}</div>}
@@ -191,7 +246,28 @@ export default function ProducerAuthorizationsPage() {
                 </div>
               )}
             </section>
+
+            {invitations.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-lg font-medium">Links de acceso compartidos</h2>
+                <AccessInvitationTable
+                  invitations={invitations}
+                  onRevoke={revokeInvitation}
+                  onApprove={approveInvitation}
+                  revoking={revoking}
+                />
+              </section>
+            )}
           </>
+        )}
+
+        {producer && (
+          <CreateAccessInvitationDialog
+            open={showInviteDialog}
+            onOpenChange={setShowInviteDialog}
+            targetOrganizationId={user?.defaultOrganizationId ?? ""}
+            onCreated={loadData}
+          />
         )}
 
         <AuthorizationDecisionDialog

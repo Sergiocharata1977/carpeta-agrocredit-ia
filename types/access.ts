@@ -1,3 +1,60 @@
+// Subtipo del receptor de una invitación
+export type InvitationRecipientSubtype =
+  | "bank"
+  | "financial_entity"
+  | "agro_company"
+  | "maquinaria_agricola"
+  | "insumos_agricolas"
+  | "other_authorized_viewer"
+
+// Estado de una invitación de acceso por link
+export type AccessInvitationStatus =
+  | "draft"
+  | "pending_owner_approval"
+  | "sent"
+  | "accepted"
+  | "revoked"
+  | "expired"
+
+// Invitación de acceso por link (colección: access_invitations)
+export interface AccessInvitation {
+  id: string
+  tokenHash: string                          // SHA-256 del token — el token plano nunca se guarda
+  status: AccessInvitationStatus
+
+  targetOrganizationId: string
+  targetScope: AccessTargetScope
+  includedOrganizationIds?: string[]
+
+  senderUid: string
+  senderOrganizationId: string
+  senderRole: "producer" | "accountant" | "admin_platform"
+
+  ownerOrganizationId: string
+  accountantLinkId?: string
+  requiresOwnerApproval: boolean
+  approvedByOwnerUid?: string
+  approvedByOwnerAt?: string
+
+  recipientEmail: string
+  recipientName?: string
+  recipientOrganizationName?: string
+  recipientSubtype: InvitationRecipientSubtype
+
+  requestedScopes: AccessScope[]
+  approvedDays: number
+  purpose: string
+
+  acceptedByUid?: string
+  acceptedByOrganizationId?: string
+  accessGrantId?: string
+
+  tokenExpiresAt: string
+  accessExpiresAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
 // Scopes de acceso disponibles
 export type AccessScope =
   | "profile_basic"
