@@ -61,7 +61,7 @@ export default function LandingPage() {
                 <path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>
               </svg>
             </span>
-            AgroCredit Hub
+            Legajo
           </Link>
           <nav className="hidden items-center gap-[30px] md:flex">
             {[["Beneficios","#beneficios"],["Proceso","#proceso"],["Roles","#roles"],["Métricas","#metricas"]].map(([l, h]) => (
@@ -69,7 +69,7 @@ export default function LandingPage() {
             ))}
             <Link href="/registro"
               className="rounded-[11px] bg-[#2D6A4F] px-5 py-2.5 text-[14.5px] font-semibold text-white shadow-[0_6px_16px_rgba(45,106,79,.28)] transition hover:-translate-y-0.5 hover:bg-[#1B4332]">
-              Solicitar demo
+              Registrate gratis
             </Link>
           </nav>
         </div>
@@ -97,21 +97,41 @@ export default function LandingPage() {
             </motion.h1>
 
             <motion.p variants={fadeUp} className="mb-8 max-w-[520px] text-[18.5px] text-[#5A6470]">
-              AgroCredit Hub digitaliza y centraliza toda la carpeta crediticia de{" "}
+              Legajo digitaliza y centraliza toda la carpeta crediticia de{" "}
               <strong className="text-[#212529]">empresas y productores agropecuarios</strong>{" "}
               en tiempo real — conectando a quien produce, a quien contabiliza y a quien financia.
             </motion.p>
 
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-3.5">
-              <Link href="/registro"
-                className="inline-flex items-center gap-2 rounded-[13px] bg-[#2D6A4F] px-6 py-[15px] text-[15.5px] font-semibold text-white shadow-[0_6px_16px_rgba(45,106,79,.28)] transition hover:-translate-y-0.5 hover:bg-[#1B4332]">
-                Solicitar demo
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-              </Link>
-              <Link href="#proceso"
-                className="inline-flex items-center gap-2 rounded-[13px] border border-[#E7EAEE] bg-white px-6 py-[15px] text-[15.5px] font-semibold text-[#212529] shadow-sm transition hover:-translate-y-0.5 hover:border-[#52B788] hover:text-[#2D6A4F]">
-                Ver cómo funciona
-              </Link>
+            {/* CTA principal */}
+            <motion.div variants={fadeUp} className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-3.5">
+                <Link href="/registro"
+                  className="inline-flex items-center gap-2 rounded-[13px] bg-[#2D6A4F] px-6 py-[15px] text-[15.5px] font-semibold text-white shadow-[0_6px_16px_rgba(45,106,79,.28)] transition hover:-translate-y-0.5 hover:bg-[#1B4332]">
+                  Registrate gratis
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+                </Link>
+                <Link href="/login"
+                  className="inline-flex items-center gap-2 rounded-[13px] border border-[#E7EAEE] bg-white px-6 py-[15px] text-[15.5px] font-semibold text-[#212529] shadow-sm transition hover:-translate-y-0.5 hover:border-[#52B788] hover:text-[#2D6A4F]">
+                  Ya tengo cuenta
+                </Link>
+              </div>
+
+              {/* 3 accesos directos por rol */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[12.5px] font-medium text-[#8A93A0]">Ingresá como:</span>
+                {[
+                  { label: "Cliente / Productor", href: "/registro/usuario", color: "#2D6A4F", bg: "#EAF7F0", border: "#BFE9D2" },
+                  { label: "Contador",             href: "/registro/contador", color: "#1D3557", bg: "#E2EAF3", border: "#C0CEDF" },
+                  { label: "Entidad Financiera",   href: "/registro/entidad",  color: "#9a7d2e", bg: "#F6E8C3", border: "#ECDCAF" },
+                ].map((r) => (
+                  <Link key={r.href} href={r.href}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12.5px] font-semibold transition hover:-translate-y-0.5"
+                    style={{ background: r.bg, borderColor: r.border, color: r.color }}>
+                    {r.label}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+                  </Link>
+                ))}
+              </div>
             </motion.div>
 
             <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-5">
@@ -125,10 +145,6 @@ export default function LandingPage() {
                   {t.label}
                 </span>
               ))}
-              <span className="flex items-center gap-2 rounded-full border border-[#BFE9D2] bg-[#EAF7F0] px-3 py-1.5 text-[13.5px] font-bold text-[#1B4332]">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#2D6A4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[15px] h-[15px]"><path d="M12 7v10M9.5 9.2c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.8c0 2.4-5 1.4-5 3.8 0 1.1 1 1.9 2.5 1.9s2.5-.8 2.5-1.8"/></svg>
-                Acceso totalmente gratuito
-              </span>
             </motion.div>
           </motion.div>
 
@@ -137,7 +153,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
             className="rounded-[20px] border border-[#E7EAEE] bg-white p-[30px] shadow-[0_18px_50px_rgba(20,40,65,.13),0_6px_16px_rgba(20,40,65,.06)]">
             <div className="mb-6 flex items-center justify-between">
-              <span className="text-[12px] font-bold uppercase tracking-[.12em] text-[#8A93A0]">Flujo Credit Hub</span>
+              <span className="text-[12px] font-bold uppercase tracking-[.12em] text-[#8A93A0]">Flujo Legajo</span>
               <span className="flex items-center gap-1.5 text-[12px] font-semibold text-[#2D6A4F]">
                 <span className="dot-pulse h-[7px] w-[7px] rounded-full bg-[#52B788]"/>En vivo
               </span>
@@ -196,7 +212,7 @@ export default function LandingPage() {
               className="rounded-[20px] border border-[#f3cdd1] p-8" style={{ background: "linear-gradient(160deg,#fcecee,#fbe4e6)" }}>
               <h3 className="mb-5 flex items-center gap-2.5 text-[18px] font-bold text-[#B23A48]">
                 <span className="rounded-[6px] bg-[#f6d2d6] px-2 py-1 text-[10.5px] font-bold uppercase tracking-[.08em]">Antes</span>
-                Sin AgroCredit
+                Sin Legajo
               </h3>
               <div className="flex flex-col gap-4">
                 {["Documentación en papel y dispersa entre oficinas y correos.","Comunicación por WhatsApp y email, sin trazabilidad.","Semanas de espera para reunir la información completa.","Créditos rechazados por documentación incompleta."].map((t) => (
@@ -222,7 +238,7 @@ export default function LandingPage() {
               className="rounded-[20px] border border-[#bfe9d2] p-8" style={{ background: "linear-gradient(160deg,#e7f7ee,#d8f3e6)" }}>
               <h3 className="mb-5 flex items-center gap-2.5 text-[18px] font-bold text-[#1B4332]">
                 <span className="rounded-[6px] bg-[#c2ead4] px-2 py-1 text-[10.5px] font-bold uppercase tracking-[.08em]">Ahora</span>
-                Con AgroCredit
+                Con Legajo
               </h3>
               <div className="flex flex-col gap-4">
                 {["Carpeta digital centralizada y ordenada en la nube.","Acceso controlado y trazable por rol, con historial.","Información disponible en tiempo real para todos.","Proceso de crédito ágil, transparente y auditable."].map((t) => (
@@ -282,13 +298,13 @@ export default function LandingPage() {
           <motion.div variants={stagger(0.14)} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }}
             className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {[
-              { accent: "#2D6A4F", iBg: "#EAF7F0", iC: "#2D6A4F", chk: "#52B788", rol: "Quien produce", name: "Productor / PyME",
+              { accent: "#2D6A4F", iBg: "#EAF7F0", iC: "#2D6A4F", chk: "#52B788", btnBg: "#2D6A4F", btnHover: "#1B4332", rol: "Quien produce", name: "Cliente / Productor", href: "/registro/usuario",
                 icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[27px] h-[27px]"><path d="M3 21h18"/><path d="M5 21V8l4-4 4 4"/><path d="M13 21V11h6v10"/><path d="M16 14h.01M16 17h.01M8 13h.01M8 17h.01"/></svg>,
                 items: ["Autoriza quién ve su información y revoca cuando quiere.","Trazabilidad total de cada acceso a su carpeta.","Sin papeles ni viajes innecesarios al banco.","Acceso totalmente gratuito, sin costos ocultos."] },
-              { accent: "#1D3557", iBg: "#E2EAF3", iC: "#1D3557", chk: "#3A6491", rol: "Estudio contable", name: "Contador",
+              { accent: "#1D3557", iBg: "#E2EAF3", iC: "#1D3557", chk: "#3A6491", btnBg: "#1D3557", btnHover: "#142841", rol: "Estudio contable", name: "Contador", href: "/registro/contador",
                 icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[27px] h-[27px]"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8"/><rect x="8" y="11" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="8" y="16" width="3" height="2"/><rect x="13" y="16" width="3" height="2"/></svg>,
-                items: ["Carga balances, EECC y documentos desde un panel.","Multi-cliente sin mezclar información entre empresas.","Validación con checklist inteligente antes de enviar."] },
-              { accent: "#E9C46A", iBg: "#F6E8C3", iC: "#9a7d2e", chk: "#c79a2e", rol: "Banco / Financiera", name: "Banco",
+                items: ["Carga balances, EECC y documentos desde un panel.","Multi-cliente sin mezclar información entre empresas.","Validación con checklist inteligente antes de enviar.","Acceso totalmente gratuito para estudios contables."] },
+              { accent: "#c79a2e", iBg: "#F6E8C3", iC: "#9a7d2e", chk: "#c79a2e", btnBg: "#c79a2e", btnHover: "#a8841e", rol: "Banco / Financiera / Empresa", name: "Entidad Financiera", href: "/registro/entidad",
                 icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[27px] h-[27px]"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M4 10L12 4l8 6"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>,
                 items: ["Accede con permisos granulares (scopes) por carpeta.","Carpeta siempre actualizada y auditada.","Menor riesgo y mayor velocidad de aprobación."] },
             ].map((r) => (
@@ -313,6 +329,15 @@ export default function LandingPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+                {/* CTA por rol */}
+                <div className="border-t border-[#E7EAEE] px-7 py-5">
+                  <Link href={r.href}
+                    className="flex w-full items-center justify-center gap-2 rounded-[11px] py-3 text-[14.5px] font-semibold text-white transition hover:opacity-90"
+                    style={{ background: r.btnBg }}>
+                    Registrate gratis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+                  </Link>
                 </div>
               </motion.div>
             ))}
@@ -353,55 +378,63 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA FINAL ───────────────────────────────────────────────────── */}
-      <section id="demo" className="py-[88px]">
+      <section id="registro" className="py-[88px]">
         <div className="mx-auto max-w-[1180px] px-7">
           <motion.div initial={{ opacity: 0, y: 40, scale: 0.97 }} whileInView={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.7, ease: EASE }} viewport={{ once: true, margin: "-80px" }}
-            className="grid grid-cols-1 items-center gap-12 overflow-hidden rounded-[28px] p-14 text-white shadow-[0_18px_50px_rgba(20,40,65,.2)] md:grid-cols-[1.1fr_.9fr]"
+            className="overflow-hidden rounded-[28px] p-14 shadow-[0_18px_50px_rgba(20,40,65,.2)]"
             style={{ background: "radial-gradient(700px 360px at 85% 10%,rgba(82,183,136,.28),transparent 60%),radial-gradient(600px 300px at 10% 90%,rgba(233,196,106,.16),transparent 60%),linear-gradient(135deg,#1B4332,#142841)" }}>
-            <div>
-              <h2 className="text-[clamp(28px,3.6vw,40px)] font-extrabold leading-[1.08] tracking-[-0.03em]">
+
+            {/* Titular */}
+            <div className="mb-10 text-center text-white">
+              <h2 className="text-[clamp(26px,3.4vw,38px)] font-extrabold leading-[1.08] tracking-[-0.03em]">
                 Tu carpeta crediticia, lista cuando el banco la necesita
               </h2>
-              <p className="mt-4 max-w-[440px] text-[16.5px] text-white/80">
-                Empresas y productores, contadores y financieras trabajando sobre la misma información — sin demoras, sin papeles y con <strong className="text-white">acceso totalmente gratuito</strong>.
+              <p className="mt-4 text-[16.5px] text-white/80">
+                Gratis para todos los roles. Sin tarjeta de crédito. Sin contrato.
               </p>
-              <div className="mt-7 flex flex-wrap gap-3.5">
-                <Link href="/registro"
-                  className="inline-flex items-center gap-2 rounded-[13px] bg-white px-6 py-[15px] text-[15.5px] font-semibold text-[#1B4332] shadow-[0_8px_20px_rgba(0,0,0,.2)] transition hover:bg-[#EAF7F0]">
-                  Comenzar ahora
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-                </Link>
-                <Link href="/login"
-                  className="inline-flex items-center gap-2 rounded-[13px] border border-white/45 px-6 py-[15px] text-[15.5px] font-semibold text-white transition hover:bg-white/12 hover:border-white/80">
-                  Ingresar
-                </Link>
-              </div>
             </div>
 
-            <div className="rounded-[20px] border border-white/16 p-6" style={{ background: "rgba(255,255,255,.08)", backdropFilter: "blur(6px)" }}>
-              <div className="flex items-center justify-between">
-                {["PyME","Contador","Banco"].map((label, i) => (
-                  <div key={label} className="flex flex-1 flex-col items-center gap-2">
-                    <motion.div
-                      className="flex h-[52px] w-[52px] items-center justify-center rounded-[14px] border border-white/18 text-white"
-                      style={{ background: "rgba(255,255,255,.12)" }}
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ duration: 2.4, delay: i * 0.5, repeat: Infinity, ease: "easeInOut" }}>
-                      {i === 0 && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[26px] h-[26px]"><path d="M3 21h18"/><path d="M5 21V8l4-4 4 4"/><path d="M13 21V11h6v10"/></svg>}
-                      {i === 1 && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[26px] h-[26px]"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>}
-                      {i === 2 && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[26px] h-[26px]"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M4 10L12 4l8 6"/><path d="M6 10v8M18 10v8"/></svg>}
-                    </motion.div>
-                    <span className="text-[10.5px] font-bold uppercase tracking-[.08em] text-white/78">{label}</span>
-                    {i < 2 && (
-                      <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.8, delay: i * 0.4, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute ml-[calc(33%+26px)] text-white/45">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-                      </motion.div>
-                    )}
+            {/* 3 cards de registro por rol */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                { rol: "Cliente / Productor", desc: "Autorizo accesos y llevo mi carpeta.", href: "/registro/usuario",
+                  bg: "rgba(45,106,79,.55)", border: "rgba(82,183,136,.35)", iconColor: "#52B788",
+                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M3 21h18"/><path d="M5 21V8l4-4 4 4"/><path d="M13 21V11h6v10"/></svg> },
+                { rol: "Contador", desc: "Gestiono carpetas de múltiples clientes.", href: "/registro/contador",
+                  bg: "rgba(29,53,87,.55)", border: "rgba(58,100,145,.40)", iconColor: "#7EAAD4",
+                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg> },
+                { rol: "Entidad Financiera", desc: "Accedo a carpetas autorizadas para evaluar.", href: "/registro/entidad",
+                  bg: "rgba(150,120,40,.45)", border: "rgba(233,196,106,.35)", iconColor: "#E9C46A",
+                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M4 10L12 4l8 6"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg> },
+              ].map((r) => (
+                <motion.div key={r.rol}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 360, damping: 22 }}
+                  className="flex flex-col gap-4 rounded-[18px] border p-6"
+                  style={{ background: r.bg, borderColor: r.border, backdropFilter: "blur(6px)" }}>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[12px] border border-white/20 bg-white/12" style={{ color: r.iconColor }}>
+                      {r.icon}
+                    </span>
+                    <div>
+                      <p className="text-[15px] font-extrabold text-white">{r.rol}</p>
+                      <p className="text-[12.5px] text-white/70">{r.desc}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <Link href={r.href}
+                    className="flex items-center justify-center gap-2 rounded-[10px] bg-white/18 border border-white/25 py-2.5 text-[14px] font-semibold text-white transition hover:bg-white/28">
+                    Registrate gratis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-8 text-center">
+              <Link href="/login" className="text-[14px] font-medium text-white/60 transition hover:text-white/90 underline-offset-2 hover:underline">
+                Ya tengo cuenta — Ingresar
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -414,14 +447,14 @@ export default function LandingPage() {
             <span className="flex h-8 w-8 items-center justify-center rounded-[9px] text-white" style={{ background: "linear-gradient(135deg,#2D6A4F,#1D3557)" }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
             </span>
-            AgroCredit Hub
+            Legajo
           </Link>
           <div className="flex flex-wrap gap-6">
             {["Privacidad","Términos","Contacto","LinkedIn"].map((l) => (
               <a key={l} href="#" className="text-[13.5px] text-[#5A6470] transition-colors hover:text-[#2D6A4F]">{l}</a>
             ))}
           </div>
-          <p className="text-[13px] text-[#8A93A0]">© 2024 AgroCredit Hub. Tecnología para el agro.</p>
+          <p className="text-[13px] text-[#8A93A0]">© 2024 Legajo. Tecnología para el agro.</p>
         </div>
       </footer>
     </div>
