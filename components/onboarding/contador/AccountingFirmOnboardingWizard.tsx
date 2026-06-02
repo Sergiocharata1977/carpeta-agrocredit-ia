@@ -23,6 +23,7 @@ const STEPS = [
 
 interface OnboardingResponse {
   organizationId: string
+  status: string
 }
 
 export function AccountingFirmOnboardingWizard() {
@@ -31,6 +32,7 @@ export function AccountingFirmOnboardingWizard() {
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
   const [firm, setFirm] = useState<AccountingFirmValues | null>(null)
   const [createdOrganizationId, setCreatedOrganizationId] = useState<string | null>(null)
+  const [createdOrgStatus, setCreatedOrgStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -75,6 +77,7 @@ export function AccountingFirmOnboardingWizard() {
 
       await getFreshIdToken()
       setCreatedOrganizationId(response.organizationId)
+      setCreatedOrgStatus(response.status)
     } catch (onboardingError) {
       setError(onboardingError instanceof Error ? onboardingError.message : "No se pudo finalizar el registro")
     } finally {
@@ -83,7 +86,7 @@ export function AccountingFirmOnboardingWizard() {
   }
 
   if (createdOrganizationId) {
-    return <WizardSuccessContador organizationId={createdOrganizationId} />
+    return <WizardSuccessContador organizationId={createdOrganizationId} orgStatus={createdOrgStatus ?? "pending_approval"} />
   }
 
   return (

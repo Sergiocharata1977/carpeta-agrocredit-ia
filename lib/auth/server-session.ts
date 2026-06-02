@@ -7,6 +7,7 @@ export interface ServerSession {
   email: string | null
   roles: UserRole[]
   defaultOrganizationId: string | null
+  orgStatus: string | null
 }
 
 export class AuthError extends Error {
@@ -33,12 +34,21 @@ export async function verifyRequestSession(request: Request): Promise<ServerSess
     typeof decoded.defaultOrganizationId === "string"
       ? decoded.defaultOrganizationId
       : null
+  const orgStatus =
+    typeof decoded.orgStatus === "string" ? decoded.orgStatus : null
 
   return {
     uid: decoded.uid,
     email: decoded.email ?? null,
     roles,
     defaultOrganizationId,
+    orgStatus,
+  }
+}
+
+export function requireActiveOrg(session: ServerSession): void {
+  if (session.orgStatus && session.orgStatus !== "active") {
+    throw new AuthError("El estudio contable aún no está habilitado por la plataforma", 403)
   }
 }
 

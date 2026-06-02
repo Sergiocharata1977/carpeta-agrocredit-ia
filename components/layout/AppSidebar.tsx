@@ -40,6 +40,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Configuracion", href: "/app/notificaciones", icon: Settings, roles: ["bank_user", "agro_company_user"] },
 
   { label: "Dashboard", href: "/app/admin", icon: LayoutDashboard, roles: ["admin_platform"] },
+  { label: "Estudios", href: "/app/admin/estudios", icon: Building2, roles: ["admin_platform"] },
   { label: "Usuarios", href: "/app/admin/organizaciones", icon: Users, roles: ["admin_platform"] },
   { label: "Accesos", href: "/app/entidad/accesos", icon: ShieldCheck, roles: ["admin_platform"] },
   { label: "Auditoria", href: "/app/admin/auditoria", icon: FileText, roles: ["admin_platform"] },
@@ -77,7 +78,7 @@ export function AppSidebar() {
             <Sprout className="size-4" />
           </div>
           <div>
-            <p className="text-sm font-extrabold leading-tight tracking-tight text-[var(--brand-ink)]">AgroCredit IA</p>
+            <p className="text-sm font-extrabold leading-tight tracking-tight text-[var(--brand-ink)]">Legajo</p>
             <p className="text-[10px] font-medium leading-none text-[var(--brand-muted)]">Carpeta agrofinanciera</p>
           </div>
         </Link>

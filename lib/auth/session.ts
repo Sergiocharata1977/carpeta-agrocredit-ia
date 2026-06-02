@@ -11,6 +11,7 @@ export interface SessionUser {
   displayName: string | null
   roles: UserRole[]
   defaultOrganizationId: string | null
+  orgStatus: string | null
 }
 
 // Hook: estado de sesión reactivo
@@ -36,6 +37,7 @@ export function useSession() {
         displayName: firebaseUser.displayName,
         roles: (claims.roles as UserRole[]) ?? [],
         defaultOrganizationId: (claims.defaultOrganizationId as string) ?? null,
+        orgStatus: (claims.orgStatus as string) ?? null,
       })
       setLoading(false)
     })

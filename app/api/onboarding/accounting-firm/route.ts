@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       taxId: data.firm.taxId,
       contactName: data.firm.contactName,
       contactPhone: data.firm.contactPhone ?? null,
-      status: "active",
+      status: "pending_approval",
       createdBy: session.uid,
       createdAt: now,
       updatedAt: now,
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     await getAdminAuth().setCustomUserClaims(session.uid, {
       roles: ["accountant"],
       defaultOrganizationId: orgRef.id,
+      orgStatus: "pending_approval",
     })
 
     await db.collection(COLLECTIONS.USERS).doc(session.uid).update({
@@ -61,10 +62,10 @@ export async function POST(request: NextRequest) {
       action: "organization.accounting_firm_created",
       targetType: "organization",
       targetId: orgRef.id,
-      metadata: { legalName: data.firm.legalName },
+      metadata: { legalName: data.firm.legalName, status: "pending_approval" },
     })
 
-    return Response.json({ organizationId: orgRef.id }, { status: 201 })
+    return Response.json({ organizationId: orgRef.id, status: "pending_approval" }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return Response.json({ error: "Datos inválidos", issues: error.issues }, { status: 400 })

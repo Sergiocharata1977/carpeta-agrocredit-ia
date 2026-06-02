@@ -78,6 +78,7 @@ El contador habilitado carga la información contable, fiscal y patrimonial del 
 | `004_PLAN_ONBOARDING_Y_REGISTRO.md` | **Ola 3 pendiente** | ScopeGuard, GrantStatusBanner, GrantExpiredBlocker, vista carpeta entidad |
 | `005_ROADMAP_INTEGRATION_CORE.md` | **Olas 4-9 pendientes** | API hub, webhooks, API keys, SDK, MCP Don Cándido IA |
 | `006_PLAN_OCR_IA_EECC.md` | **Pendiente completo** | Upload PDF/Excel → OCR Claude API → mapper → preview → guardar |
+| `009_PLAN_INVITACIONES_ACCESO_POR_LINK.md` | **Draft listo para implementar** | Cliente/contador envia link a financista o tercero, receptor crea clave y ve solo scopes autorizados |
 | `HANDOFF_ACTUAL.md` | Activo | Estado por sesión, archivos modificados, pendientes inmediatos |
 
 **Documentos eliminados (planes completados):**
@@ -98,6 +99,15 @@ El contador habilitado carga la información contable, fiscal y patrimonial del 
 - [ ] `components/access/GrantExpiredBlocker.tsx` — pantalla de bloqueo al vencer
 - [ ] Vista carpeta para entidad solicitante con guard por scope
 - [ ] `components/access/AuthorizationDecisionDialog.tsx` — mostrar días solicitados, `approvedDays` editable
+
+### Plan 009 — Invitaciones de acceso por link
+
+- [ ] Colección `access_invitations` con token hasheado, vencimiento, destinatario y scopes
+- [ ] APIs para crear, aprobar, aceptar y revocar invitaciones
+- [ ] UI "Compartir carpeta" para cliente y contador
+- [ ] Pantalla pública `/invitar/acceso/[token]` con registro/login del receptor
+- [ ] Creación de `access_grant` al aceptar la invitación
+- [ ] Vista read-only de carpeta con `ScopeGuard` y auditoría de acceso
 
 ### Plan sin número — Habilitación de contadores (NUEVO — regla de negocio)
 
@@ -161,7 +171,7 @@ audit_logs · notifications
 
 Colecciones planificadas (no creadas aún):
 ```
-integrations · api_keys · sync_logs · financial_statement_imports
+access_invitations · integrations · api_keys · sync_logs · financial_statement_imports
 ```
 
 ---
