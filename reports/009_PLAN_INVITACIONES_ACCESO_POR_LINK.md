@@ -1,9 +1,30 @@
 # Plan 009 - Invitaciones de acceso por link
 
-**Fecha:** 2026-06-02  
+**Fecha:** 2026-06-02 (revisado 2026-06-02)
 **Feature:** Cliente o contador envia un link a un financista, banco, proveedor u otro tercero autorizado para que cree su clave, ingrese y vea solo la informacion permitida.  
 **Clasificacion:** core del producto, integrado al dominio de `access_requests` / `access_grants`.  
-**Estado:** draft listo para implementar.
+**Estado:** draft registrado — pendiente de implementar.
+
+---
+
+## Dependencias antes de implementar
+
+| Dependencia | Plan | Estado |
+|---|---|---|
+| `ScopeGuard`, `GrantStatusBanner`, `GrantExpiredBlocker` | Plan 004 Ola 3 | **Pendiente — bloquea Ola 4 de este plan** |
+| Vista carpeta entidad con guard real | Plan 004 Ola 3 | **Pendiente** |
+| `requireActiveOrg(session)` para envio desde contador | Habilitacion contadores | **Implementado** (`lib/auth/server-session.ts`) |
+| Coleccion `access_invitations` registrada | Este plan Ola 1 | Draft en `docs/MODULE_REGISTRY.md` |
+
+## Actualizaciones del modelo (2026-06-02)
+
+1. **Contador habilitado** — el flujo B (contador envia link) debe llamar `requireActiveOrg(session)` ademas de validar el vinculo activo. Un contador `pending_approval` no puede enviar invitaciones.
+
+2. **`orgStatus` en claims** — disponible en `ServerSession.orgStatus`. Usar para verificar estado del contador sin lectura extra de Firestore en los endpoints de invitaciones.
+
+3. **Modulo registrado** en `docs/MODULE_REGISTRY.md` como `draft` con coleccion `access_invitations`. El nombre canonico `access_invitations` esta reservado — ninguna implementacion futura debe usar otro nombre.
+
+4. **Ola 4 bloqueada** hasta que Plan 004 Ola 3 entregue `ScopeGuard` y `GrantExpiredBlocker`. Las Olas 1, 2 y 3 son independientes y pueden implementarse en paralelo.
 
 ---
 

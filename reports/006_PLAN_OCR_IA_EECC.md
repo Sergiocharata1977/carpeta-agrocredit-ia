@@ -1,8 +1,21 @@
 # Plan OCR IA EECC - Ejecucion multi-agente
 
-**Fecha:** 2026-06-01 (revisado 2026-06-01)
+**Fecha:** 2026-06-01 (revisado 2026-06-02)
 **Feature:** Cargar balances por archivo y prellenar Estado de Situacion Patrimonial y Estado de Resultados con OCR/IA.
 **Proyectos afectados:** `Agro-Credit` como implementacion; `9001app-firebase` como referencia tecnica.
+**Estado:** Draft — pendiente de implementar (todas las olas).
+
+---
+
+## Cambios del modelo desde la escritura del plan (2026-06-02)
+
+1. **`requireActiveOrg(session)`** — helper nuevo en `lib/auth/server-session.ts`. El endpoint de extraccion (Ola 2B) DEBE llamarlo antes de procesar el archivo. Solo contadores con `orgStatus === "active"` pueden cargar datos.
+
+2. **`session.orgStatus`** — disponible en `ServerSession` y `SessionUser`. No hace falta lectura extra de Firestore para verificar si el contador esta habilitado.
+
+3. **`assertCanManageAccountingFolder`** (Ola 2B) — usar `COLLECTIONS.PRODUCER_ACCOUNTANT_LINKS` (no `producers`). La coleccion `producers` fue eliminada; el `producerId` en imports refiere al `organizations.id` de tipo `system_user`.
+
+4. **Modulo registrado** en `docs/MODULE_REGISTRY.md` como `draft` con coleccion `financial_statement_imports`.
 
 ---
 

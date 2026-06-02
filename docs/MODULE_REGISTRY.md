@@ -81,6 +81,8 @@
 |---|---|---|---|---|
 | `access_requests` | ga | `/app/entidad/accesos` · `/app/productor/autorizaciones` | `lib/services/access-requests.ts` | `access_requests` |
 | `access_grants` | ga | `/app/productor/autorizaciones` | `lib/services/access-grants.ts` | `access_grants` |
+| `access_invitations` | draft | `/app/productor/autorizaciones` · `/invitar/acceso/[token]` · `/app/entidad/carpetas/[targetOrgId]` | — pendiente — | `access_invitations` |
+| `scope_guard` | draft | — (componente transversal) | — pendiente — | `access_grants` |
 
 ### DOMINIO: FINANCIACIÓN
 
@@ -94,6 +96,18 @@
 |---|---|---|---|---|
 | `audit_logs` | ga | `/app/admin/auditoria` | `lib/firebase/audit.ts` · `lib/services/audit-logs.ts` | `audit_logs` |
 | `notifications` | ga | `/app/notificaciones` | `lib/services/notifications.ts` | `notifications` |
+
+### DOMINIO: IMPORTACIÓN CONTABLE (OCR/IA)
+
+| Módulo | Estado | Ruta frontend | Servicio | Colecciones |
+|---|---|---|---|---|
+| `statement_imports` | draft | `/app/contador/empresas/[id]/carpeta` (integrado) | — pendiente Ola 2 — | `financial_statement_imports` |
+
+### DOMINIO: HABILITACIÓN DE ESTUDIOS (ADMIN)
+
+| Módulo | Estado | Ruta frontend | Servicio | Colecciones |
+|---|---|---|---|---|
+| `accounting_firm_approval` | ga | `/app/admin/estudios` | `app/api/admin/accounting-firms/*` | `organizations` |
 
 ---
 
@@ -147,6 +161,8 @@
 | `financing_requests` | financing_requests | ga | Solicitudes de financiación |
 | `audit_logs` | audit_logs | ga | Auditoría inmutable lógica |
 | `notifications` | notifications | ga | Notificaciones internas |
+| `financial_statement_imports` | statement_imports | draft | Borradores de importación OCR/IA de EECC — Plan 006 |
+| `access_invitations` | access_invitations | draft | Invitaciones de acceso por link — Plan 009 |
 
 ---
 
