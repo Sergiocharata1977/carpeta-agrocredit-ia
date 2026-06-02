@@ -73,6 +73,32 @@ export async function deleteAsset(assetId: string): Promise<void> {
   await deleteDoc(doc(db, COLLECTIONS.ASSETS, assetId))
 }
 
+export async function getAssetsForOrganization(organizationId: string): Promise<Asset[]> {
+  const db = getFirebaseDb()
+  if (!db) return []
+  const q = query(
+    collection(db, COLLECTIONS.ASSETS),
+    where("organizationId", "==", organizationId)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asset))
+}
+
+export async function getAssetsByTypeForOrganization(
+  organizationId: string,
+  assetType: Asset["assetType"]
+): Promise<Asset[]> {
+  const db = getFirebaseDb()
+  if (!db) return []
+  const q = query(
+    collection(db, COLLECTIONS.ASSETS),
+    where("organizationId", "==", organizationId),
+    where("assetType", "==", assetType)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asset))
+}
+
 export function getTotalAssetValue(assets: Asset[]): { ARS: number; USD: number } {
   return assets.reduce(
     (acc, asset) => {

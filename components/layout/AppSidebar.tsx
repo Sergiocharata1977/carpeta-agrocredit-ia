@@ -46,7 +46,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Configuracion", href: "/app/notificaciones", icon: Settings, roles: ["admin_platform"] },
 
   { label: "Dashboard", href: "/app/contador", icon: LayoutDashboard, roles: ["accountant", "accounting_firm_admin"] },
-  { label: "Productores", href: "/app/contador/productores", icon: Building2, roles: ["accountant", "accounting_firm_admin"] },
+  { label: "Clientes", href: "/app/contador/clientes", icon: Users, roles: ["accountant", "accounting_firm_admin"] },
+  { label: "Empresas", href: "/app/contador/empresas", icon: Building2, roles: ["accountant", "accounting_firm_admin"] },
 ]
 
 const ROLE_META: Record<string, { actionLabel: string }> = {
@@ -54,8 +55,8 @@ const ROLE_META: Record<string, { actionLabel: string }> = {
   bank_user: { actionLabel: "Nueva Solicitud" },
   agro_company_user: { actionLabel: "Nueva Solicitud" },
   admin_platform: { actionLabel: "Nuevo Acceso" },
-  accountant: { actionLabel: "Nueva Carpeta" },
-  accounting_firm_admin: { actionLabel: "Nueva Carpeta" },
+  accountant: { actionLabel: "Nuevo Cliente" },
+  accounting_firm_admin: { actionLabel: "Nuevo Cliente" },
 }
 
 export function AppSidebar() {

@@ -24,6 +24,17 @@ export async function getLiabilitiesForProducer(producerId: string): Promise<Lia
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Liability))
 }
 
+export async function getLiabilitiesForOrganization(organizationId: string): Promise<Liability[]> {
+  const db = getFirebaseDb()
+  if (!db) return []
+  const q = query(
+    collection(db, COLLECTIONS.LIABILITIES),
+    where("organizationId", "==", organizationId)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Liability))
+}
+
 export async function createLiability(
   data: Omit<Liability, "id" | "createdAt" | "updatedAt">,
   createdBy: string
