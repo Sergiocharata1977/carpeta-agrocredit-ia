@@ -167,6 +167,43 @@ Pendientes principales:
 
 **Plan 007 completo.**
 
+## Cambios de esta sesion — Plan 008 ABM Clientes y Empresas
+
+**Fecha:** 2026-06-02  
+**Plan de referencia:** `reports/008_PLAN_ABM_CLIENTES_EMPRESAS.md`  
+**pnpm type-check:** OK — Commit: `50fbe87`
+
+### Archivos nuevos
+
+- `app/api/contador/empresas/route.ts` — GET empresas del estudio con batching Firestore.
+- `app/app/contador/clientes/page.tsx` — lista de clientes.
+- `app/app/contador/clientes/[clientId]/page.tsx` — datos personales + grid de empresas + dialog alta empresa.
+- `app/app/contador/empresas/page.tsx` — lista de empresas con columna Cliente.
+- `app/app/contador/empresas/[empresaId]/layout.tsx` — header + sub-nav empresa.
+- `app/app/contador/empresas/[empresaId]/page.tsx` — redirect a /carpeta.
+- `app/app/contador/empresas/[empresaId]/carpeta/page.tsx` — balance + resultados por período.
+- `app/app/contador/empresas/[empresaId]/impuestos/page.tsx` — TaxGridForm por empresa.
+- `app/app/contador/empresas/[empresaId]/bienes/page.tsx` — assets + pasivos por empresa.
+- `components/empresas/EmpresaHeader.tsx` y `EmpresaSubNav.tsx`.
+- `reports/008_PLAN_ABM_CLIENTES_EMPRESAS.md`.
+
+### Archivos modificados
+
+- `lib/services/assets.ts` — `getAssetsForOrganization`, `getAssetsByTypeForOrganization`.
+- `lib/services/liabilities.ts` — `getLiabilitiesForOrganization`.
+- `components/layout/AppSidebar.tsx` — "Clientes" + "Empresas" en lugar de "Productores"; "Nuevo Cliente".
+- `app/app/contador/productores/page.tsx` — redirect a `/app/contador/clientes`.
+
+### Estado del plan 008
+
+| Ola | Estado |
+|-----|--------|
+| 1 (Backend) | Implementada |
+| 2 (Frontend) | Implementada |
+| 3 (Integración) | Implementada |
+
+**Plan 008 completo.**
+
 ### Proximos pendientes
 
 - Plan 004 Ola 3 (acceso temporizado): `ScopeGuard`, `GrantStatusBanner`, `GrantExpiredBlocker`, vista carpeta entidad con guard.
