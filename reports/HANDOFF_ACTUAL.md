@@ -204,6 +204,31 @@ Pendientes principales:
 
 **Plan 008 completo.**
 
+## Cambios de esta sesion - Fix deploy Vercel
+
+**Fecha:** 2026-06-02  
+**Motivo:** 5 deployments consecutivos en Vercel quedaban en `Error` antes de iniciar build.
+
+Evidencia:
+
+- `vercel inspect` mostraba el build `.` en `0ms`, sin logs de clone/install/build.
+- La API de Vercel para el deployment `dpl_78DyvbauCMLNjhgM31f9Y7YThnkK` devolvio: `The vercel.json schema validation failed with the following message: should NOT have additional property toolbar`.
+- Commit afectado: `58944e65790b0dea55b313b62f52833e7eb5474b`.
+
+Cambios realizados:
+
+- Se elimino `vercel.json`, que solo contenia la propiedad invalida `{ "toolbar": false }`.
+- No se tocaron rutas, APIs, permisos, Firebase ni logica del ABM.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm build`: OK, 35 paginas generadas.
+
+Pendiente:
+
+- Luego del push, verificar en Vercel que el nuevo deployment pase de `Error` a `Building/Ready`.
+
 ### Proximos pendientes
 
 - Plan 004 Ola 3 (acceso temporizado): `ScopeGuard`, `GrantStatusBanner`, `GrantExpiredBlocker`, vista carpeta entidad con guard.
