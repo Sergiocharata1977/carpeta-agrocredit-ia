@@ -267,7 +267,7 @@ export default function LandingPage() {
             className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <div className="absolute left-[11%] right-[11%] top-[46px] hidden h-0.5 lg:block" style={{ background: "linear-gradient(90deg,#D8F3E6,#E2EAF3,#F6E8C3)" }}/>
             {[
-              { num: "1", numBg: "#2D6A4F", sBg: "#EAF7F0", sC: "#2D6A4F", title: "El contador carga los datos", desc: "Balances, estados contables y documentación, desde un panel multi-cliente.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M5 3h9l5 5v11a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M12 17v-5M9.5 14.5L12 12l2.5 2.5"/></svg> },
+              { num: "1", numBg: "#2D6A4F", sBg: "#EAF7F0", sC: "#2D6A4F", title: "El contador habilitado carga los datos", desc: "Solo estudios contables verificados por la plataforma pueden cargar información. Balances, EECC y documentos desde un panel multi-cliente.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M5 3h9l5 5v11a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M12 17v-5M9.5 14.5L12 12l2.5 2.5"/></svg> },
               { num: "2", numBg: "#52B788", sBg: "#EAF7F0", sC: "#2D6A4F", title: "El cliente autoriza el acceso", desc: "El productor o la PyME decide quién ve su información y por cuánto tiempo.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M7 10V7a5 5 0 019.6-2"/><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M12 14v3"/></svg> },
               { num: "3", numBg: "#1D3557", sBg: "#E2EAF3", sC: "#1D3557", title: "El banco recibe la carpeta", desc: "Completa, actualizada y auditada — lista para evaluar sin idas y vueltas.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M21 12a9 9 0 00-9-9 9 9 0 00-6.7 3"/><path d="M3 12a9 9 0 009 9 9 9 0 006.7-3"/><path d="M21 3v5h-5M3 21v-5h5"/></svg> },
               { num: "4", numBg: "#c79a2e", sBg: "#F6E8C3", sC: "#9a7d2e", title: "Crédito aprobado más rápido", desc: "Menos fricción, menos riesgo y una decisión de financiamiento en menos tiempo.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 11-6.2-8.56"/></svg> },
@@ -298,15 +298,15 @@ export default function LandingPage() {
           <motion.div variants={stagger(0.14)} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }}
             className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {[
-              { accent: "#2D6A4F", iBg: "#EAF7F0", iC: "#2D6A4F", chk: "#52B788", btnBg: "#2D6A4F", btnHover: "#1B4332", rol: "Quien produce", name: "Cliente / Productor", href: "/registro/usuario",
+              { accent: "#2D6A4F", iBg: "#EAF7F0", iC: "#2D6A4F", chk: "#52B788", btnBg: "#2D6A4F", btnHover: "#1B4332", btnLabel: "Registrate gratis", rol: "Quien produce", name: "Cliente / Productor", href: "/registro/usuario",
                 icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[27px] h-[27px]"><path d="M3 21h18"/><path d="M5 21V8l4-4 4 4"/><path d="M13 21V11h6v10"/><path d="M16 14h.01M16 17h.01M8 13h.01M8 17h.01"/></svg>,
                 items: ["Autoriza quién ve su información y revoca cuando quiere.","Trazabilidad total de cada acceso a su carpeta.","Sin papeles ni viajes innecesarios al banco.","Acceso totalmente gratuito, sin costos ocultos."] },
-              { accent: "#1D3557", iBg: "#E2EAF3", iC: "#1D3557", chk: "#3A6491", btnBg: "#1D3557", btnHover: "#142841", rol: "Estudio contable", name: "Contador", href: "/registro/contador",
+              { accent: "#1D3557", iBg: "#E2EAF3", iC: "#1D3557", chk: "#3A6491", btnBg: "#1D3557", btnHover: "#142841", btnLabel: "Solicitar habilitación", rol: "Estudio contable · Requiere habilitación", name: "Contador", href: "/registro/contador",
                 icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[27px] h-[27px]"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8"/><rect x="8" y="11" width="3" height="3"/><rect x="13" y="11" width="3" height="3"/><rect x="8" y="16" width="3" height="2"/><rect x="13" y="16" width="3" height="2"/></svg>,
-                items: ["Carga balances, EECC y documentos desde un panel.","Multi-cliente sin mezclar información entre empresas.","Validación con checklist inteligente antes de enviar.","Acceso totalmente gratuito para estudios contables."] },
-              { accent: "#c79a2e", iBg: "#F6E8C3", iC: "#9a7d2e", chk: "#c79a2e", btnBg: "#c79a2e", btnHover: "#a8841e", rol: "Banco / Financiera / Empresa", name: "Entidad Financiera", href: "/registro/entidad",
+                items: ["Únicos autorizados para cargar información contable de clientes.","La plataforma verifica y habilita al estudio antes de que pueda operar.","Multi-cliente sin mezclar información entre empresas.","Validación con checklist inteligente antes de enviar."] },
+              { accent: "#c79a2e", iBg: "#F6E8C3", iC: "#9a7d2e", chk: "#c79a2e", btnBg: "#c79a2e", btnHover: "#a8841e", btnLabel: "Registrate gratis", rol: "Banco / Financiera / Empresa", name: "Entidad Financiera", href: "/registro/entidad",
                 icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[27px] h-[27px]"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M4 10L12 4l8 6"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>,
-                items: ["Accede con permisos granulares (scopes) por carpeta.","Carpeta siempre actualizada y auditada.","Menor riesgo y mayor velocidad de aprobación."] },
+                items: ["Solo accedés a la información que el cliente autorizó explícitamente.","El acceso tiene fecha de vencimiento — cuando vence, se corta automáticamente.","El cliente elige qué tipos de datos podés ver: balance, resultados, impuestos, bienes.","Menor riesgo y mayor velocidad de aprobación."] },
             ].map((r) => (
               <motion.div key={r.name} variants={fadeUp}
                 className="flex flex-col overflow-hidden rounded-[20px] border border-[#E7EAEE] bg-white shadow-sm"
@@ -335,7 +335,7 @@ export default function LandingPage() {
                   <Link href={r.href}
                     className="flex w-full items-center justify-center gap-2 rounded-[11px] py-3 text-[14.5px] font-semibold text-white transition hover:opacity-90"
                     style={{ background: r.btnBg }}>
-                    Registrate gratis
+                    {r.btnLabel}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
                   </Link>
                 </div>
@@ -401,10 +401,10 @@ export default function LandingPage() {
                 { rol: "Cliente / Productor", desc: "Autorizo accesos y llevo mi carpeta.", href: "/registro/usuario",
                   bg: "rgba(45,106,79,.55)", border: "rgba(82,183,136,.35)", iconColor: "#52B788",
                   icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M3 21h18"/><path d="M5 21V8l4-4 4 4"/><path d="M13 21V11h6v10"/></svg> },
-                { rol: "Contador", desc: "Gestiono carpetas de múltiples clientes.", href: "/registro/contador",
+                { rol: "Contador", desc: "Cargo carpetas de mis clientes. Requiere verificación de la plataforma.", href: "/registro/contador",
                   bg: "rgba(29,53,87,.55)", border: "rgba(58,100,145,.40)", iconColor: "#7EAAD4",
                   icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg> },
-                { rol: "Entidad Financiera", desc: "Accedo a carpetas autorizadas para evaluar.", href: "/registro/entidad",
+                { rol: "Entidad Financiera", desc: "Accedo a carpetas con permiso acotado en tiempo e información.", href: "/registro/entidad",
                   bg: "rgba(150,120,40,.45)", border: "rgba(233,196,106,.35)", iconColor: "#E9C46A",
                   icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M4 10L12 4l8 6"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg> },
               ].map((r) => (
