@@ -15,7 +15,20 @@ import {
 } from "@/components/ui/empty"
 import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { useSession } from "@/lib/auth/session"
-import type { EmpresaItem } from "@/app/api/contador/empresas/route"
+import type { AgroActivity } from "@/types/auth"
+
+type EmpresaItem = {
+  id: string
+  legalName: string
+  taxId: string
+  activity: AgroActivity
+  province: string
+  city: string
+  entityOwnersText?: string
+  parentOrganizationId: string
+  parentLegalName: string
+  createdAt: string
+}
 
 export default function EmpresasPage() {
   const { user, loading: sessionLoading } = useSession()
