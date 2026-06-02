@@ -1,296 +1,272 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Banknote, Calculator, Sprout, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { motion } from "motion/react"
+import {
+  ArrowRight,
+  Banknote,
+  Calculator,
+  CheckCircle2,
+  FileCheck2,
+  LockKeyhole,
+  ShieldCheck,
+  Sprout,
+} from "lucide-react"
 
-// ─── tipos ────────────────────────────────────────────────────────────────────
+const EASE = [0.22, 0.61, 0.36, 1] as const
 
-type ModalType = "usuario" | "contador" | "entidad" | null
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
+}
 
-const SUBTYPES = [
-  { value: "bank", label: "Banco" },
-  { value: "financial_entity", label: "Financiera" },
-  { value: "agro_company", label: "Empresa agropecuaria" },
-  { value: "maquinaria_agricola", label: "Maquinaria agrícola" },
-  { value: "insumos_agricolas", label: "Insumos agrícolas" },
-]
+const stagger = (delay = 0.1) => ({
+  hidden: {},
+  show: { transition: { staggerChildren: delay } },
+})
 
-const OPTIONS = [
+const roleOptions = [
   {
-    type: "usuario" as ModalType,
-    title: "Soy Productor / Cliente",
-    description: "Solicitá financiamiento, autorizá accesos y seguí el estado de cada pedido.",
+    href: "/registro/usuario",
+    eyebrow: "Quien produce",
+    title: "Productor / Cliente",
+    description: "Solicita financiamiento, autoriza accesos y sigue el estado de cada pedido.",
+    cta: "Crear cuenta",
+    accent: "#2D6A4F",
+    soft: "#EAF7F0",
+    border: "#BFE9D2",
     icon: Sprout,
-    accent: "#063c31",
-    bg: "#dcefe5",
-    image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80",
+    items: ["Carpeta crediticia propia", "Permisos trazables", "Acceso gratuito"],
   },
   {
-    type: "contador" as ModalType,
-    title: "Soy Contador",
-    description: "Administrá carpetas de tus clientes y enviá información validada a financistas.",
+    href: "/registro/contador",
+    eyebrow: "Estudio contable",
+    title: "Contador",
+    description: "Administra clientes, ordena documentacion y envia informacion validada.",
+    cta: "Registrar estudio",
+    accent: "#1D3557",
+    soft: "#E2EAF3",
+    border: "#BED0E2",
     icon: Calculator,
-    accent: "#b56f2b",
-    bg: "#fff4e5",
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
+    items: ["Panel multi-cliente", "Carga contable", "Checklists por carpeta"],
   },
   {
-    type: "entidad" as ModalType,
-    title: "Soy Financista o empresa Agro",
-    description: "Pedí acceso a carpetas, evaluá indicadores y gestioná crédito con permisos.",
+    href: "/registro/entidad",
+    eyebrow: "Banco / Empresa agro",
+    title: "Financista",
+    description: "Pide acceso a carpetas, evalua indicadores y gestiona credito con permisos.",
+    cta: "Registrar entidad",
+    accent: "#C7962D",
+    soft: "#F6E8C3",
+    border: "#ECDCAF",
     icon: Banknote,
-    accent: "#2f5d74",
-    bg: "#e5edf4",
-    image: "https://images.unsplash.com/photo-1518186233392-c232efbf2373?auto=format&fit=crop&w=800&q=80",
+    items: ["Scoring documental", "Acceso por scope", "Decision mas rapida"],
   },
 ]
-
-// ─── formulario reutilizable ──────────────────────────────────────────────────
-
-function RegisterForm({
-  role,
-  accent,
-  onClose,
-}: {
-  role: "usuario" | "contador" | "entidad"
-  accent: string
-  onClose: () => void
-}) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [subtype, setSubtype] = useState("bank")
-
-  const apiRole =
-    role === "usuario" ? "system_user" : role === "contador" ? "accounting_firm" : "requesting_entity"
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-
-    const form = e.currentTarget
-    const displayName = (form.elements.namedItem("displayName") as HTMLInputElement).value
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value
-    const password = (form.elements.namedItem("password") as HTMLInputElement).value
-
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          displayName,
-          email,
-          password,
-          role: apiRole,
-          ...(role === "entidad" ? { subtype } : {}),
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? "Error al registrar")
-      router.push("/login?registered=1")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al registrar")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-      {role === "entidad" && (
-        <div className="space-y-2">
-          <Label>Tipo de entidad</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {SUBTYPES.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                onClick={() => setSubtype(s.value)}
-                className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                  subtype === s.value
-                    ? "border-[#2f5d74] bg-[#e5edf4] text-[#2f5d74]"
-                    : "border-[#dde4dc] text-[#59675f] hover:border-[#2f5d74]"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-1.5">
-        <Label htmlFor="reg-name">Nombre completo</Label>
-        <Input id="reg-name" name="displayName" placeholder="Tu nombre" required />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="reg-email">Email</Label>
-        <Input id="reg-email" name="email" type="email" placeholder="tu@email.com" required />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="reg-password">Contraseña</Label>
-        <Input
-          id="reg-password"
-          name="password"
-          type="password"
-          placeholder="Mínimo 8 caracteres"
-          minLength={8}
-          required
-        />
-      </div>
-
-      {error && (
-        <p className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
-      )}
-
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-full text-white"
-        style={{ backgroundColor: accent }}
-      >
-        {loading ? "Creando cuenta..." : "Crear cuenta"}
-      </Button>
-
-      <p className="text-center text-xs text-[#59675f]">
-        Ya tenés cuenta?{" "}
-        <Link href="/login" className="font-semibold underline" onClick={onClose}>
-          Iniciar sesion
-        </Link>
-      </p>
-    </form>
-  )
-}
-
-// ─── modal ────────────────────────────────────────────────────────────────────
-
-function Modal({
-  open,
-  option,
-  onClose,
-}: {
-  open: boolean
-  option: (typeof OPTIONS)[number] | null
-  onClose: () => void
-}) {
-  if (!open || !option) return null
-  const Icon = option.icon
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div
-        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* header con imagen */}
-        <div className="relative h-32">
-          <img src={option.image} alt={option.title} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-          <div className="absolute bottom-4 left-5 right-10 text-white">
-            <div className="flex items-center gap-2">
-              <div
-                className="flex size-7 items-center justify-center rounded-full"
-                style={{ backgroundColor: option.bg, color: option.accent }}
-              >
-                <Icon className="size-4" />
-              </div>
-              <p className="text-lg font-bold leading-tight">{option.title}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-4 flex size-7 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        {/* formulario */}
-        <div className="p-6">
-          <RegisterForm
-            role={option.type as "usuario" | "contador" | "entidad"}
-            accent={option.accent}
-            onClose={onClose}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── página principal ─────────────────────────────────────────────────────────
 
 export default function RegistroPage() {
-  const [active, setActive] = useState<ModalType>(null)
-  const activeOption = OPTIONS.find((o) => o.type === active) ?? null
-
   return (
-    <>
-      <main className="min-h-screen bg-[#f7f8f4] px-4 py-10">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-          <div className="space-y-3">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#59675f] hover:text-[#10221c]">
-              ← Volver al inicio
-            </Link>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              ¿Con qué perfil querés entrar?
-            </h1>
-            <p className="max-w-2xl text-muted-foreground">
-              Elegí tu rol para crear la cuenta. Los datos de tu organización los completás una vez adentro.
-            </p>
-          </div>
+    <main
+      className="min-h-screen overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(980px 520px at 88% -8%,rgba(82,183,136,.16),transparent 60%),radial-gradient(850px 480px at -5% 28%,rgba(29,53,87,.10),transparent 58%),#F8F9FA",
+        color: "#212529",
+        fontFamily: "'Inter',system-ui,sans-serif",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+        @keyframes travel{0%{left:0;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:calc(100% - 9px);opacity:0}}
+        .dot-pulse{animation:pulse-dot 2.4s infinite;}
+        .connector-pulse{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;margin-top:-4.5px;animation:travel 2.6s cubic-bezier(.22,.61,.36,1) infinite;}
+      `}</style>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {OPTIONS.map((option) => {
-              const Icon = option.icon
+      <header className="sticky top-0 z-40 border-b border-[#E7EAEE] bg-[#F8F9FA]/90 backdrop-blur-[14px]">
+        <div className="mx-auto flex h-[68px] max-w-[1180px] items-center justify-between px-7">
+          <Link href="/" className="flex items-center gap-2.5 text-[19px] font-extrabold tracking-tight text-[#212529]">
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-white"
+              style={{ background: "linear-gradient(135deg,#2D6A4F,#1D3557)" }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-[18px] w-[18px]"
+              >
+                <path d="M3 12l9-9 9 9" />
+                <path d="M5 10v10h14V10" />
+                <path d="M9 20v-6h6v6" />
+              </svg>
+            </span>
+            AgroCredit Hub
+          </Link>
+
+          <nav className="hidden items-center gap-[30px] md:flex">
+            <Link href="/#beneficios" className="text-[14.5px] font-medium text-[#5A6470] transition-colors hover:text-[#2D6A4F]">
+              Beneficios
+            </Link>
+            <Link href="/#proceso" className="text-[14.5px] font-medium text-[#5A6470] transition-colors hover:text-[#2D6A4F]">
+              Proceso
+            </Link>
+            <Link href="/login" className="text-[14.5px] font-semibold text-[#2D6A4F] transition-colors hover:text-[#1B4332]">
+              Ingresar
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <section className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-12 px-7 py-[72px] lg:grid-cols-[0.92fr_1.08fr]">
+        <motion.div variants={stagger(0.1)} initial="hidden" animate="show" className="flex flex-col">
+          <motion.div variants={fadeUp}>
+            <Link
+              href="/"
+              className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-[#BFE9D2] bg-[#EAF7F0] px-3.5 py-1.5 text-[12.5px] font-semibold text-[#2D6A4F] transition hover:border-[#52B788]"
+            >
+              <span className="dot-pulse h-2 w-2 rounded-full bg-[#52B788]" />
+              Volver al inicio
+            </Link>
+          </motion.div>
+
+          <motion.h1
+            variants={fadeUp}
+            className="mb-5 text-[clamp(38px,5vw,60px)] font-extrabold leading-[1.02] tracking-[-0.035em]"
+          >
+            Elegi tu rol y entra al{" "}
+            <span
+              style={{
+                background: "linear-gradient(120deg,#2D6A4F,#52B788)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              flujo crediticio digital
+            </span>
+          </motion.h1>
+
+          <motion.p variants={fadeUp} className="mb-8 max-w-[540px] text-[18.5px] leading-[1.55] text-[#5A6470]">
+            AgroCredit conecta clientes, contadores y financistas sobre una carpeta ordenada,
+            auditable y lista para acelerar decisiones de credito.
+          </motion.p>
+
+          <motion.div variants={fadeUp} className="grid max-w-[560px] grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              { icon: ShieldCheck, label: "Accesos auditados", tone: "#2D6A4F", bg: "#EAF7F0" },
+              { icon: FileCheck2, label: "Carpetas validadas", tone: "#1D3557", bg: "#E2EAF3" },
+              { icon: LockKeyhole, label: "Permisos por rol", tone: "#9a7d2e", bg: "#F6E8C3" },
+            ].map((item) => {
+              const Icon = item.icon
               return (
-                <article
-                  key={option.type}
-                  className="overflow-hidden rounded-xl border border-[#dde4dc] bg-white shadow-sm transition hover:shadow-md cursor-pointer"
-                  onClick={() => setActive(option.type)}
-                >
-                  <div className="relative h-44">
-                    <img src={option.image} alt={option.title} className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4 text-white">
-                      <p className="text-xl font-bold leading-tight">{option.title}</p>
-                    </div>
+                <div key={item.label} className="rounded-[18px] border border-[#E7EAEE] bg-white px-4 py-4 shadow-sm">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[12px]" style={{ background: item.bg, color: item.tone }}>
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <div className="flex flex-col gap-4 p-5">
-                    <p className="text-sm leading-6 text-[#59675f]">{option.description}</p>
-                    <button
-                      className="inline-flex h-10 items-center justify-center rounded-full text-sm font-bold text-white transition"
-                      style={{ backgroundColor: option.accent }}
-                    >
-                      <Icon className="mr-2 size-4" />
-                      Registrarme
-                    </button>
-                  </div>
-                </article>
+                  <p className="text-[13.5px] font-bold leading-[1.25] text-[#212529]">{item.label}</p>
+                </div>
               )
             })}
+          </motion.div>
+        </motion.div>
+
+        <motion.div variants={stagger(0.12)} initial="hidden" animate="show" className="grid gap-5">
+          {roleOptions.map((option) => {
+            const Icon = option.icon
+            return (
+              <motion.article
+                key={option.href}
+                variants={fadeUp}
+                whileHover={{ y: -5, boxShadow: "0 18px 50px rgba(20,40,65,.13),0 6px 16px rgba(20,40,65,.06)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                className="overflow-hidden rounded-[22px] border border-[#E7EAEE] bg-white shadow-sm"
+              >
+                <Link href={option.href} className="grid gap-0 sm:grid-cols-[9px_1fr]">
+                  <span className="hidden sm:block" style={{ background: option.accent }} />
+                  <div className="p-6 sm:p-7">
+                    <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                      <div className="flex gap-4">
+                        <div
+                          className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[16px] border"
+                          style={{ background: option.soft, color: option.accent, borderColor: option.border }}
+                        >
+                          <Icon className="h-7 w-7" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-[.12em] text-[#8A93A0]">{option.eyebrow}</p>
+                          <h2 className="mt-1 text-[24px] font-extrabold leading-[1.05] tracking-[-0.025em] text-[#212529]">
+                            {option.title}
+                          </h2>
+                          <p className="mt-2 max-w-[520px] text-[14.5px] leading-[1.45] text-[#5A6470]">{option.description}</p>
+                        </div>
+                      </div>
+
+                      <span
+                        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[13px] px-5 text-[14px] font-bold text-white shadow-[0_6px_16px_rgba(20,40,65,.18)]"
+                        style={{ background: option.accent }}
+                      >
+                        {option.cta}
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
+                    </div>
+
+                    <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                      {option.items.map((item) => (
+                        <div key={item} className="flex items-center gap-2 rounded-[12px] border border-[#E7EAEE] bg-[#F8F9FA] px-3 py-2 text-[12.5px] font-semibold text-[#5A6470]">
+                          <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: option.accent }} />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              </motion.article>
+            )
+          })}
+        </motion.div>
+      </section>
+
+      <section className="border-t border-[#E7EAEE] bg-white py-10">
+        <div className="mx-auto grid max-w-[1180px] gap-6 px-7 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+          <div>
+            <p className="text-[12px] font-bold uppercase tracking-[.12em] text-[#2D6A4F]">Flujo conectado</p>
+            <p className="mt-2 text-[16px] font-semibold text-[#212529]">Cliente, contador y financista trabajan sobre la misma carpeta.</p>
           </div>
 
-          <p className="text-center text-sm text-[#59675f]">
-            Ya tenés cuenta?{" "}
-            <Link href="/login" className="font-semibold text-[#063c31] hover:underline">
+          <div className="relative flex items-center gap-4">
+            {["Cliente", "Contador", "Financista"].map((label, index) => (
+              <div key={label} className="relative flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[14px] border border-[#E7EAEE] bg-[#F8F9FA] text-[12px] font-extrabold text-[#212529]">
+                  {index + 1}
+                </div>
+                {index < 2 ? (
+                  <div className="relative h-0.5 w-12 bg-[#E7EAEE]">
+                    <span
+                      className="connector-pulse"
+                      style={{
+                        background: index === 0 ? "#52B788" : "#3A6491",
+                        boxShadow: index === 0 ? "0 0 0 4px rgba(82,183,136,.2)" : "0 0 0 4px rgba(58,100,145,.2)",
+                        animationDelay: index === 0 ? "0s" : "1.3s",
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[14px] leading-[1.55] text-[#5A6470] lg:text-right">
+            Si ya tenes cuenta, podes entrar directo con tu usuario y continuar desde tu panel.
+            <Link href="/login" className="ml-1 font-bold text-[#2D6A4F] hover:text-[#1B4332]">
               Iniciar sesion
             </Link>
           </p>
         </div>
-      </main>
-
-      <Modal open={active !== null} option={activeOption} onClose={() => setActive(null)} />
-    </>
+      </section>
+    </main>
   )
 }

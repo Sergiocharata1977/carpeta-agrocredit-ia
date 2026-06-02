@@ -229,6 +229,22 @@ Pendiente:
 
 - Luego del push, verificar en Vercel que el nuevo deployment pase de `Error` a `Building/Ready`.
 
+## Cambios de esta sesion - Registro alineado a landing Motion
+
+**Fecha:** 2026-06-02  
+**Motivo:** La pantalla `/registro` no tenia el mismo lenguaje visual que la landing publica.
+
+Cambios realizados:
+
+- `app/registro/page.tsx` redisenada con el mismo sistema visual de `app/page.tsx`: header de marca, fondo radial claro, tipografia Inter, paleta verde/azul/dorado, cards limpias por rol y bloque de flujo conectado.
+- Se agrego Motion en `/registro` para entrada escalonada del hero, cards por rol y hover animado.
+- Las cards ahora linkean a los flujos reales `/registro/usuario`, `/registro/contador` y `/registro/entidad`, en vez de abrir un modal duplicado.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm build`: OK, 35 paginas generadas.
+
 ### Proximos pendientes
 
 - Plan 004 Ola 3 (acceso temporizado): `ScopeGuard`, `GrantStatusBanner`, `GrantExpiredBlocker`, vista carpeta entidad con guard.
