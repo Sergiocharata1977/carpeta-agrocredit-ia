@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AccountingPeriodSelector } from "@/components/accounting/AccountingPeriodSelector"
 import { BalanceSheetForm } from "@/components/accounting/BalanceSheetForm"
 import { IncomeStatementForm } from "@/components/accounting/IncomeStatementForm"
+import { StatementImportReview } from "@/components/accounting/StatementImportReview"
+import { StatementImportUploader } from "@/components/accounting/StatementImportUploader"
 import { TaxGridForm } from "@/components/accounting/TaxGridForm"
 import { EntitySelector } from "@/components/producers/EntitySelector"
 import { getFirebaseDb } from "@/lib/firebase/config"
@@ -40,6 +42,9 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
   const [incomeStatements, setIncomeStatements] = useState<IncomeStatement[]>([])
   const [taxDocuments, setTaxDocuments] = useState<TaxDocument[]>([])
   const [loadingPeriodData, setLoadingPeriodData] = useState(false)
+  const [balanceImportId, setBalanceImportId] = useState<string | null>(null)
+  const [incomeImportId, setIncomeImportId] = useState<string | null>(null)
+  const [combinedImportId, setCombinedImportId] = useState<string | null>(null)
 
   const isRootEntity = activeEntityId === producerId
   const createdBy = user?.uid ?? ""
@@ -108,9 +113,33 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
     setBalanceSheets([])
     setIncomeStatements([])
     setTaxDocuments([])
+    setBalanceImportId(null)
+    setIncomeImportId(null)
+    setCombinedImportId(null)
     if (entityId !== producerId && activeTab === "impuestos") {
       setActiveTab("balance")
     }
+  }
+
+  async function refreshPeriodData() {
+    if (!selectedPeriodId) return
+    const [bs, income, taxes] = await Promise.all([
+      getBalanceSheetsForPeriod(activeEntityId, selectedPeriodId),
+      getIncomeStatementsForPeriod(activeEntityId, selectedPeriodId),
+      isRootEntity
+        ? getTaxDocumentsForPeriod(activeEntityId, selectedPeriodId)
+        : Promise.resolve([] as TaxDocument[]),
+    ])
+    setBalanceSheets(bs)
+    setIncomeStatements(income)
+    setTaxDocuments(taxes)
+  }
+
+  function handlePeriodChange(periodId: string | null) {
+    setSelectedPeriodId(periodId)
+    setBalanceImportId(null)
+    setIncomeImportId(null)
+    setCombinedImportId(null)
   }
 
   function fmt(n: number, currency: string) {
@@ -139,7 +168,7 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
                 organizationId={activeEntityId}
                 createdBy={createdBy}
                 selectedPeriodId={selectedPeriodId}
-                onPeriodChange={setSelectedPeriodId}
+                onPeriodChange={handlePeriodChange}
               />
             </div>
           </CardContent>
@@ -161,42 +190,72 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
               <CardHeader>
                 <CardTitle className="text-base">Estado de situacion patrimonial</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 {loadingPeriodData ? (
                   <div className="space-y-3">
                     <Skeleton className="h-9 w-full" />
                     <Skeleton className="h-9 w-full" />
                   </div>
-                ) : balanceSheets.length === 0 ? (
-                  <BalanceSheetForm
-                    producerId={activeEntityId}
-                    organizationId={activeEntityId}
-                    periodId={selectedPeriodId}
-                    createdBy={createdBy}
-                    onSuccess={() => getBalanceSheetsForPeriod(activeEntityId, selectedPeriodId).then(setBalanceSheets)}
-                  />
                 ) : (
-                  <div className="space-y-3">
-                    {balanceSheets.map((bs) => (
-                      <div key={bs.id} className="rounded-md border p-4 text-sm">
-                        <div className="grid gap-4 sm:grid-cols-3">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Total activo</p>
-                            <p className="font-semibold">{fmt(bs.assetsTotal, bs.currency)}</p>
+                  <>
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      <StatementImportUploader
+                        producerId={activeEntityId}
+                        periodId={selectedPeriodId}
+                        kind="balance_sheet"
+                        onExtracted={setBalanceImportId}
+                      />
+                      <StatementImportUploader
+                        producerId={activeEntityId}
+                        periodId={selectedPeriodId}
+                        kind="combined"
+                        onExtracted={setCombinedImportId}
+                      />
+                    </div>
+
+                    {(combinedImportId ?? balanceImportId) && (
+                      <StatementImportReview
+                        importId={(combinedImportId ?? balanceImportId)!}
+                        onApplied={() => {
+                          setBalanceImportId(null)
+                          setCombinedImportId(null)
+                          void refreshPeriodData()
+                        }}
+                      />
+                    )}
+
+                    {balanceSheets.length === 0 ? (
+                      <BalanceSheetForm
+                        producerId={activeEntityId}
+                        organizationId={activeEntityId}
+                        periodId={selectedPeriodId}
+                        createdBy={createdBy}
+                        onSuccess={() => getBalanceSheetsForPeriod(activeEntityId, selectedPeriodId).then(setBalanceSheets)}
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        {balanceSheets.map((bs) => (
+                          <div key={bs.id} className="rounded-md border p-4 text-sm">
+                            <div className="grid gap-4 sm:grid-cols-3">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Total activo</p>
+                                <p className="font-semibold">{fmt(bs.assetsTotal, bs.currency)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Total pasivo</p>
+                                <p className="font-semibold">{fmt(bs.liabilitiesTotal, bs.currency)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Patrimonio neto</p>
+                                <p className="font-semibold">{fmt(bs.equityTotal, bs.currency)}</p>
+                              </div>
+                            </div>
+                            {bs.observations && <p className="mt-2 text-xs text-muted-foreground">{bs.observations}</p>}
                           </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Total pasivo</p>
-                            <p className="font-semibold">{fmt(bs.liabilitiesTotal, bs.currency)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Patrimonio neto</p>
-                            <p className="font-semibold">{fmt(bs.equityTotal, bs.currency)}</p>
-                          </div>
-                        </div>
-                        {bs.observations && <p className="mt-2 text-xs text-muted-foreground">{bs.observations}</p>}
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -207,46 +266,67 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
               <CardHeader>
                 <CardTitle className="text-base">Estado de resultados</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 {loadingPeriodData ? (
                   <div className="space-y-3">
                     <Skeleton className="h-9 w-full" />
                     <Skeleton className="h-9 w-full" />
                   </div>
-                ) : incomeStatements.length === 0 ? (
-                  <IncomeStatementForm
-                    producerId={activeEntityId}
-                    organizationId={activeEntityId}
-                    periodId={selectedPeriodId}
-                    createdBy={createdBy}
-                    onSuccess={() =>
-                      getIncomeStatementsForPeriod(activeEntityId, selectedPeriodId).then(setIncomeStatements)
-                    }
-                  />
                 ) : (
-                  <div className="space-y-3">
-                    {incomeStatements.map((statement) => (
-                      <div key={statement.id} className="rounded-md border p-4 text-sm">
-                        <div className="grid gap-4 sm:grid-cols-3">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Ventas netas</p>
-                            <p className="font-semibold">{fmt(statement.sales, statement.currency)}</p>
+                  <>
+                    <StatementImportUploader
+                      producerId={activeEntityId}
+                      periodId={selectedPeriodId}
+                      kind="income_statement"
+                      onExtracted={setIncomeImportId}
+                    />
+
+                    {incomeImportId && (
+                      <StatementImportReview
+                        importId={incomeImportId}
+                        onApplied={() => {
+                          setIncomeImportId(null)
+                          void refreshPeriodData()
+                        }}
+                      />
+                    )}
+
+                    {incomeStatements.length === 0 ? (
+                      <IncomeStatementForm
+                        producerId={activeEntityId}
+                        organizationId={activeEntityId}
+                        periodId={selectedPeriodId}
+                        createdBy={createdBy}
+                        onSuccess={() =>
+                          getIncomeStatementsForPeriod(activeEntityId, selectedPeriodId).then(setIncomeStatements)
+                        }
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        {incomeStatements.map((statement) => (
+                          <div key={statement.id} className="rounded-md border p-4 text-sm">
+                            <div className="grid gap-4 sm:grid-cols-3">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Ventas netas</p>
+                                <p className="font-semibold">{fmt(statement.sales, statement.currency)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Resultado bruto</p>
+                                <p className="font-semibold">{fmt(statement.grossResult, statement.currency)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Resultado neto</p>
+                                <p className="font-semibold">{fmt(statement.netResult, statement.currency)}</p>
+                              </div>
+                            </div>
+                            {statement.observations && (
+                              <p className="mt-2 text-xs text-muted-foreground">{statement.observations}</p>
+                            )}
                           </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Resultado bruto</p>
-                            <p className="font-semibold">{fmt(statement.grossResult, statement.currency)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Resultado neto</p>
-                            <p className="font-semibold">{fmt(statement.netResult, statement.currency)}</p>
-                          </div>
-                        </div>
-                        {statement.observations && (
-                          <p className="mt-2 text-xs text-muted-foreground">{statement.observations}</p>
-                        )}
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

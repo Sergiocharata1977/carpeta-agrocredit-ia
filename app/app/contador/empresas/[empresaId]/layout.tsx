@@ -3,9 +3,12 @@
 import { use, useCallback, useEffect, useState, type ReactNode } from "react"
 import { getDoc, doc } from "firebase/firestore"
 import { toast } from "sonner"
+import { Send } from "lucide-react"
 import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { useSession } from "@/lib/auth/session"
+import { Button } from "@/components/ui/button"
+import { CreateAccessInvitationDialog } from "@/components/access/CreateAccessInvitationDialog"
 import { EmpresaHeader } from "@/components/empresas/EmpresaHeader"
 import { EmpresaSubNav } from "@/components/empresas/EmpresaSubNav"
 import type { AgroActivity, Organization, OrganizationType } from "@/types/auth"
@@ -22,6 +25,7 @@ export default function EmpresaLayout({ children, params }: EmpresaLayoutProps) 
   const [empresa, setEmpresa] = useState<Organization | null>(null)
   const [parentName, setParentName] = useState<string | undefined>()
   const [loading, setLoading] = useState(true)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
 
   const loadEmpresa = useCallback(async () => {
     setLoading(true)
@@ -58,19 +62,36 @@ export default function EmpresaLayout({ children, params }: EmpresaLayoutProps) 
 
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
-      <EmpresaHeader
-        legalName={empresa?.legalName}
-        taxId={empresa?.taxId}
-        activity={empresa?.activity as AgroActivity | undefined}
-        province={empresa?.province}
-        city={empresa?.city}
-        orgType={empresa?.type as OrganizationType | undefined}
-        parentLegalName={empresa?.type === "system_user_entity" ? parentName : undefined}
-        parentClientId={empresa?.parentOrganizationId}
-        loading={sessionLoading || loading}
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <EmpresaHeader
+          legalName={empresa?.legalName}
+          taxId={empresa?.taxId}
+          activity={empresa?.activity as AgroActivity | undefined}
+          province={empresa?.province}
+          city={empresa?.city}
+          orgType={empresa?.type as OrganizationType | undefined}
+          parentLegalName={empresa?.type === "system_user_entity" ? parentName : undefined}
+          parentClientId={empresa?.parentOrganizationId}
+          loading={sessionLoading || loading}
+        />
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={sessionLoading || loading}
+          onClick={() => setInviteDialogOpen(true)}
+        >
+          <Send className="size-4" />
+          Compartir
+        </Button>
+      </div>
       <EmpresaSubNav empresaId={empresaId} />
       {children}
+      <CreateAccessInvitationDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        targetOrganizationId={empresaId}
+        onCreated={() => toast.success("Invitacion creada. Queda pendiente de aprobacion del cliente.")}
+      />
     </div>
   )
 }

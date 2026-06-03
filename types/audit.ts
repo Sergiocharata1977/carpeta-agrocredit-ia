@@ -21,6 +21,7 @@ export type AuditAction =
   | "access_request.revoked"
   | "access_grant.created"
   | "access_grant.revoked"
+  | "credit_folder.viewed"
   | "financing_request.created"
   | "financing_request.status_changed"
   | "user.login"

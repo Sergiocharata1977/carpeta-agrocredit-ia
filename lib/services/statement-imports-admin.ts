@@ -17,7 +17,13 @@ export async function getStatementImport(importId: string): Promise<FinancialSta
   const db = getAdminDb()
   const snap = await db.collection(COLLECTIONS.FINANCIAL_STATEMENT_IMPORTS).doc(importId).get()
   if (!snap.exists) return null
-  return { id: snap.id, ...snap.data() } as FinancialStatementImport
+  const data = snap.data() ?? {}
+  return {
+    id: snap.id,
+    ...data,
+    createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? data.createdAt,
+    updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() ?? data.updatedAt,
+  } as FinancialStatementImport
 }
 
 export async function updateStatementImport(

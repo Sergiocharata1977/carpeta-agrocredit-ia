@@ -3,7 +3,32 @@
 **Fecha:** 2026-05-29  
 **Proyecto:** `Agro-Credit` / `carpeta-agrocredit-ia`  
 **Stack:** Next.js App Router + Firebase + TypeScript  
-**Estado real:** Plan 004 con Ola 1 completa y Ola 2 implementada. Ola 3 pendiente con una parte adelantada.
+**Estado real:** OCR/IA EECC e invitaciones por link implementados v1. Los planes MD 006 y 009 fueron eliminados a pedido del usuario.
+
+---
+
+## Cierre 2026-06-03 - OCR/IA EECC e invitaciones por link
+
+Implementado:
+
+- OCR/IA EECC: upload PDF/imagen/Excel, provider Claude/mock/Excel, borrador `financial_statement_imports`, preview editable y apply server-side a `balance_sheets` / `income_statements`.
+- Invitaciones por link: token hasheado, aprobacion, reemision segura de link, aceptacion publica, creacion/revocacion de `access_grant` y vista read-only server-side por scopes.
+- Entidades solicitantes ya no leen colecciones contables directo por Firestore rules; pasan por `GET /api/folders/[targetOrgId]/readonly`.
+
+Planes MD borrados:
+
+- `reports/006_PLAN_OCR_IA_EECC.md`
+- `reports/009_PLAN_INVITACIONES_ACCESO_POR_LINK.md`
+
+Validacion:
+
+- `npm run type-check`: OK.
+- `npm run check:security-shape`: OK.
+
+Pendientes operativos:
+
+- Configurar `ANTHROPIC_API_KEY` en produccion.
+- Desplegar `firestore.rules` y `storage.rules`.
 
 ---
 
@@ -372,7 +397,7 @@ Pendientes/riesgos:
 
 Archivos principales:
 
-- `reports/006_PLAN_OCR_IA_EECC.md`
+- Plan historico eliminado el 2026-06-03 a pedido del usuario.
 
 Cambios realizados:
 

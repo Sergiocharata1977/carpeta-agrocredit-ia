@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { Building2, PlusCircle, UserRound } from "lucide-react"
+import { Building2, PlusCircle, Send, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { getDoc, doc } from "firebase/firestore"
 import { Badge } from "@/components/ui/badge"
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
+import { CreateAccessInvitationDialog } from "@/components/access/CreateAccessInvitationDialog"
 import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { getFreshIdToken } from "@/lib/firebase/auth-client"
@@ -84,6 +85,7 @@ export default function ClienteSinglePage({ params }: PageProps) {
   const [entities, setEntities] = useState<ChildEntity[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<EntityFormState>(() => emptyEntityForm())
 
@@ -181,25 +183,31 @@ export default function ClienteSinglePage({ params }: PageProps) {
   return (
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
       {/* Encabezado */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {client?.legalName ?? "Cliente"}
-        </h1>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-          {client?.taxId && <span>CUIT: {client.taxId}</span>}
-          {client?.activity && (
-            <>
-              <span aria-hidden="true">|</span>
-              <span>{ACTIVITY_LABELS[client.activity] ?? client.activity}</span>
-            </>
-          )}
-          {(client?.city || client?.province) && (
-            <>
-              <span aria-hidden="true">|</span>
-              <span>{[client?.city, client?.province].filter(Boolean).join(", ")}</span>
-            </>
-          )}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {client?.legalName ?? "Cliente"}
+          </h1>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            {client?.taxId && <span>CUIT: {client.taxId}</span>}
+            {client?.activity && (
+              <>
+                <span aria-hidden="true">|</span>
+                <span>{ACTIVITY_LABELS[client.activity] ?? client.activity}</span>
+              </>
+            )}
+            {(client?.city || client?.province) && (
+              <>
+                <span aria-hidden="true">|</span>
+                <span>{[client?.city, client?.province].filter(Boolean).join(", ")}</span>
+              </>
+            )}
+          </div>
         </div>
+        <Button variant="outline" className="gap-2" onClick={() => setInviteDialogOpen(true)}>
+          <Send className="size-4" />
+          Compartir con financista
+        </Button>
       </div>
 
       {/* Datos personales */}
@@ -363,6 +371,13 @@ export default function ClienteSinglePage({ params }: PageProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <CreateAccessInvitationDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        targetOrganizationId={clientId}
+        onCreated={() => toast.success("Invitacion creada. Queda pendiente de aprobacion del cliente.")}
+      />
     </div>
   )
 }

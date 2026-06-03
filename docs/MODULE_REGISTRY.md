@@ -81,8 +81,8 @@
 |---|---|---|---|---|
 | `access_requests` | ga | `/app/entidad/accesos` · `/app/productor/autorizaciones` | `lib/services/access-requests.ts` | `access_requests` |
 | `access_grants` | ga | `/app/productor/autorizaciones` | `lib/services/access-grants.ts` | `access_grants` |
-| `access_invitations` | draft | `/app/productor/autorizaciones` · `/invitar/acceso/[token]` · `/app/entidad/carpetas/[targetOrgId]` | — pendiente — | `access_invitations` |
-| `scope_guard` | draft | — (componente transversal) | — pendiente — | `access_grants` |
+| `access_invitations` | ga | `/app/productor/autorizaciones` · `/app/contador/clientes/[clientId]` · `/app/contador/empresas/[empresaId]` · `/invitar/acceso/[token]` · `/app/entidad/carpetas/[targetOrgId]` | `app/api/access-invitations/*` · `lib/auth/access-invitation-access.ts` · `components/access/CreateAccessInvitationDialog.tsx` · `AccessInvitationTable.tsx` · `AcceptAccessInvitation.tsx` | `access_invitations` |
+| `scope_guard` | ga | `/app/entidad/carpetas/[targetOrgId]` | `app/api/folders/[targetOrgId]/readonly` · `components/access/ScopeGuard.tsx` · `GrantStatusBanner.tsx` · `GrantExpiredBlocker.tsx` | `access_grants` |
 
 ### DOMINIO: FINANCIACIÓN
 
@@ -101,7 +101,7 @@
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `statement_imports` | draft | `/app/contador/empresas/[id]/carpeta` (integrado) | — pendiente Ola 2 — | `financial_statement_imports` |
+| `statement_imports` | ga | `/app/contador/productores/[producerId]/carpeta` · `/app/contador/empresas/[empresaId]/carpeta` | `app/api/accounting/statements/extract` · `app/api/accounting/statement-imports/*` · `lib/services/statement-imports-admin.ts` · `lib/ocr/*` · `components/accounting/StatementImport*` | `financial_statement_imports` |
 
 ### DOMINIO: HABILITACIÓN DE ESTUDIOS (ADMIN)
 
@@ -161,8 +161,8 @@
 | `financing_requests` | financing_requests | ga | Solicitudes de financiación |
 | `audit_logs` | audit_logs | ga | Auditoría inmutable lógica |
 | `notifications` | notifications | ga | Notificaciones internas |
-| `financial_statement_imports` | statement_imports | draft | Borradores de importación OCR/IA de EECC — Plan 006 |
-| `access_invitations` | access_invitations | draft | Invitaciones de acceso por link — Plan 009 |
+| `financial_statement_imports` | statement_imports | ga | Borradores de importación OCR/IA de EECC |
+| `access_invitations` | access_invitations | ga | Invitaciones de acceso por link |
 
 ---
 

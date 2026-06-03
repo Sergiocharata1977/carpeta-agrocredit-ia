@@ -8,6 +8,22 @@
 
 ---
 
+## Actualizacion 2026-06-03
+
+Planes cerrados en v1:
+
+- OCR/IA EECC: implementado flujo upload PDF/imagen/Excel, extraccion Claude/mock/Excel, borrador `financial_statement_imports`, preview editable con confianza y apply server-side a `balance_sheets` / `income_statements`.
+- Invitaciones por link: implementado flujo con token hasheado, aprobacion, reemision segura de link, aceptacion publica, creacion de `access_grant`, revocacion y vista read-only server-side por scopes.
+- `004_PLAN_ONBOARDING_Y_REGISTRO.md` Ola 3: `ScopeGuard`, `GrantStatusBanner`, `GrantExpiredBlocker` y carpeta read-only de entidad quedan operativos.
+
+Pendientes reales:
+
+- Configurar `ANTHROPIC_API_KEY` en produccion para usar Claude Vision; sin esa variable funciona el mock.
+- Deploy de `firestore.rules` y `storage.rules`.
+- Plan 005 Integration Core sigue pendiente.
+
+---
+
 ## 1. Qué es el producto
 
 **Carpeta crediticia agrofinanciera digital multi-tenant.**
@@ -77,8 +93,6 @@ El contador habilitado carga la información contable, fiscal y patrimonial del 
 | `000_ESTADO_ACTUAL_PROYECTO.md` | Activo | Este documento — visión completa y reglas de negocio |
 | `004_PLAN_ONBOARDING_Y_REGISTRO.md` | **Ola 3 pendiente** | ScopeGuard, GrantStatusBanner, GrantExpiredBlocker, vista carpeta entidad |
 | `005_ROADMAP_INTEGRATION_CORE.md` | **Olas 4-9 pendientes** | API hub, webhooks, API keys, SDK, MCP Don Cándido IA |
-| `006_PLAN_OCR_IA_EECC.md` | **Pendiente completo** | Upload PDF/Excel → OCR Claude API → mapper → preview → guardar |
-| `009_PLAN_INVITACIONES_ACCESO_POR_LINK.md` | **Draft listo para implementar** | Cliente/contador envia link a financista o tercero, receptor crea clave y ve solo scopes autorizados |
 | `HANDOFF_ACTUAL.md` | Activo | Estado por sesión, archivos modificados, pendientes inmediatos |
 
 **Documentos eliminados (planes completados):**
@@ -100,14 +114,14 @@ El contador habilitado carga la información contable, fiscal y patrimonial del 
 - [ ] Vista carpeta para entidad solicitante con guard por scope
 - [ ] `components/access/AuthorizationDecisionDialog.tsx` — mostrar días solicitados, `approvedDays` editable
 
-### Plan 009 — Invitaciones de acceso por link
+### Invitaciones de acceso por link — implementado v1
 
-- [ ] Colección `access_invitations` con token hasheado, vencimiento, destinatario y scopes
-- [ ] APIs para crear, aprobar, aceptar y revocar invitaciones
-- [ ] UI "Compartir carpeta" para cliente y contador
-- [ ] Pantalla pública `/invitar/acceso/[token]` con registro/login del receptor
-- [ ] Creación de `access_grant` al aceptar la invitación
-- [ ] Vista read-only de carpeta con `ScopeGuard` y auditoría de acceso
+- [x] Colección `access_invitations` con token hasheado, vencimiento, destinatario y scopes
+- [x] APIs para crear, aprobar, aceptar, revocar y regenerar link
+- [x] UI "Compartir carpeta" para cliente y contador
+- [x] Pantalla pública `/invitar/acceso/[token]` con registro/login del receptor
+- [x] Creación de `access_grant` al aceptar la invitación
+- [x] Vista read-only de carpeta con `ScopeGuard` y auditoría de acceso
 
 ### Plan sin número — Habilitación de contadores (NUEVO — regla de negocio)
 
@@ -127,13 +141,13 @@ El contador habilitado carga la información contable, fiscal y patrimonial del 
 - [ ] Ola 8: MCP para Don Cándido IA
 - [ ] Ola 9: Integración piloto externa (Agro Biciuffa o 9001app)
 
-### Plan 006 — OCR/IA para EECC
+### OCR/IA para EECC — implementado v1
 
-- [ ] Ola 1: Storage path + endpoint upload + colección `financial_statement_imports`
-- [ ] Ola 2: Extracción Claude API (Vision) → mapper a rubros canónicos
-- [ ] Ola 3: Preview editable con confianza por campo
-- [ ] Ola 4: Aplicación final a Balance/Resultados con confirmación del contador
-- [ ] Variable de entorno: `ANTHROPIC_API_KEY` (server-side)
+- [x] Storage path + endpoint upload + colección `financial_statement_imports`
+- [x] Extracción Claude API/mock/Excel → mapper a rubros canónicos
+- [x] Preview editable con confianza por campo
+- [x] Aplicación final a Balance/Resultados con confirmación del contador
+- [ ] Variable de entorno `ANTHROPIC_API_KEY` en producción
 
 ---
 

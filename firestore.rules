@@ -43,23 +43,16 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/organization_members/$(memberId)).data.status == 'active';
     }
 
-    // Verifica si hay un access_grant activo y no vencido para el solicitante sobre esa org
-    // Nota: validación fina de scopes se hace server-side en API routes
-    function isRequestingEntityWithDefaultOrg() {
-      return isRequestingEntity() && defaultOrgId() != null;
-    }
-
     // Puede leer datos de carpeta de una organización si:
     // - Es admin de plataforma
     // - Es contador con membership activa en cualquier org (acceso server-side valida el vínculo)
     // - Es miembro activo de esa organización (system_user viendo su propia carpeta)
-    // - Es entidad solicitante (server-side valida el grant activo y los scopes)
+    // - Las entidades solicitantes leen carpeta solo por API server-side con grant y scopes.
     function canReadFolderData(folderOwnerOrgId) {
       return isAuthenticated() && (
         isAdminPlatform() ||
         isAccountant() ||
-        isMemberOf(folderOwnerOrgId) ||
-        isRequestingEntityWithDefaultOrg()
+        isMemberOf(folderOwnerOrgId)
       );
     }
 

@@ -8,7 +8,10 @@ import {
   requireAnyRole,
   verifyRequestSession,
 } from "@/lib/auth/server-session"
-import { assertCanControlInvitation } from "@/lib/auth/access-invitation-access"
+import {
+  assertCanControlInvitation,
+  createInvitationToken,
+} from "@/lib/auth/access-invitation-access"
 
 export async function POST(
   request: NextRequest,
@@ -20,7 +23,6 @@ export async function POST(
 
     const { invitationId } = await params
     const db = getAdminDb()
-    const now = FieldValue.serverTimestamp()
     const ref = db.collection(COLLECTIONS.ACCESS_INVITATIONS).doc(invitationId)
     const snap = await ref.get()
 
@@ -31,31 +33,32 @@ export async function POST(
     const invitation = snap.data()!
     await assertCanControlInvitation(session, invitation)
 
-    if (invitation.status === "revoked") {
-      return Response.json({ error: "Ya esta revocada" }, { status: 409 })
+    if (invitation.status !== "sent") {
+      return Response.json({ error: "Solo se puede generar link para invitaciones enviadas" }, { status: 409 })
     }
 
-    await ref.update({ status: "revoked", updatedAt: now })
-
-    if (invitation.accessGrantId) {
-      await db.collection(COLLECTIONS.ACCESS_GRANTS).doc(invitation.accessGrantId).update({
-        status: "revoked",
-        revokedBy: session.uid,
-        revokedAt: new Date().toISOString(),
-        updatedAt: now,
-      })
-    }
+    const { rawToken, tokenHash, tokenExpiresAt } = createInvitationToken()
+    await ref.update({
+      tokenHash,
+      tokenExpiresAt,
+      updatedAt: FieldValue.serverTimestamp(),
+    })
 
     await writeAuditLog({
       actorUid: session.uid,
       actorOrganizationId: session.defaultOrganizationId,
-      action: "access_invitation.revoked",
+      action: "access_invitation.sent",
       targetType: "access_invitation",
       targetId: invitationId,
-      metadata: { recipientEmail: invitation.recipientEmail },
+      metadata: { reissued: true, recipientEmail: invitation.recipientEmail },
     })
 
-    return Response.json({ ok: true })
+    return Response.json({
+      ok: true,
+      token: rawToken,
+      inviteUrl: `/invitar/acceso/${rawToken}`,
+      tokenExpiresAt,
+    })
   } catch (error) {
     return getAuthErrorResponse(error)
   }

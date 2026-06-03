@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server"
-import { randomBytes, createHash } from "crypto"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import { verifyRequestSession, requireAnyRole, getAuthErrorResponse } from "@/lib/auth/server-session"
+import { createInvitationToken } from "@/lib/auth/access-invitation-access"
 import { FieldValue } from "firebase-admin/firestore"
 
 export async function POST(
@@ -37,10 +37,7 @@ export async function POST(
       return Response.json({ error: "No tenés permiso para aprobar esta invitación" }, { status: 403 })
     }
 
-    // Generar nuevo token al aprobar
-    const rawToken = randomBytes(32).toString("hex")
-    const tokenHash = createHash("sha256").update(rawToken).digest("hex")
-    const tokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    const { rawToken, tokenHash, tokenExpiresAt } = createInvitationToken()
 
     await ref.update({
       status: "sent",
@@ -55,6 +52,15 @@ export async function POST(
       actorUid: session.uid,
       actorOrganizationId: session.defaultOrganizationId,
       action: "access_invitation.approved",
+      targetType: "access_invitation",
+      targetId: invitationId,
+      metadata: { recipientEmail: invitation.recipientEmail },
+    })
+
+    await writeAuditLog({
+      actorUid: session.uid,
+      actorOrganizationId: session.defaultOrganizationId,
+      action: "access_invitation.sent",
       targetType: "access_invitation",
       targetId: invitationId,
       metadata: { recipientEmail: invitation.recipientEmail },

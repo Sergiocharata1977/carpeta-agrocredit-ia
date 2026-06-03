@@ -1,24 +1,23 @@
 import { NextRequest } from "next/server"
-import { createHash } from "crypto"
+import { FieldValue } from "firebase-admin/firestore"
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
-import { verifyRequestSession, getAuthErrorResponse } from "@/lib/auth/server-session"
-import { FieldValue } from "firebase-admin/firestore"
+import { getAuthErrorResponse, verifyRequestSession } from "@/lib/auth/server-session"
+import { hashInvitationToken } from "@/lib/auth/access-invitation-access"
 
 async function findInvitationByToken(token: string) {
-  const tokenHash = createHash("sha256").update(token).digest("hex")
   const db = getAdminDb()
   const snap = await db
     .collection(COLLECTIONS.ACCESS_INVITATIONS)
-    .where("tokenHash", "==", tokenHash)
+    .where("tokenHash", "==", hashInvitationToken(token))
     .limit(1)
     .get()
+
   if (snap.empty) return null
   return { id: snap.docs[0].id, ...snap.docs[0].data() } as Record<string, unknown> & { id: string }
 }
 
-// GET — pública, devuelve info mínima para la pantalla de aceptación
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
@@ -28,28 +27,25 @@ export async function GET(
     const invitation = await findInvitationByToken(token)
 
     if (!invitation) {
-      return Response.json({ error: "Invitación no encontrada o token inválido" }, { status: 404 })
+      return Response.json({ error: "Invitacion no encontrada o token invalido" }, { status: 404 })
     }
 
     if (invitation.status !== "sent") {
-      return Response.json({ error: "Esta invitación ya no está disponible", status: invitation.status }, { status: 410 })
+      return Response.json({ error: "Esta invitacion ya no esta disponible", status: invitation.status }, { status: 410 })
     }
 
     if (new Date(invitation.tokenExpiresAt as string) < new Date()) {
-      return Response.json({ error: "El link de invitación expiró", status: "expired" }, { status: 410 })
+      return Response.json({ error: "El link de invitacion expiro", status: "expired" }, { status: 410 })
     }
 
-    // Obtener nombre del dueño de la carpeta
-    const db = getAdminDb()
-    const ownerSnap = await db
+    const ownerSnap = await getAdminDb()
       .collection(COLLECTIONS.ORGANIZATIONS)
       .doc(invitation.targetOrganizationId as string)
       .get()
-    const ownerName = ownerSnap.exists ? (ownerSnap.data()?.legalName ?? "") : ""
 
     return Response.json({
       invitationId: invitation.id,
-      ownerName,
+      ownerName: ownerSnap.exists ? (ownerSnap.data()?.legalName ?? "") : "",
       senderRole: invitation.senderRole,
       recipientEmail: (invitation.recipientEmail as string).replace(/(.{2})(.*)(@.*)/, "$1***$3"),
       requestedScopes: invitation.requestedScopes,
@@ -62,7 +58,6 @@ export async function GET(
   }
 }
 
-// POST — requiere sesión; acepta la invitación y crea el grant
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
@@ -70,24 +65,20 @@ export async function POST(
   try {
     const session = await verifyRequestSession(request)
     const { token } = await params
-
     const invitation = await findInvitationByToken(token)
+
     if (!invitation) {
-      return Response.json({ error: "Invitación no encontrada" }, { status: 404 })
+      return Response.json({ error: "Invitacion no encontrada" }, { status: 404 })
     }
-
     if (invitation.status !== "sent") {
-      return Response.json({ error: "Esta invitación ya no está disponible" }, { status: 410 })
+      return Response.json({ error: "Esta invitacion ya no esta disponible" }, { status: 410 })
     }
-
     if (new Date(invitation.tokenExpiresAt as string) < new Date()) {
-      return Response.json({ error: "El link expiró" }, { status: 410 })
+      return Response.json({ error: "El link expiro" }, { status: 410 })
     }
-
-    // Verificar que el email del usuario autenticado coincide
     if (session.email?.toLowerCase() !== (invitation.recipientEmail as string).toLowerCase()) {
       return Response.json(
-        { error: "El email de tu cuenta no coincide con el destinatario de esta invitación" },
+        { error: "El email de tu cuenta no coincide con el destinatario de esta invitacion" },
         { status: 403 },
       )
     }
@@ -96,11 +87,18 @@ export async function POST(
     const now = FieldValue.serverTimestamp()
     const batch = db.batch()
 
-    // Crear o usar organización solicitante del receptor
     let grantedToOrganizationId = session.defaultOrganizationId
+    let canUseCurrentOrg = false
 
-    if (!grantedToOrganizationId) {
-      // Crear org requesting_entity tipo invited
+    if (grantedToOrganizationId) {
+      const currentOrgSnap = await db.collection(COLLECTIONS.ORGANIZATIONS).doc(grantedToOrganizationId).get()
+      canUseCurrentOrg =
+        currentOrgSnap.exists &&
+        currentOrgSnap.data()?.type === "requesting_entity" &&
+        (session.roles.includes("bank_user") || session.roles.includes("agro_company_user"))
+    }
+
+    if (!grantedToOrganizationId || !canUseCurrentOrg) {
       const orgRef = db.collection(COLLECTIONS.ORGANIZATIONS).doc()
       batch.set(orgRef, {
         type: "requesting_entity",
@@ -111,35 +109,28 @@ export async function POST(
         createdAt: now,
         updatedAt: now,
       })
-      batch.set(
-        db.collection(COLLECTIONS.ORGANIZATION_MEMBERS).doc(`${orgRef.id}_${session.uid}`),
-        {
-          organizationId: orgRef.id,
-          uid: session.uid,
-          role: "bank_user",
-          status: "active",
-          invitedBy: invitation.senderUid,
-          createdAt: now,
-          updatedAt: now,
-        },
-      )
+      batch.set(db.collection(COLLECTIONS.ORGANIZATION_MEMBERS).doc(`${orgRef.id}_${session.uid}`), {
+        organizationId: orgRef.id,
+        uid: session.uid,
+        role: "bank_user",
+        status: "active",
+        invitedBy: invitation.senderUid,
+        createdAt: now,
+        updatedAt: now,
+      })
       grantedToOrganizationId = orgRef.id
 
-      // Actualizar claims
-      const auth = getAdminAuth()
-      await auth.setCustomUserClaims(session.uid, {
-        roles: ["bank_user"],
+      await getAdminAuth().setCustomUserClaims(session.uid, {
+        roles: Array.from(new Set([...session.roles, "bank_user"])),
         defaultOrganizationId: orgRef.id,
         orgStatus: "active",
       })
     }
 
-    // Calcular expiresAt del grant
     const startsAt = new Date()
     const expiresAt = new Date(startsAt.getTime() + (invitation.approvedDays as number) * 24 * 60 * 60 * 1000)
-
-    // Crear access_grant
     const grantRef = db.collection(COLLECTIONS.ACCESS_GRANTS).doc()
+
     batch.set(grantRef, {
       targetOrganizationId: invitation.targetOrganizationId,
       targetScope: invitation.targetScope,
@@ -156,9 +147,7 @@ export async function POST(
       updatedAt: now,
     })
 
-    // Marcar invitación como aceptada
-    const invRef = db.collection(COLLECTIONS.ACCESS_INVITATIONS).doc(invitation.id)
-    batch.update(invRef, {
+    batch.update(db.collection(COLLECTIONS.ACCESS_INVITATIONS).doc(invitation.id), {
       status: "accepted",
       acceptedByUid: session.uid,
       acceptedByOrganizationId: grantedToOrganizationId,

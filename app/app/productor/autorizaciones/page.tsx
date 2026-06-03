@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { AuthorizationDecisionDialog } from "@/components/access/AuthorizationDecisionDialog"
 import { AccessRequestTable } from "@/components/access/AccessRequestTable"
 import { RoleGate } from "@/components/auth/RoleGate"
@@ -159,15 +160,41 @@ export default function ProducerAuthorizationsPage() {
 
   async function approveInvitation(invitationId: string) {
     const token = await getIdToken()
-    if (!token) return
+    if (!token) return null
     try {
-      await fetch(`/api/access-invitations/${invitationId}/approve`, {
+      const res = await fetch(`/api/access-invitations/${invitationId}/approve`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({}),
       })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? "No se pudo aprobar la invitacion")
       await loadData()
-    } catch { /* no-op */ }
+      const url = json.inviteUrl ? `${window.location.origin}${json.inviteUrl}` : null
+      if (url) toast.success("Invitacion aprobada. Link copiado.")
+      return url
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo aprobar la invitacion")
+      return null
+    }
+  }
+
+  async function copyInvitationLink(invitationId: string) {
+    const token = await getIdToken()
+    if (!token) return null
+    try {
+      const res = await fetch(`/api/access-invitations/${invitationId}/link`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? "No se pudo generar el link")
+      toast.success("Link regenerado y copiado.")
+      return json.inviteUrl ? `${window.location.origin}${json.inviteUrl}` : null
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo generar el link")
+      return null
+    }
   }
 
   const isLoading = sessionLoading || loadingData
@@ -254,6 +281,7 @@ export default function ProducerAuthorizationsPage() {
                   invitations={invitations}
                   onRevoke={revokeInvitation}
                   onApprove={approveInvitation}
+                  onCopyLink={copyInvitationLink}
                   revoking={revoking}
                 />
               </section>
