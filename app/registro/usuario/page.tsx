@@ -12,17 +12,25 @@ export default function RegistroUsuarioPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
-    setLoading(true)
+    setConfirmError(null)
 
     const form = e.currentTarget
     const displayName = (form.elements.namedItem("displayName") as HTMLInputElement).value
     const email = (form.elements.namedItem("email") as HTMLInputElement).value
     const password = (form.elements.namedItem("password") as HTMLInputElement).value
+    const confirmPassword = (form.elements.namedItem("confirmPassword") as HTMLInputElement).value
 
+    if (password !== confirmPassword) {
+      setConfirmError("Las contraseñas no coinciden")
+      return
+    }
+
+    setLoading(true)
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -72,6 +80,20 @@ export default function RegistroUsuarioPage() {
             <div className="space-y-1.5">
               <Label htmlFor="password">Contraseña</Label>
               <Input id="password" name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                placeholder="Repetí la misma contraseña"
+                minLength={8}
+                required
+              />
+              {confirmError && (
+                <p className="text-sm text-red-600">{confirmError}</p>
+              )}
             </div>
 
             {error && (
