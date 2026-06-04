@@ -20,6 +20,69 @@ export async function POST(request: NextRequest) {
       displayName: data.displayName,
     })
 
+    if (data.role === "system_user") {
+      const orgRef = db.collection(COLLECTIONS.ORGANIZATIONS).doc()
+      const now = FieldValue.serverTimestamp()
+
+      await db.runTransaction(async (transaction) => {
+        transaction.set(orgRef, {
+          type: "system_user",
+          legalName: data.displayName,
+          taxId: "",
+          personType: null,
+          activity: null,
+          province: null,
+          city: null,
+          address: null,
+          phone: null,
+          email: data.email,
+          status: "active",
+          folderStatus: "incomplete",
+          onboardingStatus: "basic_registered",
+          createdBy: userRecord.uid,
+          createdAt: now,
+          updatedAt: now,
+        })
+
+        transaction.set(db.collection(COLLECTIONS.ORGANIZATION_MEMBERS).doc(`${orgRef.id}_${userRecord.uid}`), {
+          organizationId: orgRef.id,
+          uid: userRecord.uid,
+          role: "producer",
+          status: "active",
+          invitedBy: null,
+          createdAt: now,
+          updatedAt: now,
+        })
+
+        transaction.set(db.collection(COLLECTIONS.USERS).doc(userRecord.uid), {
+          uid: userRecord.uid,
+          email: data.email,
+          displayName: data.displayName,
+          defaultOrganizationId: orgRef.id,
+          roles: ["producer"],
+          status: "active",
+          createdAt: now,
+          updatedAt: now,
+        })
+      })
+
+      await auth.setCustomUserClaims(userRecord.uid, {
+        roles: ["producer"],
+        defaultOrganizationId: orgRef.id,
+      })
+
+      await writeAuditLog({
+        actorUid: userRecord.uid,
+        actorOrganizationId: orgRef.id,
+        action: "user.registered",
+        targetType: "user",
+        targetId: userRecord.uid,
+        metadata: { intendedRole: data.role, defaultOrganizationId: orgRef.id },
+      })
+
+      return Response.json({ uid: userRecord.uid, email: data.email, defaultOrganizationId: orgRef.id }, { status: 201 })
+    }
+
     await db.collection(COLLECTIONS.USERS).doc(userRecord.uid).set({
       uid: userRecord.uid,
       email: data.email,

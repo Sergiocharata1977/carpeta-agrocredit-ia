@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Sprout } from "lucide-react"
+import { loginAdmin, getFreshIdToken } from "@/lib/firebase/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,7 +40,9 @@ export default function RegistroUsuarioPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error al registrar")
-      router.push("/login?registered=1")
+      await loginAdmin(email, password)
+      await getFreshIdToken()
+      router.replace("/app")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrar")
     } finally {

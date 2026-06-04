@@ -464,6 +464,7 @@ Pendientes/riesgos:
 
 ## Riesgos y notas
 
+- Cambio 2026-06-04: `/api/auth/register` ahora, cuando recibe `role: "system_user"`, crea una organizacion minima `organizations.type = system_user`, membership activa, claims `roles: ["producer"]` y `defaultOrganizationId`. `/registro/usuario` inicia sesion al terminar y redirige a `/app`. Validacion: `pnpm type-check` OK. Riesgo operativo: cuentas de productor creadas antes de este cambio pueden haber quedado con `roles: []` y requieren reparacion/manual reset si ya existen en Firebase Auth.
 - El proyecto aun conserva rutas y servicios con nombre `productor` por compatibilidad. En UI nueva usar "Usuario del sistema" o "Usuario"; no introducir nuevas superficies con el nombre funcional viejo.
 - `/api/auth/setup-claims` todavia mantiene roles legacy en su schema. Los wizards no lo llaman directamente; las APIs de onboarding setean claims y el cliente refresca token.
 - `ClienteNuevoDialog` usa `/api/onboarding/system-user?createdByAccountant=true`; revisar en Ola 3 si conviene ajustar el backend para que el contador no quede como miembro `producer` del cliente.
