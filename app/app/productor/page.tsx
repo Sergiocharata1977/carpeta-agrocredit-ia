@@ -1,202 +1,265 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
+import {
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  HelpCircle,
+  LockKeyhole,
+  Settings,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react"
 import { RoleGate } from "@/components/auth/RoleGate"
 import { useSession } from "@/lib/auth/session"
-import { ArrowRight, CreditCard, Search, SlidersHorizontal, WalletCards } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
-const summaryCards = [
+const nextSteps = [
   {
-    label: "Credito Utilizado",
-    value: "$145,200.00",
-    meta: "+12% vs mes anterior",
-    icon: CreditCard,
-    tone: "bg-[var(--brand-blue-soft)] text-[var(--brand-blue)]",
+    title: "Completar datos del cliente",
+    description: "Carga los datos basicos de tu actividad y tu carpeta para que el contador pueda trabajar con informacion ordenada.",
+    href: "/app/productor/autorizaciones",
+    action: "Ir a configuracion",
+    icon: UserRound,
   },
   {
-    label: "Linea Disponible",
-    value: "$350,000.00",
-    meta: "80% disponible",
-    icon: WalletCards,
-    tone: "bg-[#dceee7] text-[var(--brand-green)]",
+    title: "Elegir o confirmar contador",
+    description: "El contador te ayuda a preparar balances, impuestos, documentos y carpeta crediticia.",
+    href: "/app/productor/autorizaciones",
+    action: "Gestionar contador",
+    icon: ShieldCheck,
   },
   {
-    label: "Solicitudes",
-    value: "08 Totales",
-    meta: "3 en curso",
-    icon: CreditCard,
-    tone: "bg-[#dff5ea] text-[#2da67a]",
+    title: "Preparar una solicitud",
+    description: "Cuando tu carpeta este lista, vas a poder iniciar una solicitud para una entidad financiera o comercial.",
+    href: "/app/productor/financiacion",
+    action: "Ver solicitudes",
+    icon: ClipboardList,
   },
 ]
 
-const requests = [
-  { id: "#AC-9821", project: "Cosecha Fina 2024", amount: "$85,000.00", date: "12 Oct 2024", status: "Aprobado", statusTone: "bg-[#d8f5e7] text-[#178a5f]" },
-  { id: "#AC-9755", project: "Riego Inteligente Sector B", amount: "$42,500.00", date: "08 Oct 2024", status: "Revision", statusTone: "bg-[var(--brand-blue-soft)] text-[var(--brand-blue)]" },
-  { id: "#AC-9702", project: "Renovacion Tractor J-D", amount: "$120,000.00", date: "25 Sep 2024", status: "Analisis", statusTone: "bg-[#dfefff] text-[#3661c4]" },
-  { id: "#AC-9540", project: "Fertilizantes de Invierno", amount: "$18,000.00", date: "15 Sep 2024", status: "Listo", statusTone: "bg-[#d8f5e7] text-[#178a5f]" },
+const systemGuides = [
+  {
+    question: "Que puedo hacer desde este panel?",
+    shortAnswer: "Este es tu punto de entrada como cliente/productor.",
+    answer: [
+      "Desde este panel vas a ordenar tu carpeta crediticia: tus datos, contador, documentacion, autorizaciones y solicitudes.",
+      "La idea es que no tengas que enviar papeles sueltos cada vez que una entidad te pide informacion. Primero completas la carpeta y despues autorizas accesos concretos.",
+    ],
+  },
+  {
+    question: "Por que no veo importes ni creditos cargados?",
+    shortAnswer: "Porque esta cuenta es nueva y no tiene solicitudes reales todavia.",
+    answer: [
+      "Se quitaron los datos ficticios del dashboard. A partir de ahora el panel no inventa montos, aprobaciones ni notificaciones.",
+      "Cuando existan solicitudes reales, el sistema podra mostrar estados, avances y mensajes vinculados a tu cuenta.",
+    ],
+  },
+  {
+    question: "Para que elijo un contador?",
+    shortAnswer: "Para que pueda cargar y mantener tu informacion contable.",
+    answer: [
+      "El contador prepara o actualiza la informacion que normalmente piden bancos, financieras y empresas agro: balances, resultados, impuestos, bienes, pasivos y documentos.",
+      "Vos seguis siendo quien autoriza el acceso a tu carpeta. El contador ayuda a cargar; la autorizacion frente a terceros queda controlada.",
+    ],
+  },
+  {
+    question: "Quien puede ver mi carpeta?",
+    shortAnswer: "Solo quien tenga permiso o un acceso aprobado.",
+    answer: [
+      "Tu carpeta no queda publica. Las entidades solo deberian ver informacion si existe una autorizacion o invitacion aprobada con alcance definido.",
+      "El sistema esta pensado para que los accesos sean trazables: quien pidio, que pidio, para que y por cuanto tiempo.",
+    ],
+  },
+  {
+    question: "Que datos tengo que completar primero?",
+    shortAnswer: "Primero identidad y datos productivos; despues contador y documentacion.",
+    answer: [
+      "El orden recomendado es: datos del cliente, actividad principal, contador asociado, empresas o campos vinculados si corresponde, y documentacion de respaldo.",
+      "Despues de eso, una solicitud de credito tiene mucha menos friccion porque la informacion ya esta centralizada.",
+    ],
+  },
+  {
+    question: "Puedo usar el sistema sin contador?",
+    shortAnswer: "Si, pero la carpeta puede quedar incompleta.",
+    answer: [
+      "Podrias iniciar tu cuenta sin contador, pero muchas partes contables van a necesitar carga tecnica.",
+      "Lo recomendable es elegir un contador cuando quieras avanzar hacia una carpeta lista para evaluar.",
+    ],
+  },
 ]
 
-const notifications = [
-  {
-    title: "Credito Aprobado",
-    detail: "Tu solicitud #AC-9821 para Cosecha Fina 2024 ha sido aprobada.",
-    time: "Hace 2 horas",
-    dot: "bg-[var(--brand-green)]",
-  },
-  {
-    title: "Documentacion Pendiente",
-    detail: "Sube tu titulo de propiedad para completar el perfil.",
-    time: "Hace 5 horas",
-    dot: "bg-[var(--brand-blue)]",
-  },
-  {
-    title: "Ajuste de Tasas",
-    detail: "Nuevas tasas de interes para el sector sojero actualizadas.",
-    time: "Ayer",
-    dot: "bg-[#c9d2da]",
-  },
-]
-
-const creditLines = [
-  { title: "Agro-Insumos", detail: "Hasta $200,000 con TNA 35%" },
-  { title: "Maquinaria Pesada", detail: "Hasta $500,000 con TNA 32%" },
-]
+type SystemGuide = (typeof systemGuides)[number]
 
 export default function ProducerDashboard() {
   const { user } = useSession()
+  const [selectedGuide, setSelectedGuide] = useState<SystemGuide | null>(null)
 
   return (
     <RoleGate allowedRoles={["producer", "admin_platform"]}>
       <div className="space-y-6">
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_23rem]">
-          <div className="space-y-5">
-            <div className="grid gap-4 md:grid-cols-3">
-              {summaryCards.map((card) => {
-                const Icon = card.icon
-                return (
-                  <article key={card.label} className="ag-card p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${card.tone}`}>
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <span className="text-sm font-semibold text-[#37b87d]">{card.meta}</span>
-                    </div>
-                    <p className="mt-6 text-lg text-[var(--brand-muted)]">{card.label}</p>
-                    <p className="mt-2 text-[2.2rem] font-bold tracking-tight text-[var(--brand-ink)]">{card.value}</p>
-                  </article>
-                )
-              })}
+        <section className="ag-panel overflow-hidden">
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="p-6 lg:p-8">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <CheckCircle2 className="size-3.5" />
+                  Cuenta activa
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                  <FileText className="size-3.5" />
+                  Carpeta pendiente
+                </span>
+              </div>
+
+              <div className="mt-6 max-w-3xl">
+                <h1 className="text-3xl font-bold tracking-tight text-[var(--brand-ink)]">
+                  Bienvenido, {user?.displayName ?? "cliente"}
+                </h1>
+                <p className="mt-3 text-base leading-7 text-[var(--brand-muted)]">
+                  Tu acceso ya esta creado. El proximo paso es completar tu carpeta, elegir un contador
+                  y preparar la informacion para futuras solicitudes de credito.
+                </p>
+              </div>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Button asChild className="bg-[var(--brand-green)] text-white hover:bg-[var(--brand-green)]/95">
+                  <Link href="/app/productor/autorizaciones">
+                    <Settings className="size-4" />
+                    Completar configuracion
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/app/productor/financiacion">
+                    <ClipboardList className="size-4" />
+                    Ver solicitudes
+                  </Link>
+                </Button>
+              </div>
             </div>
 
-            <section className="ag-panel overflow-hidden">
-              <div className="flex flex-col gap-5 border-b border-[var(--brand-line)] px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+            <aside className="border-t border-[var(--brand-line)] bg-[var(--brand-surface-strong)] p-6 lg:border-l lg:border-t-0 lg:p-8">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--brand-muted)]">
+                Estado actual
+              </h2>
+              <dl className="mt-5 space-y-4">
                 <div>
-                  <h2 className="text-[2rem] font-bold tracking-tight text-[var(--brand-ink)]">Mis Solicitudes</h2>
-                  <p className="mt-1 text-lg text-[var(--brand-muted)]">
-                    Gestion de creditos activos y pendientes para {user?.displayName ?? "tu cuenta"}.
+                  <dt className="text-sm text-[var(--brand-muted)]">Usuario</dt>
+                  <dd className="mt-1 text-base font-semibold text-[var(--brand-ink)]">
+                    {user?.email ?? "Sesion activa"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-[var(--brand-muted)]">Rol</dt>
+                  <dd className="mt-1 text-base font-semibold text-[var(--brand-ink)]">Cliente / Productor</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-[var(--brand-muted)]">Organizacion</dt>
+                  <dd className="mt-1 break-all text-sm font-medium text-[var(--brand-ink)]">
+                    {user?.defaultOrganizationId ?? "Pendiente"}
+                  </dd>
+                </div>
+              </dl>
+            </aside>
+          </div>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-3">
+          {nextSteps.map((step) => {
+            const Icon = step.icon
+            return (
+              <article key={step.title} className="ag-card flex min-h-60 flex-col p-6">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-[#dceee7] text-[var(--brand-green)]">
+                  <Icon className="size-5" />
+                </div>
+                <h2 className="mt-5 text-xl font-semibold tracking-tight text-[var(--brand-ink)]">{step.title}</h2>
+                <p className="mt-3 flex-1 text-sm leading-6 text-[var(--brand-muted)]">{step.description}</p>
+                <Button asChild variant="outline" className="mt-5 justify-between">
+                  <Link href={step.href}>
+                    {step.action}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              </article>
+            )
+          })}
+        </section>
+
+        <section className="ag-panel p-6 lg:p-8">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--brand-blue-soft)] text-[var(--brand-blue)]">
+                  <BookOpen className="size-5" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-[var(--brand-ink)]">
+                    Manual del sistema
+                  </h2>
+                  <p className="mt-1 text-sm text-[var(--brand-muted)]">
+                    Preguntas frecuentes para entender que hacer dentro de AgroCredit.
                   </p>
                 </div>
-                <div className="flex flex-col gap-3 md:flex-row">
-                  <div className="flex h-14 min-w-72 items-center gap-3 rounded-2xl border border-[var(--brand-line)] bg-white px-4">
-                    <Search className="h-5 w-5 text-[var(--brand-muted)]" />
-                    <span className="text-base text-[var(--brand-muted)]">Buscar proyecto...</span>
-                  </div>
-                  <button className="flex h-14 items-center justify-center gap-3 rounded-2xl border border-[var(--brand-line)] bg-white px-6 text-lg font-medium text-[var(--brand-ink)]">
-                    <SlidersHorizontal className="h-5 w-5" />
-                    Filtrar
-                  </button>
-                </div>
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead className="bg-[var(--brand-surface-strong)] text-left text-sm uppercase tracking-[0.14em] text-[var(--brand-muted)]">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">ID Credito</th>
-                      <th className="px-6 py-4 font-semibold">Proyecto</th>
-                      <th className="px-6 py-4 font-semibold">Monto</th>
-                      <th className="px-6 py-4 font-semibold">Fecha</th>
-                      <th className="px-6 py-4 font-semibold">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requests.map((request) => (
-                      <tr key={request.id} className="border-t border-[var(--brand-line)] bg-white">
-                        <td className="px-6 py-5 text-[1.1rem] font-medium text-[var(--brand-ink)]">{request.id}</td>
-                        <td className="px-6 py-5 text-[1.1rem] font-semibold text-[var(--brand-ink)]">{request.project}</td>
-                        <td className="px-6 py-5 text-[1.1rem] text-[var(--brand-ink)]">{request.amount}</td>
-                        <td className="px-6 py-5 text-[1.1rem] text-[var(--brand-ink)]">{request.date}</td>
-                        <td className="px-6 py-5">
-                          <span className={`ag-chip ${request.statusTone}`}>{request.status}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-[var(--brand-line)] px-6 py-5 text-base text-[var(--brand-muted)]">
-                <span>Mostrando 4 de 8 registros</span>
-                <div className="flex items-center gap-2">
-                  <button className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--brand-line)] bg-white text-[var(--brand-ink)]">
-                    ‹
-                  </button>
-                  <button className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--brand-line)] bg-white text-[var(--brand-ink)]">
-                    ›
-                  </button>
-                </div>
-              </div>
-            </section>
+            </div>
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--brand-line)] bg-white px-3 py-1 text-xs font-semibold text-[var(--brand-muted)]">
+              <LockKeyhole className="size-3.5" />
+              Guia privada para usuarios
+            </span>
           </div>
 
-          <aside className="space-y-5">
-            <section className="ag-card p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[2rem] font-bold tracking-tight text-[var(--brand-ink)]">Notificaciones</h2>
-                <Link href="/app/notificaciones" className="text-base font-semibold text-[var(--brand-blue)]">
-                  Ver todas
-                </Link>
-              </div>
-              <div className="mt-6 space-y-5">
-                {notifications.map((item) => (
-                  <article key={item.title} className="border-b border-[var(--brand-line)] pb-5 last:border-b-0 last:pb-0">
-                    <div className="flex items-start gap-3">
-                      <span className={`mt-2 h-3 w-3 rounded-full ${item.dot}`} />
-                      <div>
-                        <p className="text-[1.45rem] font-semibold tracking-tight text-[var(--brand-ink)]">{item.title}</p>
-                        <p className="mt-1 text-base leading-7 text-[var(--brand-ink)]">{item.detail}</p>
-                        <p className="mt-2 text-base text-[var(--brand-muted)]">{item.time}</p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-[1.7rem] bg-[var(--brand-green)] p-6 text-white shadow-[0_18px_36px_rgba(6,60,49,0.22)]">
-              <h2 className="text-[2rem] font-bold tracking-tight">Lineas Disponibles</h2>
-              <div className="mt-6 space-y-4">
-                {creditLines.map((line) => (
-                  <article key={line.title} className="rounded-2xl border border-white/14 bg-white/6 px-5 py-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[1.4rem] font-semibold">{line.title}</p>
-                        <p className="mt-2 text-base text-white/78">{line.detail}</p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 shrink-0" />
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <Link
-                href="/app/productor/financiacion"
-                className="mt-6 flex h-14 items-center justify-center rounded-2xl bg-white text-lg font-semibold text-[var(--brand-green)] transition hover:bg-white/92"
+          <div className="mt-6 grid gap-3 md:grid-cols-2">
+            {systemGuides.map((guide) => (
+              <button
+                key={guide.question}
+                type="button"
+                onClick={() => setSelectedGuide(guide)}
+                className="group flex min-h-24 items-start gap-4 rounded-lg border border-[var(--brand-line)] bg-white p-4 text-left transition hover:border-[var(--brand-green)] hover:shadow-sm"
               >
-                Solicitar Incremento
-              </Link>
-            </section>
-          </aside>
+                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-surface-strong)] text-[var(--brand-green)] group-hover:bg-[#dceee7]">
+                  <HelpCircle className="size-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold leading-5 text-[var(--brand-ink)]">
+                    {guide.question}
+                  </span>
+                  <span className="mt-1 block text-sm leading-5 text-[var(--brand-muted)]">
+                    {guide.shortAnswer}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
         </section>
+
+        <Dialog open={Boolean(selectedGuide)} onOpenChange={(open) => !open && setSelectedGuide(null)}>
+          <DialogContent className="sm:max-w-2xl">
+            {selectedGuide ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="pr-8 text-2xl leading-8">{selectedGuide.question}</DialogTitle>
+                  <DialogDescription>{selectedGuide.shortAnswer}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 text-sm leading-7 text-[var(--brand-ink)]">
+                  {selectedGuide.answer.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </DialogContent>
+        </Dialog>
       </div>
     </RoleGate>
   )
