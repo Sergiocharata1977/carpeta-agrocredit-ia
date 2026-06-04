@@ -6,7 +6,6 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  ClipboardList,
   FileText,
   HelpCircle,
   LockKeyhole,
@@ -14,6 +13,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react"
+import { ProducerLegajoHabilitationsPanel } from "@/components/access/ProducerLegajoHabilitationsPanel"
 import { RoleGate } from "@/components/auth/RoleGate"
 import { useSession } from "@/lib/auth/session"
 import { Button } from "@/components/ui/button"
@@ -40,13 +40,6 @@ const nextSteps = [
     action: "Gestionar contador",
     icon: ShieldCheck,
   },
-  {
-    title: "Preparar una solicitud",
-    description: "Cuando tu carpeta este lista, vas a poder iniciar una solicitud para una entidad financiera o comercial.",
-    href: "/app/productor/financiacion",
-    action: "Ver solicitudes",
-    icon: ClipboardList,
-  },
 ]
 
 const systemGuides = [
@@ -54,16 +47,16 @@ const systemGuides = [
     question: "Que puedo hacer desde este panel?",
     shortAnswer: "Este es tu punto de entrada como cliente/productor.",
     answer: [
-      "Desde este panel vas a ordenar tu carpeta crediticia: tus datos, contador, documentacion, autorizaciones y solicitudes.",
-      "La idea es que no tengas que enviar papeles sueltos cada vez que una entidad te pide informacion. Primero completas la carpeta y despues autorizas accesos concretos.",
+      "Desde este panel vas a ordenar tu legajo: tus datos, contador, documentacion, habilitaciones y comunicacion con entidades.",
+      "La idea es que no tengas que enviar papeles sueltos cada vez que una entidad te pide informacion. Primero completas el legajo y despues habilitas accesos concretos por tiempo determinado.",
     ],
   },
   {
-    question: "Por que no veo importes ni creditos cargados?",
-    shortAnswer: "Porque esta cuenta es nueva y no tiene solicitudes reales todavia.",
+    question: "Que hace y que no hace el sistema?",
+    shortAnswer: "Ordena y habilita el legajo; no decide operaciones financieras.",
     answer: [
-      "Se quitaron los datos ficticios del dashboard. A partir de ahora el panel no inventa montos, aprobaciones ni notificaciones.",
-      "Cuando existan solicitudes reales, el sistema podra mostrar estados, avances y mensajes vinculados a tu cuenta.",
+      "AgroCredit IA funciona como legajo y comunicacion entre cliente, contador y financista.",
+      "El sistema habilita la visualizacion de informacion por alcance y tiempo, pero no decide operaciones comerciales ni reemplaza la evaluacion de cada entidad.",
     ],
   },
   {
@@ -87,7 +80,7 @@ const systemGuides = [
     shortAnswer: "Primero identidad y datos productivos; despues contador y documentacion.",
     answer: [
       "El orden recomendado es: datos del cliente, actividad principal, contador asociado, empresas o campos vinculados si corresponde, y documentacion de respaldo.",
-      "Despues de eso, una solicitud de credito tiene mucha menos friccion porque la informacion ya esta centralizada.",
+      "Despues de eso, habilitar el legajo a una entidad es mas simple porque la informacion ya esta centralizada.",
     ],
   },
   {
@@ -129,7 +122,7 @@ export default function ProducerDashboard() {
                 </h1>
                 <p className="mt-3 text-base leading-7 text-[var(--brand-muted)]">
                   Tu acceso ya esta creado. El proximo paso es completar tu carpeta, elegir un contador
-                  y preparar la informacion para futuras solicitudes de credito.
+                  y preparar la informacion para habilitar el legajo a entidades cuando lo necesites.
                 </p>
               </div>
 
@@ -138,12 +131,6 @@ export default function ProducerDashboard() {
                   <Link href="/app/productor/autorizaciones">
                     <Settings className="size-4" />
                     Completar configuracion
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/app/productor/financiacion">
-                    <ClipboardList className="size-4" />
-                    Ver solicitudes
                   </Link>
                 </Button>
               </div>
@@ -175,7 +162,9 @@ export default function ProducerDashboard() {
           </div>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-3">
+        <ProducerLegajoHabilitationsPanel organizationId={user?.defaultOrganizationId ?? null} compact />
+
+        <section className="grid gap-5 lg:grid-cols-2">
           {nextSteps.map((step) => {
             const Icon = step.icon
             return (

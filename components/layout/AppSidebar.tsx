@@ -28,7 +28,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/app/productor", icon: LayoutDashboard, roles: ["producer"] },
-  { label: "Solicitudes", href: "/app/productor/financiacion", icon: FileText, roles: ["producer"] },
+  { label: "Habilitaciones", href: "/app/productor/financiacion", icon: ShieldCheck, roles: ["producer"] },
   { label: "Notificaciones", href: "/app/notificaciones", icon: Bell, roles: ["producer"] },
   { label: "Configuracion", href: "/app/productor/autorizaciones", icon: Settings, roles: ["producer"] },
 
@@ -52,7 +52,7 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 const ROLE_META: Record<string, { actionLabel: string }> = {
-  producer: { actionLabel: "Nueva Solicitud" },
+  producer: { actionLabel: "Habilitar legajo" },
   bank_user: { actionLabel: "Nueva Solicitud" },
   agro_company_user: { actionLabel: "Nueva Solicitud" },
   admin_platform: { actionLabel: "Nuevo Acceso" },

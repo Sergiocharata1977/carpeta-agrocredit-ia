@@ -107,7 +107,7 @@ export function CreateAccessInvitationDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Compartir carpeta por link</DialogTitle>
+          <DialogTitle>Crear link excepcional de legajo</DialogTitle>
           <DialogDescription>
             El receptor recibirá un link para crear su clave y ver solo lo que autoricés.
           </DialogDescription>

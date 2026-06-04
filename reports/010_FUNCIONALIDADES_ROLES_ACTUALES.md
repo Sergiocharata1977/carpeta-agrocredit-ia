@@ -46,7 +46,7 @@ Despues del registro, el usuario entra al panel privado sin tener que completar 
 
 ### Panel actual del productor
 
-El panel actual del productor ya no muestra datos ficticios de creditos, montos o solicitudes.
+El panel actual del productor ya no muestra datos ficticios de creditos, montos o operaciones.
 
 Muestra:
 
@@ -66,7 +66,7 @@ Desde el panel, el productor puede ir a:
 
 - Completar configuracion.
 - Gestionar contador o autorizaciones.
-- Ver solicitudes de financiacion.
+- Ver habilitaciones de legajo.
 - Consultar el manual interno del sistema.
 
 ### Autorizaciones
@@ -83,17 +83,19 @@ Esta seccion esta pensada para:
 
 El modelo vigente indica que el productor conserva el control sobre su carpeta. El contador puede ayudar a cargar informacion, pero el acceso de terceros debe quedar autorizado y trazado.
 
-### Solicitudes de financiacion
+### Habilitaciones de legajo
 
-El productor tiene una ruta para solicitudes de financiacion.
+El productor tiene una ruta de habilitaciones de legajo. La ruta tecnica se conserva por compatibilidad, pero el concepto funcional es habilitar visualizacion del legajo, no gestionar credito.
 
 La finalidad es que pueda:
 
-- Crear o revisar solicitudes.
-- Relacionar solicitudes con su organizacion.
-- Trabajar con entidades financieras o comerciales.
+- Enviar una habilitacion a una cuenta del sistema.
+- Definir que secciones del legajo se pueden ver.
+- Definir por cuantos dias queda habilitado el acceso.
+- Usar link excepcional cuando el destinatario todavia no tenga cuenta.
+- Dejar preparado el futuro acceso por QR, todavia no implementado.
 
-La experiencia aun depende de que exista informacion real cargada en la carpeta y de que las entidades tengan los permisos correspondientes.
+La via principal esperada es enviar la habilitacion a una cuenta registrada del sistema. Link y QR son vias excepcionales.
 
 ### Pendientes importantes del productor
 
@@ -102,7 +104,7 @@ Aunque el acceso simple ya funciona, todavia falta cerrar una experiencia comple
 - Completar perfil propio desde el panel del productor.
 - Elegir contador desde un flujo dedicado y claro.
 - Ver estado real de carpeta con datos cargados.
-- Ver solicitudes reales sin depender de pantallas base.
+- Ver habilitaciones reales sin depender de pantallas base.
 - Mostrar alertas reales y no contenido estatico.
 
 ## Contador / Estudio contable
@@ -274,7 +276,7 @@ La entidad tiene dashboard propio en `/app/entidad`.
 El menu privado le permite acceder a:
 
 - Dashboard.
-- Solicitudes.
+- Habilitaciones o solicitudes internas segun la pantalla vigente.
 - Accesos.
 - Riesgo.
 - Reportes.
@@ -334,15 +336,15 @@ Actualmente contempla:
 
 Cada tab se protege con `ScopeGuard`, por lo que la entidad solo puede ver secciones si el grant incluye el scope correspondiente.
 
-### Financiamiento
+### Comunicacion y habilitaciones
 
-La entidad tiene una seccion de financiacion.
+La entidad tiene secciones heredadas de financiacion, pero el objetivo de producto no es decidir operaciones comerciales. El objetivo es mejorar la comunicacion y permitir que la entidad vea un legajo autorizado.
 
 Esta seccion esta pensada para:
 
-- Gestionar solicitudes de financiacion.
-- Revisar pedidos.
-- Relacionar solicitudes con carpetas autorizadas.
+- Revisar pedidos o habilitaciones vinculadas a legajos.
+- Consultar carpetas autorizadas.
+- Coordinar informacion pendiente con cliente y contador.
 
 La operacion completa depende de los datos de carpeta y de los grants existentes.
 

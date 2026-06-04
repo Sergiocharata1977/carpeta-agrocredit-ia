@@ -4,7 +4,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
 } from "firebase/firestore"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import type { AccessGrant } from "@/types/access"
@@ -24,8 +23,7 @@ export async function getGrantsForProducer(
   if (!db) return []
   const q = query(
     collection(db, COLLECTIONS.ACCESS_GRANTS),
-    where("producerId", "==", producerId),
-    orderBy("createdAt", "desc"),
+    where("targetOrganizationId", "==", producerId),
   )
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccessGrant))
