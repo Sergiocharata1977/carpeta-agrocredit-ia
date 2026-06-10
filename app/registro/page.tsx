@@ -32,9 +32,9 @@ const roleOptions = [
     title: "Productor / Cliente",
     description: "Solicita financiamiento, autoriza accesos y sigue el estado de cada pedido.",
     cta: "Crear cuenta",
-    accent: "#2D6A4F",
-    soft: "#EAF7F0",
-    border: "#BFE9D2",
+    accent: "#6d28d9",
+    soft: "#f0ebff",
+    border: "#ddd6fe",
     icon: Sprout,
     items: ["Carpeta crediticia propia", "Permisos trazables", "Acceso gratuito"],
   },
@@ -44,9 +44,9 @@ const roleOptions = [
     title: "Contador",
     description: "Administra clientes, ordena documentacion y envia informacion validada.",
     cta: "Registrar estudio",
-    accent: "#1D3557",
-    soft: "#E2EAF3",
-    border: "#BED0E2",
+    accent: "#312e81",
+    soft: "#eef2ff",
+    border: "#c7d2fe",
     icon: Calculator,
     items: ["Panel multi-cliente", "Carga contable", "Checklists por carpeta"],
   },
@@ -56,9 +56,9 @@ const roleOptions = [
     title: "Financista",
     description: "Pide acceso a carpetas, evalua indicadores y gestiona credito con permisos.",
     cta: "Registrar entidad",
-    accent: "#C7962D",
-    soft: "#F6E8C3",
-    border: "#ECDCAF",
+    accent: "#9333ea",
+    soft: "#f3e8ff",
+    border: "#e9d5ff",
     icon: Banknote,
     items: ["Scoring documental", "Acceso por scope", "Decision mas rapida"],
   },
@@ -70,7 +70,7 @@ export default function RegistroPage() {
       className="min-h-screen overflow-hidden"
       style={{
         background:
-          "radial-gradient(980px 520px at 88% -8%,rgba(82,183,136,.16),transparent 60%),radial-gradient(850px 480px at -5% 28%,rgba(29,53,87,.10),transparent 58%),#F8F9FA",
+          "radial-gradient(980px 520px at 88% -8%,rgba(139,92,246,.16),transparent 60%),radial-gradient(850px 480px at -5% 28%,rgba(91,33,182,.10),transparent 58%),#faf8ff",
         color: "#212529",
         fontFamily: "'Inter',system-ui,sans-serif",
       }}
@@ -83,12 +83,12 @@ export default function RegistroPage() {
         .connector-pulse{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;margin-top:-4.5px;animation:travel 2.6s cubic-bezier(.22,.61,.36,1) infinite;}
       `}</style>
 
-      <header className="sticky top-0 z-40 border-b border-[#E7EAEE] bg-[#F8F9FA]/90 backdrop-blur-[14px]">
+      <header className="sticky top-0 z-40 border-b border-[#ede9fe] bg-[#faf8ff]/90 backdrop-blur-[14px]">
         <div className="mx-auto flex h-[68px] max-w-[1180px] items-center justify-between px-7">
           <Link href="/" className="flex items-center gap-2.5 text-[19px] font-extrabold tracking-tight text-[#212529]">
             <span
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-white"
-              style={{ background: "linear-gradient(135deg,#2D6A4F,#1D3557)" }}
+              style={{ background: "linear-gradient(135deg,#6d28d9,#312e81)" }}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -104,17 +104,17 @@ export default function RegistroPage() {
                 <path d="M9 20v-6h6v6" />
               </svg>
             </span>
-            AgroCredit Hub
+            Legajo
           </Link>
 
           <nav className="hidden items-center gap-[30px] md:flex">
-            <Link href="/#beneficios" className="text-[14.5px] font-medium text-[#5A6470] transition-colors hover:text-[#2D6A4F]">
+            <Link href="/#beneficios" className="text-[14.5px] font-medium text-[#5A6470] transition-colors hover:text-[#6d28d9]">
               Beneficios
             </Link>
-            <Link href="/#proceso" className="text-[14.5px] font-medium text-[#5A6470] transition-colors hover:text-[#2D6A4F]">
+            <Link href="/#proceso" className="text-[14.5px] font-medium text-[#5A6470] transition-colors hover:text-[#6d28d9]">
               Proceso
             </Link>
-            <Link href="/login" className="text-[14.5px] font-semibold text-[#2D6A4F] transition-colors hover:text-[#1B4332]">
+            <Link href="/login" className="text-[14.5px] font-semibold text-[#6d28d9] transition-colors hover:text-[#4c1d95]">
               Ingresar
             </Link>
           </nav>
@@ -126,9 +126,9 @@ export default function RegistroPage() {
           <motion.div variants={fadeUp}>
             <Link
               href="/"
-              className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-[#BFE9D2] bg-[#EAF7F0] px-3.5 py-1.5 text-[12.5px] font-semibold text-[#2D6A4F] transition hover:border-[#52B788]"
+              className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-[#ddd6fe] bg-[#f0ebff] px-3.5 py-1.5 text-[12.5px] font-semibold text-[#6d28d9] transition hover:border-[#a78bfa]"
             >
-              <span className="dot-pulse h-2 w-2 rounded-full bg-[#52B788]" />
+              <span className="dot-pulse h-2 w-2 rounded-full bg-[#a78bfa]" />
               Volver al inicio
             </Link>
           </motion.div>
@@ -140,7 +140,7 @@ export default function RegistroPage() {
             Elegi tu rol y entra al{" "}
             <span
               style={{
-                background: "linear-gradient(120deg,#2D6A4F,#52B788)",
+                background: "linear-gradient(120deg,#6d28d9,#a78bfa)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -151,19 +151,19 @@ export default function RegistroPage() {
           </motion.h1>
 
           <motion.p variants={fadeUp} className="mb-8 max-w-[540px] text-[18.5px] leading-[1.55] text-[#5A6470]">
-            AgroCredit conecta clientes, contadores y financistas sobre una carpeta ordenada,
+            Legajo conecta clientes, contadores y financistas sobre una carpeta ordenada,
             auditable y lista para acelerar decisiones de credito.
           </motion.p>
 
           <motion.div variants={fadeUp} className="grid max-w-[560px] grid-cols-1 gap-3 sm:grid-cols-3">
             {[
-              { icon: ShieldCheck, label: "Accesos auditados", tone: "#2D6A4F", bg: "#EAF7F0" },
-              { icon: FileCheck2, label: "Carpetas validadas", tone: "#1D3557", bg: "#E2EAF3" },
-              { icon: LockKeyhole, label: "Permisos por rol", tone: "#9a7d2e", bg: "#F6E8C3" },
+              { icon: ShieldCheck, label: "Accesos auditados", tone: "#6d28d9", bg: "#f0ebff" },
+              { icon: FileCheck2, label: "Carpetas validadas", tone: "#312e81", bg: "#eef2ff" },
+              { icon: LockKeyhole, label: "Permisos por rol", tone: "#7e22ce", bg: "#f3e8ff" },
             ].map((item) => {
               const Icon = item.icon
               return (
-                <div key={item.label} className="rounded-[18px] border border-[#E7EAEE] bg-white px-4 py-4 shadow-sm">
+                <div key={item.label} className="rounded-[18px] border border-[#ede9fe] bg-white px-4 py-4 shadow-sm">
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[12px]" style={{ background: item.bg, color: item.tone }}>
                     <Icon className="h-5 w-5" />
                   </div>
@@ -181,9 +181,9 @@ export default function RegistroPage() {
               <motion.article
                 key={option.href}
                 variants={fadeUp}
-                whileHover={{ y: -5, boxShadow: "0 18px 50px rgba(20,40,65,.13),0 6px 16px rgba(20,40,65,.06)" }}
+                whileHover={{ y: -5, boxShadow: "0 18px 50px rgba(91,33,182,.1),0 6px 16px rgba(91,33,182,.06)" }}
                 transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                className="overflow-hidden rounded-[22px] border border-[#E7EAEE] bg-white shadow-sm"
+                className="overflow-hidden rounded-[22px] border border-[#ede9fe] bg-white shadow-sm"
               >
                 <Link href={option.href} className="grid gap-0 sm:grid-cols-[9px_1fr]">
                   <span className="hidden sm:block" style={{ background: option.accent }} />
@@ -206,7 +206,7 @@ export default function RegistroPage() {
                       </div>
 
                       <span
-                        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[13px] px-5 text-[14px] font-bold text-white shadow-[0_6px_16px_rgba(20,40,65,.18)]"
+                        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[13px] px-5 text-[14px] font-bold text-white shadow-[0_6px_16px_rgba(91,33,182,.2)]"
                         style={{ background: option.accent }}
                       >
                         {option.cta}
@@ -216,7 +216,7 @@ export default function RegistroPage() {
 
                     <div className="mt-5 grid gap-2 sm:grid-cols-3">
                       {option.items.map((item) => (
-                        <div key={item} className="flex items-center gap-2 rounded-[12px] border border-[#E7EAEE] bg-[#F8F9FA] px-3 py-2 text-[12.5px] font-semibold text-[#5A6470]">
+                        <div key={item} className="flex items-center gap-2 rounded-[12px] border border-[#ede9fe] bg-[#faf8ff] px-3 py-2 text-[12.5px] font-semibold text-[#5A6470]">
                           <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: option.accent }} />
                           <span>{item}</span>
                         </div>
@@ -230,26 +230,26 @@ export default function RegistroPage() {
         </motion.div>
       </section>
 
-      <section className="border-t border-[#E7EAEE] bg-white py-10">
+      <section className="border-t border-[#ede9fe] bg-white py-10">
         <div className="mx-auto grid max-w-[1180px] gap-6 px-7 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-[.12em] text-[#2D6A4F]">Flujo conectado</p>
+            <p className="text-[12px] font-bold uppercase tracking-[.12em] text-[#6d28d9]">Flujo conectado</p>
             <p className="mt-2 text-[16px] font-semibold text-[#212529]">Cliente, contador y financista trabajan sobre la misma carpeta.</p>
           </div>
 
           <div className="relative flex items-center gap-4">
             {["Cliente", "Contador", "Financista"].map((label, index) => (
               <div key={label} className="relative flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-[14px] border border-[#E7EAEE] bg-[#F8F9FA] text-[12px] font-extrabold text-[#212529]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[14px] border border-[#ede9fe] bg-[#faf8ff] text-[12px] font-extrabold text-[#212529]">
                   {index + 1}
                 </div>
                 {index < 2 ? (
-                  <div className="relative h-0.5 w-12 bg-[#E7EAEE]">
+                  <div className="relative h-0.5 w-12 bg-[#ede9fe]">
                     <span
                       className="connector-pulse"
                       style={{
-                        background: index === 0 ? "#52B788" : "#3A6491",
-                        boxShadow: index === 0 ? "0 0 0 4px rgba(82,183,136,.2)" : "0 0 0 4px rgba(58,100,145,.2)",
+                        background: index === 0 ? "#a78bfa" : "#4f46e5",
+                        boxShadow: index === 0 ? "0 0 0 4px rgba(167,139,250,.2)" : "0 0 0 4px rgba(99,102,241,.2)",
                         animationDelay: index === 0 ? "0s" : "1.3s",
                       }}
                     />
@@ -261,7 +261,7 @@ export default function RegistroPage() {
 
           <p className="text-[14px] leading-[1.55] text-[#5A6470] lg:text-right">
             Si ya tenes cuenta, podes entrar directo con tu usuario y continuar desde tu panel.
-            <Link href="/login" className="ml-1 font-bold text-[#2D6A4F] hover:text-[#1B4332]">
+            <Link href="/login" className="ml-1 font-bold text-[#6d28d9] hover:text-[#4c1d95]">
               Iniciar sesion
             </Link>
           </p>

@@ -36,9 +36,9 @@ export class ClaudeFinancialStatementProvider implements FinancialStatementOCRPr
   private client: Anthropic
   private model: string
 
-  constructor(model = "claude-haiku-4-5") {
+  constructor(model?: string) {
     this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    this.model = model
+    this.model = model ?? process.env.CLAUDE_MODEL ?? "claude-haiku-4-5"
   }
 
   async extract(
