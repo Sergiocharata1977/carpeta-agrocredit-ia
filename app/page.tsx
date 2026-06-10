@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView, useMotionValue, useSpring, useScroll, useTransform } from "motion/react"
+import LegajoFlowAnimation from "@/components/landing/LegajoFlowAnimation"
 
 const EASE = [0.22, 0.61, 0.36, 1] as const
 
@@ -195,6 +196,28 @@ export default function LandingPage() {
               <span className="rounded-full bg-[#f0ebff] px-3 py-1 text-[11px] font-bold tracking-[.04em] text-[#6d28d9]">— 70% tiempo</span>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* ── FLUJO ANIMADO ─────────────────────────────────────────────────── */}
+      <section id="flujo" className="py-[80px]"
+        style={{ background: "linear-gradient(180deg,#faf8ff 0%,#f0ebff 50%,#faf8ff 100%)" }}>
+        <div className="mx-auto max-w-[1180px] px-7">
+          <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show"
+            viewport={{ once: true, margin: "-80px" }} className="mb-10 text-center">
+            <motion.span variants={fadeUp}
+              className="mb-3 inline-block text-[12px] font-bold uppercase tracking-[.12em] text-[#6d28d9]">
+              Cómo funciona
+            </motion.span>
+            <motion.h2 variants={fadeUp}
+              className="text-[clamp(26px,3.4vw,36px)] font-extrabold leading-[1.1] tracking-[-0.03em]">
+              Tres actores, una carpeta conectada
+            </motion.h2>
+            <motion.p variants={fadeUp} className="mt-3 text-[16px] text-[#5A6470]">
+              El productor autoriza, el contador carga y el financista decide — todo en tiempo real.
+            </motion.p>
+          </motion.div>
+          <LegajoFlowAnimation />
         </div>
       </section>
 
