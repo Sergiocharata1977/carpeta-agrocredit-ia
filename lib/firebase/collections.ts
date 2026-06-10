@@ -22,6 +22,7 @@ export const COLLECTIONS = {
   AUDIT_LOGS: "audit_logs",
   NOTIFICATIONS: "notifications",
   FINANCIAL_STATEMENT_IMPORTS: "financial_statement_imports",
+  API_KEYS: "api_keys",
 } as const
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS]

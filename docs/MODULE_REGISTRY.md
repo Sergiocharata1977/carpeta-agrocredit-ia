@@ -109,6 +109,14 @@
 |---|---|---|---|---|
 | `accounting_firm_approval` | ga | `/app/admin/estudios` | `app/api/admin/accounting-firms/*` | `organizations` |
 
+### DOMINIO: INTEGRATION CORE (Olas 4–8)
+
+| Módulo | Estado | Ruta frontend | Servicio | Colecciones |
+|---|---|---|---|---|
+| `api_keys` | beta | `/app/admin/api-keys` | `lib/services/api-keys.ts` · `app/api/api-keys/*` | `api_keys` |
+| `hub_producers` | beta | — | `app/api/hub/producers` | `organizations` · `producer_accountant_links` · `access_grants` |
+| `hub_credit_folders` | beta | — | `app/api/hub/credit-folders/[producerId]` | `organizations` · `organization_profiles` · `access_grants` · `producer_accountant_links` |
+
 ---
 
 ## Dashboards por rol
@@ -163,6 +171,7 @@
 | `notifications` | notifications | ga | Notificaciones internas |
 | `financial_statement_imports` | statement_imports | ga | Borradores de importación OCR/IA de EECC |
 | `access_invitations` | access_invitations | ga | Invitaciones de acceso por link |
+| `api_keys` | api_keys | beta | Claves de API para integraciones externas (hash SHA-256, scoped) |
 
 ---
 

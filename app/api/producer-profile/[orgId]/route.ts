@@ -142,7 +142,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const { orgId } = await params
     const session = await verifyRequestSession(request)
-    await assertCanAccessProfile(session, orgId)
+    const organization = await assertCanAccessProfile(session, orgId)
 
     const snap = await getAdminDb()
       .collection(COLLECTIONS.ORGANIZATION_PROFILES)
@@ -151,6 +151,12 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
     return Response.json({
       profile: snap.exists ? serializeProfile(snap.id, snap.data() ?? {}) : null,
+      organization: {
+        legalName: organization.legalName ?? null,
+        taxId: organization.taxId ?? null,
+        type: organization.type,
+        status: organization.status ?? null,
+      },
     })
   } catch (error) {
     if (error instanceof AuthError) {

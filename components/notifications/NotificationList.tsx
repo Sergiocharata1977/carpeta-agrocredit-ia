@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import type { Notification, NotificationType } from "@/types/audit"
 
 const TYPE_LABELS: Record<NotificationType, string> = {
+  link_request_received: "Solicitud de vinculo",
   access_request_received: "Acceso solicitado",
   access_request_approved: "Acceso aprobado",
   access_request_rejected: "Acceso rechazado",

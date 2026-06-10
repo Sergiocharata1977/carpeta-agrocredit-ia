@@ -132,6 +132,33 @@ export async function POST(request: NextRequest) {
       metadata: { accountingFirmId: body.accountingFirmId },
     })
 
+    // Notificar a los miembros activos del estudio contable
+    const membersSnap = await db
+      .collection(COLLECTIONS.ORGANIZATION_MEMBERS)
+      .where("organizationId", "==", body.accountingFirmId)
+      .where("status", "==", "active")
+      .get()
+
+    if (!membersSnap.empty) {
+      const notifBatch = db.batch()
+      for (const member of membersSnap.docs) {
+        const notifRef = db.collection(COLLECTIONS.NOTIFICATIONS).doc()
+        notifBatch.set(notifRef, {
+          recipientUid: member.data().uid,
+          organizationId: body.accountingFirmId,
+          type: "link_request_received",
+          status: "unread",
+          payload: {
+            linkId: ref.id,
+            producerOrgId,
+            firmLegalName: firmSnap.data()?.legalName ?? null,
+          },
+          createdAt: FieldValue.serverTimestamp(),
+        })
+      }
+      await notifBatch.commit()
+    }
+
     return Response.json({ ok: true, linkId: ref.id }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {

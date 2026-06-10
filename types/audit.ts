@@ -54,6 +54,7 @@ export interface AuditLog {
 
 // Notificación interna (colección: notifications)
 export type NotificationType =
+  | "link_request_received"
   | "access_request_received"
   | "access_request_approved"
   | "access_request_rejected"

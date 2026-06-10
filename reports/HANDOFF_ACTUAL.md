@@ -506,6 +506,54 @@ Todos los items pendientes de la Ola 3 ya estan implementados (ver tabla en `rep
 
 ---
 
+---
+
+## Cambios de esta sesion — Plan 011 (fixes) + Plan 005 Ola 4 y 6 (Integration Core)
+
+**Fecha:** 2026-06-10  
+**pnpm type-check:** pendiente (ejecutar antes de retomar)
+
+### Plan 011 — Fixes menores
+
+**Plan 011-1 completado:** `GET /api/producer-profile/[orgId]` ahora retorna también `organization: { legalName, taxId, type, status }` junto al `profile`. Así el formulario de perfil puede precargar el nombre del productor sin una query adicional.
+
+**Plan 011-2 completado:** cuando un productor hace `POST /api/producer-accountant-links` y el estudio existe y está activo, se crean notificaciones en `COLLECTIONS.NOTIFICATIONS` para cada miembro activo del estudio (query por `organizationId + status=active`). Tipo de notificación nuevo: `link_request_received` — agregado al tipo `NotificationType` en `types/audit.ts`.
+
+### Plan 005 Ola 6 — API Keys
+
+Archivos nuevos:
+- `types/api-keys.ts` — tipos `ApiKey`, `ApiKeyPublic`, `ApiKeyScope`, constante `API_KEY_SCOPES`.
+- `lib/schemas/api-keys.ts` — schema Zod `createApiKeySchema`.
+- `lib/services/api-keys.ts` — generación de plaintext (`agro_` + 32 bytes hex), hash SHA-256, `createApiKey`, `validateApiKeyFromHeader`, `listApiKeys`, `revokeApiKey`, `toPublicApiKey`.
+
+Colección nueva: `api_keys` agregada a `lib/firebase/collections.ts`.
+
+### Plan 005 Ola 4 — Endpoints hub y admin
+
+Archivos nuevos:
+- `app/api/api-keys/route.ts` — `GET` (listar keys de la org) + `POST` (crear, devuelve plaintext una sola vez).
+- `app/api/api-keys/[keyId]/route.ts` — `DELETE` (revocar). Valida que la key pertenezca a la org del caller, excepto admin_platform.
+- `app/api/hub/producers/route.ts` — `GET`, autenticado por API key header `Bearer`. Para `accounting_firm`: lista productores con link activo; para otros: lista productores con grant activo no vencido. Genera audit log.
+- `app/api/hub/credit-folders/[producerId]/route.ts` — `GET`, autenticado por API key. Verifica acceso (link activo o grant activo), devuelve datos básicos del productor + campos seleccionados del perfil. Genera audit log.
+- `app/app/admin/api-keys/page.tsx` — panel admin para listar / crear / revocar API keys. Usa `RoleGate allowedRoles=["admin_platform"]`, `fetch` con `getIdToken()`, muestra plaintext en alerta amarilla una sola vez, formulario de selección de scopes.
+
+### Archivos modificados
+
+- `app/api/producer-profile/[orgId]/route.ts` — GET retorna `organization` básico.
+- `app/api/producer-accountant-links/route.ts` — POST crea notificaciones batch para miembros del estudio.
+- `types/audit.ts` — agrega `"link_request_received"` a `NotificationType`.
+- `lib/firebase/collections.ts` — agrega `API_KEYS: "api_keys"`.
+- `docs/MODULE_REGISTRY.md` — nuevos dominios `INTEGRATION CORE`, colección `api_keys` registrada.
+
+### Pendientes operativos
+
+- Ejecutar `pnpm type-check` y resolver si hay errores.
+- Deploy de Firestore rules para habilitar lectura/escritura de `api_keys` solo por admin_platform server-side (las reglas actuales usan deny-by-default; los endpoints hub usan Admin SDK, no les afecta).
+- Plan 005 Ola 5 (webhooks/eventos): pendiente.
+- Plan 005 Ola 7 (SDK interno): pendiente.
+
+---
+
 ## Cierre obligatorio para proximas sesiones
 
 1. Ejecutar `pnpm type-check`.
