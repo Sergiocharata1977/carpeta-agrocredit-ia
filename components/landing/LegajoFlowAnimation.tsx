@@ -202,7 +202,7 @@ export default function LegajoFlowAnimation() {
 
       {/* ── nube hub ── */}
       <motion.g transform="translate(500,310)"
-        initial={{opacity:0,scale:.8}} whileInView={{opacity:1,scale:1}}
+        initial={{opacity:0}} whileInView={{opacity:1}}
         viewport={{once:true,margin:"-40px"}}
         transition={{duration:.7,delay:.1,ease:[.22,.61,.36,1]}}>
         {/* halo exterior */}
