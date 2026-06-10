@@ -87,7 +87,7 @@ function Actor({x,y,color,soft,label,sub,icon,d}:{
 }){
   return (
     <motion.g transform={`translate(${x},${y})`}
-      initial={{opacity:0,y:16}} whileInView={{opacity:1,y:0}}
+      initial={{opacity:0}} whileInView={{opacity:1}}
       viewport={{once:true,margin:"-40px"}}
       transition={{duration:.65,delay:d,ease:[.22,.61,.36,1]}}>
       {/* plataforma */}
@@ -148,7 +148,7 @@ function TChip({x,y,label,color,delay}:{x:number;y:number;label:string;color:str
 function LRow({y,icon,text,color,d}:{y:number;icon:ReactNode;text:string;color:string;d:number}){
   return (
     <motion.g transform={`translate(16,${y})`}
-      initial={{opacity:0,x:-10}} whileInView={{opacity:1,x:0}}
+      initial={{opacity:0}} whileInView={{opacity:1}}
       viewport={{once:true}} transition={{duration:.4,delay:d}}>
       <rect x={-3} y={-13} width={26} height={26} rx={7} fill={color} opacity={.12}/>
       <g fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">{icon}</g>
@@ -162,7 +162,7 @@ function LRow({y,icon,text,color,d}:{y:number;icon:ReactNode;text:string;color:s
 function RRow({y,text,color,d}:{y:number;text:string;color:string;d:number}){
   return (
     <motion.g transform={`translate(16,${y})`}
-      initial={{opacity:0,x:10}} whileInView={{opacity:1,x:0}}
+      initial={{opacity:0}} whileInView={{opacity:1}}
       viewport={{once:true}} transition={{duration:.4,delay:d}}>
       <circle r={10} fill={color} opacity={.12}/>
       <path d="M-5 0l3.5 3.5 6.5-7" fill="none" stroke={color} strokeWidth={2}
@@ -180,7 +180,7 @@ export default function LegajoFlowAnimation() {
   const D_FIN  = "M500,346 C500,388 500,432 500,474"
 
   return (
-    <svg viewBox="0 0 1000 640" width="100%" style={{display:"block",overflow:"visible"}}>
+    <svg viewBox="0 0 1000 640" width="100%" style={{display:"block"}}>
       <defs>
         <radialGradient id="hg" cx="50%" cy="40%" r="60%">
           <stop offset="0%" stopColor="#ffffff"/>
@@ -293,8 +293,8 @@ export default function LegajoFlowAnimation() {
 
       {/* ── panel izquierdo ── */}
       <motion.g transform="translate(10,252)"
-        initial={{opacity:0,x:-14}} whileInView={{opacity:1,x:0}}
-        viewport={{once:true}} transition={{duration:.55,delay:.45}}>
+        initial={{opacity:0}} whileInView={{opacity:1}}
+        viewport={{once:true}} transition={{duration:.6,delay:.45}}>
         <rect x={0} y={0} width={178} height={258} rx={16}
           fill="#fff" stroke={C.bd} strokeWidth={1.5} opacity={.97}/>
         {/* header */}
@@ -323,8 +323,8 @@ export default function LegajoFlowAnimation() {
 
       {/* ── panel derecho ── */}
       <motion.g transform="translate(812,252)"
-        initial={{opacity:0,x:14}} whileInView={{opacity:1,x:0}}
-        viewport={{once:true}} transition={{duration:.55,delay:.5}}>
+        initial={{opacity:0}} whileInView={{opacity:1}}
+        viewport={{once:true}} transition={{duration:.6,delay:.5}}>
         <rect x={0} y={0} width={178} height={258} rx={16}
           fill="#fff" stroke={C.bd} strokeWidth={1.5} opacity={.97}/>
         {/* header */}
