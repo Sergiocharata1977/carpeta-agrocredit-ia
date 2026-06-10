@@ -462,6 +462,38 @@ Pendientes/riesgos:
 
 ---
 
+## Cambios de esta sesion — Experiencia Productor + Dashboard Contador (Plan 011)
+
+**Fecha:** 2026-06-10  
+**Plan de referencia:** `reports/011_PENDIENTES_PRODUCTOR_CONTADOR.md`
+
+### Archivos nuevos
+
+- `app/api/producer-accountant-links/route.ts` — GET (productor consulta sus vinculos) + POST (solicita vinculo con estudio).
+- `app/api/contador/vinculos-pendientes/route.ts` — GET de links pendientes para el estudio contable.
+- `app/api/organizations/[orgId]/route.ts` — PATCH para que el titular actualice datos basicos de su organizacion.
+- `app/app/productor/perfil/page.tsx` — formulario de completar perfil basico (legalName, CUIT, actividad, domicilio).
+- `app/app/productor/contador/page.tsx` — busqueda de estudios y solicitud de vinculo.
+- `reports/011_PENDIENTES_PRODUCTOR_CONTADOR.md` — este plan con pendientes documentados.
+
+### Archivos modificados
+
+- `app/app/productor/page.tsx` — cards corregidos hacia `/productor/perfil` y `/productor/contador`, tres pasos en orden, botones de accion rapida.
+- `components/layout/AppSidebar.tsx` — productor ve: Mi Perfil + Mi Contador + Habilitaciones + Autorizaciones.
+- `app/app/contador/page.tsx` — conteo real de clientes, seccion `VinculoPendienteCard` para solicitudes pendientes de productores.
+
+### Reconciliacion Plan 004 Ola 3
+
+Todos los items pendientes de la Ola 3 ya estan implementados (ver tabla en `reports/011_PENDIENTES_PRODUCTOR_CONTADOR.md`). Plan 004 completo.
+
+### Pendientes operativos de esta sesion
+
+- Perfil page lee el estado inicial via `/api/producer-profile/[orgId]`; conviene agregar `organization` basica en esa respuesta (ver pendiente #1 del plan 011).
+- Notificacion al estudio cuando llega solicitud de vinculo (pendiente #3).
+- `pnpm type-check` ejecutar al retomar.
+
+---
+
 ## Riesgos y notas
 
 - Cambio 2026-06-04: se reoriento el panel de Productor desde "solicitudes/financiacion" hacia "Habilitaciones de legajo". La accion central ahora es habilitar la visualizacion del legajo por cuenta del sistema, alcance y tiempo; link queda como via excepcional y QR queda pendiente. Archivos principales: `app/app/productor/page.tsx`, `app/app/productor/financiacion/page.tsx`, `components/access/ProducerLegajoHabilitationsPanel.tsx`, `app/api/access-grants/direct/route.ts`, `components/layout/AppSidebar.tsx`, `lib/services/access-grants.ts`. Validacion: `pnpm type-check` OK.

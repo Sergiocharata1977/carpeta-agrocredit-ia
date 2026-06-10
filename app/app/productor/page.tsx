@@ -25,20 +25,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-const nextSteps = [
+const setupSteps = [
   {
-    title: "Completar datos del cliente",
-    description: "Carga los datos basicos de tu actividad y tu carpeta para que el contador pueda trabajar con informacion ordenada.",
-    href: "/app/productor/autorizaciones",
-    action: "Ir a configuracion",
+    title: "Completar mi perfil",
+    description: "Carga tus datos de identidad y actividad para que el contador pueda iniciar la carpeta.",
+    href: "/app/productor/perfil",
+    action: "Ir a mi perfil",
     icon: UserRound,
   },
   {
-    title: "Elegir o confirmar contador",
-    description: "El contador te ayuda a preparar balances, impuestos, documentos y carpeta crediticia.",
-    href: "/app/productor/autorizaciones",
-    action: "Gestionar contador",
+    title: "Elegir un contador",
+    description: "El contador prepara balances, impuestos, documentos y la carpeta crediticia completa.",
+    href: "/app/productor/contador",
+    action: "Buscar contador",
     icon: ShieldCheck,
+  },
+  {
+    title: "Habilitar accesos",
+    description: "Controla quién puede ver tu carpeta, con qué alcance y por cuánto tiempo.",
+    href: "/app/productor/autorizaciones",
+    action: "Ver autorizaciones",
+    icon: Settings,
   },
 ]
 
@@ -121,16 +128,22 @@ export default function ProducerDashboard() {
                   Bienvenido, {user?.displayName ?? "cliente"}
                 </h1>
                 <p className="mt-3 text-base leading-7 text-[var(--brand-muted)]">
-                  Tu acceso ya esta creado. El proximo paso es completar tu carpeta, elegir un contador
-                  y preparar la informacion para habilitar el legajo a entidades cuando lo necesites.
+                  Tu acceso ya esta creado. Completa tu perfil, elige un contador y habilita el
+                  legajo cuando lo necesites.
                 </p>
               </div>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button asChild className="bg-[var(--brand-green)] text-white hover:bg-[var(--brand-green)]/95">
-                  <Link href="/app/productor/autorizaciones">
-                    <Settings className="size-4" />
-                    Completar configuracion
+                  <Link href="/app/productor/perfil">
+                    <UserRound className="size-4" />
+                    Completar mi perfil
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/app/productor/contador">
+                    <ShieldCheck className="size-4" />
+                    Elegir contador
                   </Link>
                 </Button>
               </div>
@@ -162,28 +175,38 @@ export default function ProducerDashboard() {
           </div>
         </section>
 
-        <ProducerLegajoHabilitationsPanel organizationId={user?.defaultOrganizationId ?? null} compact />
-
-        <section className="grid gap-5 lg:grid-cols-2">
-          {nextSteps.map((step) => {
-            const Icon = step.icon
-            return (
-              <article key={step.title} className="ag-card flex min-h-60 flex-col p-6">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-[#dceee7] text-[var(--brand-green)]">
-                  <Icon className="size-5" />
-                </div>
-                <h2 className="mt-5 text-xl font-semibold tracking-tight text-[var(--brand-ink)]">{step.title}</h2>
-                <p className="mt-3 flex-1 text-sm leading-6 text-[var(--brand-muted)]">{step.description}</p>
-                <Button asChild variant="outline" className="mt-5 justify-between">
-                  <Link href={step.href}>
-                    {step.action}
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
-              </article>
-            )
-          })}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.14em] text-[var(--brand-muted)]">
+            Proximos pasos
+          </h2>
+          <div className="grid gap-5 lg:grid-cols-3">
+            {setupSteps.map((step, index) => {
+              const Icon = step.icon
+              return (
+                <article key={step.title} className="ag-card flex min-h-52 flex-col p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 items-center justify-center rounded-2xl bg-[#dceee7] text-[var(--brand-green)]">
+                      <Icon className="size-5" />
+                    </div>
+                    <span className="flex size-6 items-center justify-center rounded-full border border-[var(--brand-line)] text-xs font-bold text-[var(--brand-muted)]">
+                      {index + 1}
+                    </span>
+                  </div>
+                  <h2 className="mt-4 text-lg font-semibold tracking-tight text-[var(--brand-ink)]">{step.title}</h2>
+                  <p className="mt-2 flex-1 text-sm leading-6 text-[var(--brand-muted)]">{step.description}</p>
+                  <Button asChild variant="outline" className="mt-5 justify-between">
+                    <Link href={step.href}>
+                      {step.action}
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                </article>
+              )
+            })}
+          </div>
         </section>
+
+        <ProducerLegajoHabilitationsPanel organizationId={user?.defaultOrganizationId ?? null} compact />
 
         <section className="ag-panel p-6 lg:p-8">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">

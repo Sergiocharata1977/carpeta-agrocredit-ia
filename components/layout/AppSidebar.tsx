@@ -15,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   Sprout,
+  UserRound,
   Users,
 } from "lucide-react"
 import type { UserRole } from "@/types/auth"
@@ -28,9 +29,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/app/productor", icon: LayoutDashboard, roles: ["producer"] },
+  { label: "Mi Perfil", href: "/app/productor/perfil", icon: UserRound, roles: ["producer"] },
+  { label: "Mi Contador", href: "/app/productor/contador", icon: Building2, roles: ["producer"] },
   { label: "Habilitaciones", href: "/app/productor/financiacion", icon: ShieldCheck, roles: ["producer"] },
+  { label: "Autorizaciones", href: "/app/productor/autorizaciones", icon: Settings, roles: ["producer"] },
   { label: "Notificaciones", href: "/app/notificaciones", icon: Bell, roles: ["producer"] },
-  { label: "Configuracion", href: "/app/productor/autorizaciones", icon: Settings, roles: ["producer"] },
 
   { label: "Dashboard", href: "/app/entidad", icon: LayoutDashboard, roles: ["bank_user", "agro_company_user"] },
   { label: "Solicitudes", href: "/app/entidad/financiacion", icon: FileText, roles: ["bank_user", "agro_company_user"] },
