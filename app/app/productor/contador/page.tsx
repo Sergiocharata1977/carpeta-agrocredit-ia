@@ -57,6 +57,8 @@ const STATUS_VARIANTS: Record<ProducerLink["status"], "default" | "secondary" | 
   inactive: "secondary",
 }
 
+const BANNER_KEY = "agro_contador_banner_dismissed"
+
 export default function ProducerContadorPage() {
   const { user } = useSession()
   const [links, setLinks] = useState<ProducerLink[]>([])
@@ -66,6 +68,17 @@ export default function ProducerContadorPage() {
   const [loadingFirms, setLoadingFirms] = useState(false)
   const [requesting, setRequesting] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [bannerVisible, setBannerVisible] = useState(false)
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem(BANNER_KEY) === "1"
+    if (!dismissed) setBannerVisible(true)
+  }, [])
+
+  function dismissBanner() {
+    localStorage.setItem(BANNER_KEY, "1")
+    setBannerVisible(false)
+  }
 
   const fetchLinks = useCallback(async () => {
     setLoadingLinks(true)
@@ -203,14 +216,23 @@ export default function ProducerContadorPage() {
           </section>
         )}
 
-        {/* Banner explicativo — solo si no hay vínculo activo */}
-        {!activeLink && !loadingLinks && (
-          <section className="rounded-xl border border-[#c7d2fe] bg-[#eef2ff] p-5">
+        {/* Banner explicativo — solo si no hay vínculo activo y no fue cerrado */}
+        {!activeLink && !loadingLinks && bannerVisible && (
+          <section className="relative rounded-xl border border-[#c7d2fe] bg-[#eef2ff] p-5 pr-12">
+            {/* Botón cerrar */}
+            <button
+              onClick={dismissBanner}
+              className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-full text-[#6366f1] transition-colors hover:bg-[#e0e7ff] hover:text-[#4338ca]"
+              aria-label="Cerrar aviso"
+            >
+              <X className="size-4" />
+            </button>
+
             <div className="flex gap-4">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e0e7ff] text-[#4f46e5]">
                 <FileText className="size-5" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <p className="font-semibold text-[#1e1b4b]">¿Para qué necesitás un contador?</p>
                 <p className="text-sm leading-relaxed text-[#3730a3]">
                   El contador es quien carga y mantiene tu información financiera: balances,
@@ -218,10 +240,19 @@ export default function ProducerContadorPage() {
                   la carpeta crediticia no puede completarse y los bancos o financieras no
                   podrán evaluar tu solicitud.
                 </p>
-                <p className="mt-2 text-sm font-medium text-[#4338ca]">
+                <p className="text-sm leading-relaxed text-[#3730a3]">
                   Buscá tu estudio contable aquí abajo y enviá una solicitud de vínculo.
                   El contador recibirá una notificación y podrá aceptar o rechazar.
                 </p>
+                {/* Mensaje de privacidad */}
+                <div className="flex items-start gap-2 rounded-lg border border-[#a5b4fc] bg-[#e0e7ff] px-3 py-2">
+                  <Info className="mt-0.5 size-3.5 shrink-0 text-[#4f46e5]" />
+                  <p className="text-xs leading-relaxed text-[#3730a3]">
+                    <span className="font-semibold">Tu información está encriptada y es privada.</span>{" "}
+                    Solo vos, tu contador y las personas que vos autoricés expresamente pueden
+                    verla. Ningún banco ni financiera accede sin tu permiso.
+                  </p>
+                </div>
               </div>
             </div>
           </section>

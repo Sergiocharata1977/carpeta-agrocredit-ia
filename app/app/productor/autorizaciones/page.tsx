@@ -20,7 +20,7 @@ import {
   getGrantsForProducer,
   revokeAccessGrant,
 } from "@/lib/services/access-grants"
-import { ShieldCheck, Clock, AlertCircle, Ban, Send, Info } from "lucide-react"
+import { ShieldCheck, Clock, AlertCircle, Ban, Send, Info, X } from "lucide-react"
 import Link from "next/link"
 import type { AccessGrant, AccessInvitation, AccessRequest, AccessScope } from "@/types/access"
 import type { Producer } from "@/types/producer"
@@ -35,9 +35,20 @@ export default function ProducerAuthorizationsPage() {
   const [selectedRequest, setSelectedRequest] = useState<AccessRequest | null>(null)
   const [invitations, setInvitations] = useState<AccessInvitation[]>([])
   const [hasActiveContador, setHasActiveContador] = useState(false)
+  const [bannerVisible, setBannerVisible] = useState(false)
   const [showInviteDialog, setShowInviteDialog] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem("agro_autorizaciones_banner_dismissed") === "1"
+    if (!dismissed) setBannerVisible(true)
+  }, [])
+
+  function dismissBanner() {
+    localStorage.setItem("agro_autorizaciones_banner_dismissed", "1")
+    setBannerVisible(false)
+  }
   const [revoking, setRevoking] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -248,27 +259,47 @@ export default function ProducerAuthorizationsPage() {
           </div>
         ) : (
           <>
-            {/* Aviso si no tiene contador activo */}
-            {!hasActiveContador && (
-              <div className="flex items-start gap-4 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-5">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#fef3c7]">
-                  <Info className="size-4 text-[#d97706]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-[#92400e]">
-                    Necesitás un contador para poder compartir tu carpeta
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-[#78350f]">
-                    Para que un banco o financiera pueda evaluar tu solicitud, tu contador
-                    debe haber cargado la información financiera (balances, impuestos,
-                    documentos). Sin esa información, compartir el acceso no tiene utilidad.
-                  </p>
-                  <Link
-                    href="/app/productor/contador"
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#d97706] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b45309] transition-colors"
-                  >
-                    Vincular un contador
-                  </Link>
+            {/* Aviso si no tiene contador activo — cerrable */}
+            {!hasActiveContador && bannerVisible && (
+              <div className="relative rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-5 pr-12">
+                {/* Botón cerrar */}
+                <button
+                  onClick={dismissBanner}
+                  className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-full text-[#d97706] transition-colors hover:bg-[#fef3c7] hover:text-[#92400e]"
+                  aria-label="Cerrar aviso"
+                >
+                  <X className="size-4" />
+                </button>
+
+                <div className="flex items-start gap-4">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#fef3c7]">
+                    <Info className="size-4 text-[#d97706]" />
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="font-semibold text-[#92400e]">
+                      Necesitás un contador para poder compartir tu carpeta
+                    </p>
+                    <p className="text-sm leading-relaxed text-[#78350f]">
+                      Para que un banco o financiera pueda evaluar tu solicitud, tu contador
+                      debe haber cargado la información financiera (balances, impuestos,
+                      documentos). Sin esa información, compartir el acceso no tiene utilidad.
+                    </p>
+                    {/* Mensaje de privacidad */}
+                    <div className="flex items-start gap-2 rounded-lg border border-[#fcd34d] bg-[#fef9c3] px-3 py-2">
+                      <Info className="mt-0.5 size-3.5 shrink-0 text-[#b45309]" />
+                      <p className="text-xs leading-relaxed text-[#78350f]">
+                        <span className="font-semibold">Tu información está encriptada y es privada.</span>{" "}
+                        Solo vos, tu contador y las personas que vos autoricés pueden verla.
+                        Ningún banco ni financiera accede sin tu permiso explícito.
+                      </p>
+                    </div>
+                    <Link
+                      href="/app/productor/contador"
+                      className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[#d97706] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#b45309]"
+                    >
+                      Vincular un contador
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
