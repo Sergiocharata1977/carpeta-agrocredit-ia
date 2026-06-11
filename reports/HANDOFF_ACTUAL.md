@@ -601,6 +601,63 @@ Todo el panel superadmin lee via API server-side con Admin SDK y validacion de r
 
 ---
 
+## Plan 012: Lanzamiento Seguro con Aislamiento Multi-Tenant y Cifrado V1
+
+**Fecha creación:** 2026-06-11  
+**Archivo:** `reports/012_PLAN_LANZAMIENTO_SEGURO_ENCRIPTACION.md`  
+**Estado:** Documento de arquitectura + olas ejecutables  
+**Bloqueante:** Ola 0 (ADR de seguridad) debe cerrarse antes de codificar Ola 1
+
+### Decisiones clave establecidas
+
+1. **V1 es "Legajo Seguro", no "E2EE Puro"**
+   - Balance sheet vive como dato estructurado en Firestore (`balance_sheets.details`) — NO se cifra masivamente
+   - Archivos fuente (PDF, Excel) en Storage SÍ se cifran (son los candidatos reales)
+   - AgroCredit puede desencriptar tras validar permisos, pero queda auditado
+   - Promesa comercial: "tus datos están privados dentro del legajo, acceso auditado a nivel sección"
+
+2. **Alcance V1 vs V2**
+   - **V1 (Obligatorio para lanzamiento):** deny-by-default, aislamiento multi-tenant, grants con vencimiento, auditoría por sección, cifrado de archivos fuente
+   - **V2 (Post-lanzamiento/Enterprise):** E2EE completo, KMS, key recovery, rotación automatizada
+
+3. **Auditoría granular por sección del legajo**
+   - No solo "document_encrypted/decrypted"; también "balance_sheet.viewed", "income_statement.viewed by scope"
+   - Productor ve: "Contador X vio Balance el [fecha], Financista Y vio solo Ingresos el [fecha]"
+   - Validación de scopes server-side: financista con `income_statements` no puede leer `assets`
+
+4. **Storage y API**
+   - Mantener ruta canónica: `orgs/{producerOrganizationId}/producers/{producerId}/periods/{periodId}/{documentType}/{documentId}-{filename}`
+   - API NO devuelve `storagePath` (encriptación queda oculta en metadata)
+   - Endpoint valida scope + no devuelve campos fuera del scope autorizado
+
+### Olas del Plan 012
+
+| Ola | Objetivo | Tiempo | Bloqueante |
+|-----|----------|--------|-----------|
+| 0 | ADR: elegir algoritmo (libsodium vs WebCrypto), definir ciclo de claves V1 | 2-3 días | Sí — antes de cualquier código |
+| 1 | Tipos, schemas, reglas Firestore/Storage, auditoría | 3-4 días | Ola 0 |
+| 2 | Tests de aislamiento multi-tenant y permisos | 3-4 días | Ola 1 |
+| 3 | Cifrado V1 de archivos fuente + validación scopes en APIs | 4-5 días | Ola 1 |
+| 4 | Checklist pre-deploy, docs, staging validation | 2-3 días | Ola 3 |
+| **Total** | | **14-19 días** | |
+
+### Cambios respecto al enfoque original
+
+- ✅ **Más realista:** V1 ahora cabe en 2-3 sprints (antes era 10-12 semanas)
+- ✅ **Menos cifraje indiscriminado:** solo archivos fuente, no todos los datos estructurados
+- ✅ **Promesa honesta:** "auditable" en lugar de "nadie nos ve"
+- ✅ **Auditoría útil:** por sección, no solo por evento cripto
+- ✅ **OCR/IA sigue funcionando:** no necesita desencriptar en cliente
+
+### Pendientes operativos antes de Ola 1
+
+- [ ] Cerrar ADR (Ola 0): ¿libsodium.js (XChaCha20-Poly1305) o WebCrypto (AES-256-GCM)?
+- [ ] Crear `docs/ADR_SECURITY_ENCRYPTION.md` con el modelo de claves V1
+- [ ] Crear `docs/PRIVACY_MODEL.md` para explicar a contadores/financistas qué ven y qué no
+- [ ] Verificar que `types/audit.ts` tiene `AuditAction` actualizado con eventos por sección
+
+---
+
 ## Cierre obligatorio para proximas sesiones
 
 1. Ejecutar `pnpm type-check`.
