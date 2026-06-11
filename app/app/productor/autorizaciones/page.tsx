@@ -20,7 +20,8 @@ import {
   getGrantsForProducer,
   revokeAccessGrant,
 } from "@/lib/services/access-grants"
-import { ShieldCheck, Clock, AlertCircle, Ban, Send } from "lucide-react"
+import { ShieldCheck, Clock, AlertCircle, Ban, Send, Info } from "lucide-react"
+import Link from "next/link"
 import type { AccessGrant, AccessInvitation, AccessRequest, AccessScope } from "@/types/access"
 import type { Producer } from "@/types/producer"
 import { AccessInvitationTable } from "@/components/access/AccessInvitationTable"
@@ -33,6 +34,7 @@ export default function ProducerAuthorizationsPage() {
   const [grants, setGrants] = useState<AccessGrant[]>([])
   const [selectedRequest, setSelectedRequest] = useState<AccessRequest | null>(null)
   const [invitations, setInvitations] = useState<AccessInvitation[]>([])
+  const [hasActiveContador, setHasActiveContador] = useState(false)
   const [showInviteDialog, setShowInviteDialog] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -50,6 +52,22 @@ export default function ProducerAuthorizationsPage() {
     const currentProducer = producers[0] ?? null
     setProducer(currentProducer)
 
+    const token = await getIdToken()
+
+    // Verificar si tiene contador activo
+    if (token) {
+      const linksRes = await fetch("/api/producer-accountant-links", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (linksRes.ok) {
+        const linksJson = await linksRes.json()
+        const active = (linksJson.links ?? []).some(
+          (l: { status: string }) => l.status === "active",
+        )
+        setHasActiveContador(active)
+      }
+    }
+
     if (currentProducer) {
       const [nextRequests, nextGrants] = await Promise.all([
         getAccessRequestsForProducer(currentProducer.id),
@@ -59,7 +77,6 @@ export default function ProducerAuthorizationsPage() {
       setGrants(nextGrants)
 
       // Cargar invitaciones
-      const token = await getIdToken()
       if (token) {
         const res = await fetch(
           `/api/access-invitations?ownerOrganizationId=${user?.defaultOrganizationId}`,
@@ -231,6 +248,31 @@ export default function ProducerAuthorizationsPage() {
           </div>
         ) : (
           <>
+            {/* Aviso si no tiene contador activo */}
+            {!hasActiveContador && (
+              <div className="flex items-start gap-4 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-5">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#fef3c7]">
+                  <Info className="size-4 text-[#d97706]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[#92400e]">
+                    Necesitás un contador para poder compartir tu carpeta
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-[#78350f]">
+                    Para que un banco o financiera pueda evaluar tu solicitud, tu contador
+                    debe haber cargado la información financiera (balances, impuestos,
+                    documentos). Sin esa información, compartir el acceso no tiene utilidad.
+                  </p>
+                  <Link
+                    href="/app/productor/contador"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#d97706] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b45309] transition-colors"
+                  >
+                    Vincular un contador
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <SummaryCard title="Pendientes" value={pendingRequests.length} icon={AlertCircle} />
               <SummaryCard title="Activos" value={activeGrants.length} icon={ShieldCheck} />

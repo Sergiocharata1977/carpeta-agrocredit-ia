@@ -6,8 +6,9 @@ import {
   Building2,
   CheckCircle2,
   Clock,
+  FileText,
+  Info,
   Loader2,
-  Search,
   Send,
   UserX,
   X,
@@ -18,7 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getFreshIdToken, getIdToken } from "@/lib/firebase/auth-client"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { useSession } from "@/lib/auth/session"
 
 interface AccountingFirm {
@@ -70,11 +71,18 @@ export default function ProducerContadorPage() {
     setLoadingLinks(true)
     setError(null)
     try {
-      const token = await getIdToken()
+      // getFreshIdToken fuerza refresco de claims — necesario para que
+      // defaultOrganizationId esté disponible en cuentas recién creadas
+      const token = await getFreshIdToken()
       if (!token) throw new Error("Sesion no disponible")
       const res = await fetch("/api/producer-accountant-links", {
         headers: { Authorization: `Bearer ${token}` },
       })
+      if (res.status === 403) {
+        // Sin organización configurada aún — tratar como sin vínculos
+        setLinks([])
+        return
+      }
       if (!res.ok) throw new Error("No se pudieron cargar los vinculos")
       const json = await res.json()
       setLinks(json.links ?? [])
@@ -88,7 +96,7 @@ export default function ProducerContadorPage() {
   const searchFirms = useCallback(async (q: string) => {
     setLoadingFirms(true)
     try {
-      const token = await getIdToken()
+      const token = await getFreshIdToken()
       if (!token) return
       const params = new URLSearchParams({ type: "accounting_firm", limit: "10" })
       if (q.trim()) params.set("search", q.trim())
@@ -191,6 +199,30 @@ export default function ProducerContadorPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Banner explicativo — solo si no hay vínculo activo */}
+        {!activeLink && !loadingLinks && (
+          <section className="rounded-xl border border-[#c7d2fe] bg-[#eef2ff] p-5">
+            <div className="flex gap-4">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e0e7ff] text-[#4f46e5]">
+                <FileText className="size-5" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-[#1e1b4b]">¿Para qué necesitás un contador?</p>
+                <p className="text-sm leading-relaxed text-[#3730a3]">
+                  El contador es quien carga y mantiene tu información financiera: balances,
+                  declaraciones impositivas, bienes y documentos. Sin un contador vinculado,
+                  la carpeta crediticia no puede completarse y los bancos o financieras no
+                  podrán evaluar tu solicitud.
+                </p>
+                <p className="mt-2 text-sm font-medium text-[#4338ca]">
+                  Buscá tu estudio contable aquí abajo y enviá una solicitud de vínculo.
+                  El contador recibirá una notificación y podrá aceptar o rechazar.
+                </p>
+              </div>
             </div>
           </section>
         )}
