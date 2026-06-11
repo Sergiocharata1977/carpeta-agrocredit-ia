@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/app/productor", icon: LayoutDashboard, roles: ["producer"] },
   { label: "Mi Perfil", href: "/app/productor/perfil", icon: UserRound, roles: ["producer"] },
   { label: "Mi Contador", href: "/app/productor/contador", icon: Building2, roles: ["producer"] },
+  { label: "Mi Carpeta", href: "/app/productor/carpeta", icon: FileText, roles: ["producer"] },
   { label: "Habilitaciones", href: "/app/productor/financiacion", icon: ShieldCheck, roles: ["producer"] },
   { label: "Autorizaciones", href: "/app/productor/autorizaciones", icon: Settings, roles: ["producer"] },
   { label: "Notificaciones", href: "/app/notificaciones", icon: Bell, roles: ["producer"] },

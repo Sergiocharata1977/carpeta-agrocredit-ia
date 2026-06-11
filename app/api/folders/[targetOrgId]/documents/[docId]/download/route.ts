@@ -4,6 +4,7 @@ import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import {
   getAuthErrorResponse,
+  isProducerRole,
   requireAnyRole,
   verifyRequestSession,
 } from "@/lib/auth/server-session"
@@ -15,15 +16,22 @@ export async function GET(
 ) {
   try {
     const session = await verifyRequestSession(request)
-    requireAnyRole(session, ["bank_user", "agro_company_user", "admin_platform"])
-
     const { targetOrgId, docId } = await params
+
+    // El titular descarga documentos de su propia carpeta sin grant
+    const isOwner = isProducerRole(session) && session.defaultOrganizationId === targetOrgId
+    if (!isOwner) {
+      requireAnyRole(session, ["bank_user", "agro_company_user", "admin_platform"])
+    }
+
     const db = getAdminDb()
     const now = new Date()
 
     // Verify active grant with documents scope
     let hasAccess = false
-    if (session.roles.includes("admin_platform")) {
+    if (isOwner) {
+      hasAccess = true
+    } else if (session.roles.includes("admin_platform")) {
       hasAccess = true
     } else if (session.defaultOrganizationId) {
       const snap = await db
@@ -82,7 +90,7 @@ export async function GET(
     await writeAuditLog({
       actorUid: session.uid,
       actorOrganizationId: session.defaultOrganizationId,
-      action: "document.downloaded_by_entity",
+      action: isOwner ? "document.downloaded_by_owner" : "document.downloaded_by_entity",
       targetType: "document",
       targetId: docId,
       metadata: {

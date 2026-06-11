@@ -59,6 +59,8 @@ export function ProducerLegajoHabilitationsPanel({
   const [purpose, setPurpose] = useState("Habilitacion temporal para visualizar legajo agrofinanciero.")
   const [saving, setSaving] = useState(false)
   const [revoking, setRevoking] = useState<string | null>(null)
+  // null = todavia no se sabe; false = carpeta vacia, no se puede habilitar
+  const [folderHasData, setFolderHasData] = useState<boolean | null>(null)
 
   const loadData = useCallback(async () => {
     if (!organizationId) {
@@ -82,6 +84,15 @@ export function ProducerLegajoHabilitationsPanel({
         if (res.ok) {
           const json = await res.json()
           setInvitations(json.invitations ?? [])
+        }
+
+        const statusRes = await fetch(`/api/folders/${organizationId}/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        })
+        if (statusRes.ok) {
+          const statusJson = await statusRes.json()
+          setFolderHasData(Boolean(statusJson.hasData))
         }
       }
     } catch (loadError) {
@@ -126,6 +137,10 @@ export function ProducerLegajoHabilitationsPanel({
   }
 
   async function createDirectGrant() {
+    if (folderHasData === false) {
+      toast.error("Tu carpeta no tiene informacion cargada todavia. No se puede habilitar el legajo.")
+      return
+    }
     if (!organizationId || !selectedEntity) {
       toast.error("Selecciona una cuenta del sistema.")
       return
@@ -223,13 +238,23 @@ export function ProducerLegajoHabilitationsPanel({
             setMode("account")
             setDialogOpen(true)
           }}
-          disabled={!organizationId}
+          disabled={!organizationId || folderHasData === false}
           className="bg-[var(--brand-green)] text-white hover:bg-[var(--brand-green)]/95"
         >
           <Plus className="size-4" />
           Habilitar legajo
         </Button>
       </div>
+
+      {folderHasData === false ? (
+        <div className="m-6 mb-0 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <span>
+            Tu carpeta todavia no tiene informacion cargada, por eso no podes habilitar el legajo.
+            Pedile a tu contador que cargue balances, impuestos o documentos primero.
+          </span>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="m-6 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">

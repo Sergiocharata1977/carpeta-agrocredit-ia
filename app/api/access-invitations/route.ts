@@ -16,6 +16,7 @@ import {
   createInvitationToken,
 } from "@/lib/auth/access-invitation-access"
 import { createAccessInvitationSchema } from "@/lib/schemas/access"
+import { getFolderDataStatus } from "@/lib/firebase/folder-data"
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,10 +28,18 @@ export async function POST(request: NextRequest) {
 
     const data = createAccessInvitationSchema.parse(await request.json())
     const invitationAccess = await assertCanCreateInvitation(session, data.targetOrganizationId)
-    const { rawToken, tokenHash, tokenExpiresAt } = createInvitationToken()
-    const status = invitationAccess.requiresOwnerApproval ? "pending_owner_approval" : "sent"
 
     const db = getAdminDb()
+    const folderStatus = await getFolderDataStatus(db, data.targetOrganizationId)
+    if (!folderStatus.hasData) {
+      return Response.json(
+        { error: "La carpeta no tiene informacion cargada todavia. Carga datos antes de invitar a visualizar el legajo." },
+        { status: 409 },
+      )
+    }
+
+    const { rawToken, tokenHash, tokenExpiresAt } = createInvitationToken()
+    const status = invitationAccess.requiresOwnerApproval ? "pending_owner_approval" : "sent"
     const now = FieldValue.serverTimestamp()
     const invitationRef = db.collection(COLLECTIONS.ACCESS_INVITATIONS).doc()
 

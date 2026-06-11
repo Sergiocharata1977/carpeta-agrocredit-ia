@@ -4,6 +4,7 @@ import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import {
   getAuthErrorResponse,
+  isProducerRole,
   requireAnyRole,
   verifyRequestSession,
 } from "@/lib/auth/server-session"
@@ -41,14 +42,35 @@ export async function GET(
 ) {
   try {
     const session = await verifyRequestSession(request)
-    requireAnyRole(session, ["bank_user", "agro_company_user", "admin_platform"])
-
     const { targetOrgId } = await params
+
+    // El titular puede ver su propia carpeta; el resto requiere rol de entidad o admin
+    const isOwner = isProducerRole(session) && session.defaultOrganizationId === targetOrgId
+    if (!isOwner) {
+      requireAnyRole(session, ["bank_user", "agro_company_user", "admin_platform"])
+    }
+
     const db = getAdminDb()
     const now = new Date()
     let grant: AccessGrant | null = null
 
-    if (session.roles.includes("admin_platform")) {
+    if (isOwner) {
+      grant = {
+        id: "owner",
+        targetOrganizationId: targetOrgId,
+        targetScope: "single_organization",
+        accessRequestId: "owner",
+        grantedToOrganizationId: targetOrgId,
+        allowedScopes: [...FULL_SCOPES],
+        purpose: "Vista del titular del legajo",
+        startsAt: now.toISOString(),
+        expiresAt: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        status: "approved",
+        grantedBy: session.uid,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      }
+    } else if (session.roles.includes("admin_platform")) {
       grant = {
         id: "admin",
         targetOrganizationId: targetOrgId,

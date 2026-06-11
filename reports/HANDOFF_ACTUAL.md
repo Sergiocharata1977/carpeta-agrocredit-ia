@@ -578,6 +578,29 @@ Todo el panel superadmin lee via API server-side con Admin SDK y validacion de r
 
 ---
 
+## Cambios de esta sesion — Carpeta vacia no habilita legajo + vista Mi Carpeta del titular
+
+**Fecha:** 2026-06-11  
+**pnpm type-check:** OK
+
+### Regla de negocio nueva: no se puede habilitar un legajo vacio
+
+- **Nuevo:** `lib/firebase/folder-data.ts` — `getFolderDataStatus(db, orgId)` verifica si hay datos en balance_sheets, income_statements, tax_documents, assets, liabilities y documents (queries `limit(1)` sin orderBy, sin depender de indices).
+- `POST /api/access-grants/direct` — rechaza con 409 si la carpeta no tiene informacion cargada.
+- `POST /api/access-invitations` — mismo bloqueo para links excepcionales.
+- **Nuevo:** `GET /api/folders/[targetOrgId]/status` — estado liviano `{ hasData, sections }` para titular, contador o admin.
+- `ProducerLegajoHabilitationsPanel` — deshabilita el boton "Habilitar legajo" y muestra aviso ambar cuando la carpeta esta vacia.
+
+### El titular ve su propia carpeta
+
+- `GET /api/folders/[targetOrgId]/readonly` — ahora el productor titular (defaultOrganizationId == targetOrgId) accede con grant sintetico full-scope, igual que admin. Tambien habilitado el download de documentos propio (audit log `document.downloaded_by_owner`).
+- **Nuevo:** `components/folders/ReadonlyFolderView.tsx` — vista de carpeta extraida de la pagina de entidad, con prop `ownerView` (sin banner de grant, con aviso "asi ven tu legajo las cuentas habilitadas" y empty-state si no hay datos).
+- **Nuevo:** `app/app/productor/carpeta/page.tsx` — pagina "Mi Carpeta" del productor usando la vista compartida.
+- `app/app/entidad/carpetas/[targetOrgId]/page.tsx` — reducida a wrapper de `ReadonlyFolderView` (sin cambio funcional).
+- `components/layout/AppSidebar.tsx` — item "Mi Carpeta" en el menu del productor.
+
+---
+
 ## Cierre obligatorio para proximas sesiones
 
 1. Ejecutar `pnpm type-check`.

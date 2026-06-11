@@ -3,6 +3,7 @@ import { z } from "zod"
 import { assertCanDecideAccess, notifyOrganizationUsers } from "@/lib/auth/server-access"
 import { getAuthErrorResponse, verifyRequestSession } from "@/lib/auth/server-session"
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
+import { getFolderDataStatus } from "@/lib/firebase/folder-data"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 
@@ -37,6 +38,14 @@ export async function POST(request: Request) {
     }
     if (recipientSnap.data()?.status !== "active") {
       return Response.json({ error: "La entidad destino no esta activa" }, { status: 409 })
+    }
+
+    const folderStatus = await getFolderDataStatus(db, input.targetOrganizationId)
+    if (!folderStatus.hasData) {
+      return Response.json(
+        { error: "La carpeta no tiene informacion cargada todavia. Pedile a tu contador que cargue datos antes de habilitar el legajo." },
+        { status: 409 },
+      )
     }
 
     const now = new Date()
