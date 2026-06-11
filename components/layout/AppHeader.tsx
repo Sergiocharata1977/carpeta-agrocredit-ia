@@ -1,11 +1,12 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
-import { CalendarDays } from "lucide-react"
+import { Building2, CalendarDays } from "lucide-react"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
 import { AppUserMenu } from "@/components/layout/AppUserMenu"
 import { useSession } from "@/lib/auth/session"
+import { getIdToken } from "@/lib/firebase/auth-client"
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string; roleLabel?: string }> = {
   "/app/productor": {
@@ -76,6 +77,33 @@ function formatToday() {
 export function AppHeader() {
   const pathname = usePathname()
   const { user } = useSession()
+  const [orgName, setOrgName] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadOrgName() {
+      if (!user?.defaultOrganizationId) {
+        setOrgName(null)
+        return
+      }
+      try {
+        const token = await getIdToken()
+        if (!token) return
+        const res = await fetch("/api/me/organization", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setOrgName(data.organization?.legalName ?? null)
+      } catch {
+        // El nombre de la org es informativo: si falla, no rompemos el header
+      }
+    }
+    loadOrgName()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.defaultOrganizationId])
 
   const content = useMemo(() => {
     const directMatch = PAGE_TITLES[pathname]
@@ -100,10 +128,20 @@ export function AppHeader() {
   return (
     <header className="flex flex-col gap-5 rounded-[1.8rem] border border-[var(--brand-line)] bg-white/85 px-5 py-5 shadow-[0_18px_40px_rgba(17,33,50,0.06)] backdrop-blur lg:flex-row lg:items-start lg:justify-between lg:px-7">
       <div className="min-w-0">
-        {content.roleLabel && (
-          <span className="mb-2 inline-flex items-center rounded-full border border-[var(--brand-line)] bg-[var(--brand-surface-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--brand-muted)]">
-            {content.roleLabel}
-          </span>
+        {(content.roleLabel || orgName) && (
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            {content.roleLabel && (
+              <span className="inline-flex items-center rounded-full border border-[var(--brand-line)] bg-[var(--brand-surface-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--brand-muted)]">
+                {content.roleLabel}
+              </span>
+            )}
+            {orgName && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-line)] bg-white px-3 py-1 text-xs font-bold text-[var(--brand-ink)]">
+                <Building2 className="h-3.5 w-3.5" />
+                {orgName}
+              </span>
+            )}
+          </div>
         )}
         <h1 className="text-[2.2rem] font-extrabold tracking-tight text-[var(--brand-green)] lg:text-[3rem]">
           {content.title}

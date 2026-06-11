@@ -27,10 +27,10 @@ export async function GET(request: NextRequest) {
     const producerOrgId = requireDefaultOrganization(session)
     const db = getAdminDb()
 
+    // Sin orderBy en la query: where + orderBy requiere indice compuesto no desplegado
     const snapshot = await db
       .collection(COLLECTIONS.PRODUCER_ACCOUNTANT_LINKS)
       .where("systemUserOrganizationId", "==", producerOrgId)
-      .orderBy("createdAt", "desc")
       .get()
 
     if (snapshot.empty) {
@@ -51,20 +51,22 @@ export async function GET(request: NextRequest) {
     const firmSnaps = firmIds.length > 0 ? await db.getAll(...firmRefs) : []
     const firmMap = new Map(firmSnaps.map((snap) => [snap.id, snap.data()]))
 
-    const links = snapshot.docs.map((doc) => {
-      const data = doc.data()
-      const firm = firmMap.get(data.accountingFirmId)
-      return {
-        id: doc.id,
-        status: data.status ?? "pending",
-        accountingFirmId: data.accountingFirmId,
-        firmLegalName: firm?.legalName ?? null,
-        firmTaxId: firm?.taxId ?? null,
-        firmContactEmail: firm?.contactEmail ?? null,
-        isMain: data.isMain ?? false,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
-      }
-    })
+    const links = snapshot.docs
+      .map((doc) => {
+        const data = doc.data()
+        const firm = firmMap.get(data.accountingFirmId)
+        return {
+          id: doc.id,
+          status: data.status ?? "pending",
+          accountingFirmId: data.accountingFirmId,
+          firmLegalName: firm?.legalName ?? null,
+          firmTaxId: firm?.taxId ?? null,
+          firmContactEmail: firm?.contactEmail ?? null,
+          isMain: data.isMain ?? false,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
+        }
+      })
+      .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
 
     return Response.json({ links })
   } catch (error) {
