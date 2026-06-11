@@ -6,7 +6,7 @@ export const registrationSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   displayName: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(100),
-  role: z.enum(["system_user", "accountant", "requesting_entity_user"]),
+  role: z.enum(["system_user", "accountant", "requesting_entity_user", "accounting_firm", "requesting_entity"]),
 })
 
 export const systemUserOrgSchema = z.object({

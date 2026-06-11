@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Calculator } from "lucide-react"
+import { ArrowLeft, Calculator, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +13,8 @@ export default function RegistroContadorPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmError, setConfirmError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -25,8 +27,12 @@ export default function RegistroContadorPage() {
     const password = (form.elements.namedItem("password") as HTMLInputElement).value
     const confirmPassword = (form.elements.namedItem("confirmPassword") as HTMLInputElement).value
 
+    if (password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres")
+      return
+    }
     if (password !== confirmPassword) {
-      setConfirmError("Las contraseñas no coinciden")
+      setConfirmError("Las contraseñas no coinciden — verificá que sean iguales")
       return
     }
 
@@ -41,7 +47,12 @@ export default function RegistroContadorPage() {
       if (!res.ok) throw new Error(data.error ?? "Error al registrar")
       router.push("/login?registered=1")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al registrar")
+      const msg = err instanceof Error ? err.message : "Error al registrar"
+      if (msg.includes("email") && msg.includes("registrado")) {
+        setError("Ese email ya tiene una cuenta. ¿Querés iniciar sesión?")
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -79,25 +90,59 @@ export default function RegistroContadorPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} required />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Mínimo 8 caracteres"
+                  minLength={8}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#59675f] hover:text-[#10221c]"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Repetí la misma contraseña"
-                minLength={8}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Repetí la misma contraseña"
+                  minLength={8}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#59675f] hover:text-[#10221c]"
+                  aria-label={showConfirm ? "Ocultar contraseña" : "Ver contraseña"}
+                >
+                  {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
               {confirmError && (
                 <p className="text-sm text-red-600">{confirmError}</p>
               )}
             </div>
 
             {error && (
-              <p className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
+              <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 border border-red-200">
+                {error}
+                {error.includes("iniciar sesión") && (
+                  <Link href="/login" className="ml-1 underline font-semibold">Ir al login</Link>
+                )}
+              </div>
             )}
 
             <Button
