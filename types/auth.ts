@@ -82,6 +82,11 @@ export interface Organization {
   phone?: string
   email?: string
   folderStatus?: FolderStatus
+  // Solo accounting_firm — perfil profesional del estudio/contador
+  photoUrl?: string
+  licenseNumber?: string
+  // Consejo Profesional de Ciencias Economicas — debe coincidir con la provincia
+  professionalCouncil?: string
   createdAt: string
   updatedAt: string
   createdBy: string

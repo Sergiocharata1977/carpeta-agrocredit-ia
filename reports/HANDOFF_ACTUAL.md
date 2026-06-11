@@ -658,6 +658,32 @@ Todo el panel superadmin lee via API server-side con Admin SDK y validacion de r
 
 ---
 
+## Cambios de esta sesion - Lista de contadores en dos formatos + single del estudio
+
+**Fecha:** 2026-06-11
+**pnpm type-check:** OK
+
+### Lista de Estudios Contables (admin)
+
+- `app/app/admin/estudios/page.tsx` - toggle de vista Lista / Tarjetas; ambos formatos 100% clickeables (toda la fila/tarjeta navega al single); avatar con foto o iniciales; muestra ciudad/provincia y matricula. Botones Habilitar/Rechazar con stopPropagation.
+
+### Single del estudio contable
+
+- **Nuevo:** `app/app/admin/estudios/[firmId]/page.tsx` - header con foto/iniciales, estado y acciones habilitar/rechazar/reactivar; cards de datos (contacto, telefono, direccion, ciudad/provincia, matricula, consejo profesional); formulario de edicion inline para admin.
+- **Nuevo:** `GET/PATCH /api/admin/accounting-firms/[orgId]` - detalle y edicion del estudio (solo admin_platform). Valida server-side que el consejo profesional coincida con la provincia.
+
+### Campos nuevos del contador
+
+- `types/auth.ts` - `Organization` agrega `photoUrl`, `licenseNumber`, `professionalCouncil` (solo accounting_firm).
+- **Nuevo:** `lib/constants/provinces.ts` - `AR_PROVINCES` (24 jurisdicciones) y `councilLabel()`. El consejo profesional se autocompleta al elegir provincia y siempre debe coincidir.
+
+### Pendientes de este modulo
+
+- Foto: v1 es URL de imagen; falta upload real a Storage.
+- Capturar matricula/consejo/direccion en el wizard de registro del contador (hoy solo se editan desde el single admin).
+
+---
+
 ## Cierre obligatorio para proximas sesiones
 
 1. Ejecutar `pnpm type-check`.
