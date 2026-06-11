@@ -102,6 +102,8 @@ export async function POST(request: NextRequest) {
       updatedAt: FieldValue.serverTimestamp(),
     })
 
+    await auth.setCustomUserClaims(userRecord.uid, { intendedRole: data.role })
+
     await writeAuditLog({
       actorUid: userRecord.uid,
       actorOrganizationId: null,

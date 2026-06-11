@@ -15,6 +15,16 @@ export default function AppIndexPage() {
       router.replace("/login")
       return
     }
+    if (user.roles.length === 0) {
+      if (user.intendedRole === "accounting_firm") {
+        router.replace("/app/onboarding/contador")
+      } else if (user.intendedRole === "requesting_entity") {
+        router.replace("/app/onboarding/entidad")
+      } else {
+        router.replace("/login")
+      }
+      return
+    }
     router.replace(getDefaultDashboardRoute(user.roles))
   }, [user, loading, router])
 

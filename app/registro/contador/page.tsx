@@ -45,7 +45,7 @@ export default function RegistroContadorPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error al registrar")
-      router.push("/login?registered=1")
+      router.push("/login")
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al registrar"
       if (msg.includes("email") && msg.includes("registrado")) {

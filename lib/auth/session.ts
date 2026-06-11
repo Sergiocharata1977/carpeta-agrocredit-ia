@@ -12,6 +12,7 @@ export interface SessionUser {
   roles: UserRole[]
   defaultOrganizationId: string | null
   orgStatus: string | null
+  intendedRole: string | null
 }
 
 // Hook: estado de sesión reactivo
@@ -38,6 +39,7 @@ export function useSession() {
         roles: (claims.roles as UserRole[]) ?? [],
         defaultOrganizationId: (claims.defaultOrganizationId as string) ?? null,
         orgStatus: (claims.orgStatus as string) ?? null,
+        intendedRole: (claims.intendedRole as string) ?? null,
       })
       setLoading(false)
     })
