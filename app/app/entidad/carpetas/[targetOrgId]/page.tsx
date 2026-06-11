@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { Building2, FileText, Landmark, Receipt, Scale, TrendingUp } from "lucide-react"
+import { Building2, Download, FileText, Landmark, Loader2, Receipt, Scale, TrendingUp } from "lucide-react"
 import { RoleGate } from "@/components/auth/RoleGate"
 import { GrantExpiredBlocker } from "@/components/access/GrantExpiredBlocker"
 import { GrantStatusBanner } from "@/components/access/GrantStatusBanner"
@@ -44,6 +44,32 @@ interface TaxDocSummary {
   currency?: string
 }
 
+interface AssetItem {
+  id: string
+  description?: string
+  category?: string
+  value?: number
+  currency?: string
+}
+
+interface LiabilityItem {
+  id: string
+  description?: string
+  category?: string
+  amount?: number
+  currency?: string
+  creditor?: string
+}
+
+interface DocumentItem {
+  id: string
+  fileName?: string
+  name?: string
+  documentType?: string
+  fileSize?: number
+  createdAt?: string
+}
+
 const TABS = [
   { id: "resumen", label: "Resumen", scope: "accounting_summary" as const, icon: Building2 },
   { id: "balance", label: "Balance", scope: "balance_sheets" as const, icon: Scale },
@@ -60,6 +86,9 @@ export default function EntidadCarpetaPage() {
   const [balance, setBalance] = useState<BalanceSummary | null>(null)
   const [income, setIncome] = useState<IncomeSummary | null>(null)
   const [taxDocs, setTaxDocs] = useState<TaxDocSummary[]>([])
+  const [assets, setAssets] = useState<AssetItem[]>([])
+  const [liabilities, setLiabilities] = useState<LiabilityItem[]>([])
+  const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [activeTab, setActiveTab] = useState("resumen")
   const [loading, setLoading] = useState(true)
 
@@ -78,12 +107,12 @@ export default function EntidadCarpetaPage() {
       setBalance(json.balance ?? null)
       setIncome(json.income ?? null)
       setTaxDocs(json.taxDocs ?? [])
+      setAssets(json.assets ?? [])
+      setLiabilities(json.liabilities ?? [])
+      setDocuments(json.documents ?? [])
     } catch {
       setGrant(null)
       setOrg(null)
-      setBalance(null)
-      setIncome(null)
-      setTaxDocs([])
     } finally {
       setLoading(false)
     }
@@ -105,7 +134,7 @@ export default function EntidadCarpetaPage() {
       <div className="space-y-6 p-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Carpeta crediticia
+            Carpeta de información
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             {org?.legalName ?? (loading ? "Cargando..." : "Sin acceso")}
@@ -211,13 +240,13 @@ export default function EntidadCarpetaPage() {
 
               {activeTab === "patrimonio" && (
                 <ScopeGuard grant={grant} requiredScope="assets" sectionLabel="El patrimonio">
-                  <p className="text-sm text-muted-foreground">Resumen de bienes y deudas disponible proximamente.</p>
+                  <PatrimonioTab assets={assets} liabilities={liabilities} fmt={fmt} />
                 </ScopeGuard>
               )}
 
               {activeTab === "documentos" && (
                 <ScopeGuard grant={grant} requiredScope="documents" sectionLabel="Los documentos">
-                  <p className="text-sm text-muted-foreground">Listado de documentos disponible proximamente.</p>
+                  <DocumentosTab docs={documents} targetOrgId={targetOrgId} />
                 </ScopeGuard>
               )}
             </div>
@@ -243,7 +272,6 @@ function TaxDocsList({ docs }: { docs: TaxDocSummary[] }) {
   if (docs.length === 0) {
     return <p className="text-sm text-muted-foreground">Sin documentos impositivos cargados.</p>
   }
-
   return (
     <div className="divide-y rounded-md border border-[var(--brand-line)]">
       {docs.map((doc) => (
@@ -259,6 +287,145 @@ function TaxDocsList({ docs }: { docs: TaxDocSummary[] }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+function PatrimonioTab({
+  assets,
+  liabilities,
+  fmt,
+}: {
+  assets: AssetItem[]
+  liabilities: LiabilityItem[]
+  fmt: (n: number, currency?: string) => string
+}) {
+  const totalActivos = assets.reduce((sum, a) => sum + (a.value ?? 0), 0)
+  const totalPasivos = liabilities.reduce((sum, l) => sum + (l.amount ?? 0), 0)
+  const patrimonioNeto = totalActivos - totalPasivos
+
+  if (assets.length === 0 && liabilities.length === 0) {
+    return <p className="text-sm text-muted-foreground">Sin bienes ni deudas cargados para esta carpeta.</p>
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Total activos" value={fmt(totalActivos)} />
+        <StatCard label="Total pasivos" value={fmt(totalPasivos)} />
+        <StatCard label="Patrimonio neto" value={fmt(patrimonioNeto)} highlight />
+      </div>
+
+      {assets.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Bienes</h3>
+          <div className="divide-y rounded-md border border-[var(--brand-line)]">
+            {assets.map((a) => (
+              <div key={a.id} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">{a.description ?? "Bien sin descripción"}</p>
+                  {a.category && <p className="text-xs text-muted-foreground">{a.category}</p>}
+                </div>
+                {a.value != null && (
+                  <p className="text-sm font-semibold">{fmt(a.value, a.currency)}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {liabilities.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Deudas</h3>
+          <div className="divide-y rounded-md border border-[var(--brand-line)]">
+            {liabilities.map((l) => (
+              <div key={l.id} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">{l.description ?? "Deuda sin descripción"}</p>
+                  {l.creditor && <p className="text-xs text-muted-foreground">Acreedor: {l.creditor}</p>}
+                </div>
+                {l.amount != null && (
+                  <p className="text-sm font-semibold">{fmt(l.amount, l.currency)}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DocumentosTab({
+  docs,
+  targetOrgId,
+}: {
+  docs: DocumentItem[]
+  targetOrgId: string
+}) {
+  const [downloading, setDownloading] = useState<string | null>(null)
+
+  async function handleDownload(docId: string, fileName?: string) {
+    setDownloading(docId)
+    try {
+      const { getFreshIdToken } = await import("@/lib/firebase/auth-client")
+      const token = await getFreshIdToken()
+      const res = await fetch(`/api/folders/${targetOrgId}/documents/${docId}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? "No se pudo obtener el link")
+      const a = document.createElement("a")
+      a.href = json.url
+      a.download = fileName ?? "documento"
+      a.target = "_blank"
+      a.click()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al descargar")
+    } finally {
+      setDownloading(null)
+    }
+  }
+
+  if (docs.length === 0) {
+    return <p className="text-sm text-muted-foreground">Sin documentos cargados para esta carpeta.</p>
+  }
+
+  return (
+    <div className="divide-y rounded-md border border-[var(--brand-line)]">
+      {docs.map((doc) => {
+        const name = doc.fileName ?? doc.name ?? "Documento"
+        return (
+          <div key={doc.id} className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-sm font-medium">{name}</p>
+              <div className="flex items-center gap-3 mt-0.5">
+                {doc.documentType && (
+                  <p className="text-xs text-muted-foreground">{doc.documentType}</p>
+                )}
+                {doc.createdAt && (
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(doc.createdAt).toLocaleDateString("es-AR")}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => handleDownload(doc.id, name)}
+              disabled={downloading === doc.id}
+              className="flex items-center gap-1.5 rounded-md border border-[var(--brand-line)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--brand-ink)] hover:bg-[var(--brand-surface-strong)] disabled:opacity-50"
+            >
+              {downloading === doc.id ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Download className="size-3.5" />
+              )}
+              Descargar
+            </button>
+          </div>
+        )
+      })}
     </div>
   )
 }

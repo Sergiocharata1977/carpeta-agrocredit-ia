@@ -18,6 +18,8 @@ export default function ContadorDashboard() {
   const [showDialog, setShowDialog] = useState(false)
   const { user, loading: sessionLoading } = useSession()
   const [clientCount, setClientCount] = useState<number | null>(null)
+  const [completeCount, setCompleteCount] = useState<number | null>(null)
+  const [incompleteCount, setIncompleteCount] = useState<number | null>(null)
   const [pendingLinks, setPendingLinks] = useState<VinculoPendiente[]>([])
   const [loadingData, setLoadingData] = useState(false)
 
@@ -28,9 +30,10 @@ export default function ContadorDashboard() {
       const token = await getFreshIdToken()
       if (!token) return
 
-      const [clientsRes, linksRes] = await Promise.all([
+      const [clientsRes, linksRes, metricasRes] = await Promise.all([
         fetch("/api/contador/productores", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }),
         fetch("/api/contador/vinculos-pendientes", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }),
+        fetch("/api/contador/metricas", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }),
       ])
 
       if (clientsRes.ok) {
@@ -41,6 +44,12 @@ export default function ContadorDashboard() {
       if (linksRes.ok) {
         const json = await linksRes.json()
         setPendingLinks(json.links ?? [])
+      }
+
+      if (metricasRes.ok) {
+        const json = await metricasRes.json()
+        setCompleteCount(json.completeCount ?? 0)
+        setIncompleteCount(json.incompleteCount ?? 0)
       }
     } finally {
       setLoadingData(false)
@@ -94,8 +103,18 @@ export default function ContadorDashboard() {
             icon={AlertCircle}
             description={pendingLinks.length > 0 ? "Requieren decision" : "Sin pendientes"}
           />
-          <SummaryCard title="Carpetas completas" value="—" icon={CheckCircle} />
-          <SummaryCard title="Pendientes de carga" value="—" icon={FileText} />
+          <SummaryCard
+            title="Carpetas completas"
+            value={loadingData ? "..." : (completeCount ?? "—")}
+            icon={CheckCircle}
+            description={completeCount !== null ? `${completeCount} carpeta${completeCount !== 1 ? "s" : ""} completa${completeCount !== 1 ? "s" : ""}` : undefined}
+          />
+          <SummaryCard
+            title="Pendientes de carga"
+            value={loadingData ? "..." : (incompleteCount ?? "—")}
+            icon={FileText}
+            description={incompleteCount !== null ? `${incompleteCount} carpeta${incompleteCount !== 1 ? "s" : ""} incompleta${incompleteCount !== 1 ? "s" : ""}` : undefined}
+          />
         </div>
 
         {pendingLinks.length > 0 && (

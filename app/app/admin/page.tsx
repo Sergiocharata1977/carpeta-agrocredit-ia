@@ -1,49 +1,88 @@
 "use client"
 
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { RoleGate } from "@/components/auth/RoleGate"
-import { Activity, ArrowRightLeft, Check, Shield, UserCog } from "lucide-react"
+import { Activity, Check, Shield, Users } from "lucide-react"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 
-const topCards = [
-  { title: "Acciones Hoy", value: "1,429", meta: "+12% vs ayer", icon: Activity, tone: "text-[#37b87d]" },
-  { title: "Alertas Criticas", value: "0", meta: "Sistema estable", icon: Shield, tone: "text-[#d92d20]" },
-]
-
-const accessRows = [
-  {
-    producer: "Cooperativa Agraria Sud",
-    entity: "Banco Nacional de Fomento",
-    badge: "Lectura/Escritura",
-  },
-  {
-    producer: "Agroinsumos del Litoral",
-    entity: "Banco Regional del Norte",
-    badge: "Solo Lectura",
-  },
-]
+interface AdminMetrics {
+  actionsToday: number
+  activeGrants: number
+  orgsByType: Record<string, number>
+  totalOrgs: number
+}
 
 export default function AdminDashboard() {
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const loadMetrics = useCallback(async () => {
+    try {
+      const token = await getFreshIdToken()
+      if (!token) return
+      const res = await fetch("/api/admin/metrics", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      })
+      if (res.ok) setMetrics(await res.json())
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadMetrics()
+  }, [loadMetrics])
+
+  const fmt = (n: number | undefined) => (loading ? "..." : (n ?? 0).toLocaleString("es-AR"))
+
   return (
     <RoleGate allowedRoles={["admin_platform"]}>
       <div className="space-y-6">
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="space-y-5">
-            <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1.4fr]">
-              {topCards.map((card) => {
-                const Icon = card.icon
-                return (
-                  <article key={card.title} className="ag-card p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-[1.1rem] text-[var(--brand-ink)]">{card.title}</p>
-                        <p className="mt-6 text-[3rem] font-extrabold tracking-tight text-[var(--brand-ink)]">{card.value}</p>
-                        <p className={`mt-2 text-lg font-semibold ${card.tone}`}>{card.meta}</p>
-                      </div>
-                      <Icon className={`h-7 w-7 ${card.tone}`} />
-                    </div>
-                  </article>
-                )
-              })}
+            <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_1.4fr]">
+              <article className="ag-card p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[1.1rem] text-[var(--brand-ink)]">Acciones Hoy</p>
+                    <p className="mt-6 text-[3rem] font-extrabold tracking-tight text-[var(--brand-ink)]">
+                      {fmt(metrics?.actionsToday)}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-[#37b87d]">Registros de auditoría</p>
+                  </div>
+                  <Activity className="h-7 w-7 text-[#37b87d]" />
+                </div>
+              </article>
+
+              <article className="ag-card p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[1.1rem] text-[var(--brand-ink)]">Accesos activos</p>
+                    <p className="mt-6 text-[3rem] font-extrabold tracking-tight text-[var(--brand-ink)]">
+                      {fmt(metrics?.activeGrants)}
+                    </p>
+                    <p className="mt-2 text-lg text-[var(--brand-muted)]">Grants vigentes</p>
+                  </div>
+                  <Shield className="h-7 w-7 text-[var(--brand-green)]" />
+                </div>
+              </article>
+
+              <article className="ag-card p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[1.1rem] text-[var(--brand-ink)]">Organizaciones</p>
+                    <p className="mt-6 text-[3rem] font-extrabold tracking-tight text-[var(--brand-ink)]">
+                      {fmt(metrics?.totalOrgs)}
+                    </p>
+                    <p className="mt-2 text-lg text-[var(--brand-muted)]">
+                      {fmt(metrics?.orgsByType?.system_user)} productores
+                    </p>
+                  </div>
+                  <Users className="h-7 w-7 text-[var(--brand-blue)]" />
+                </div>
+              </article>
 
               <article className="ag-card p-6">
                 <div className="flex items-start justify-between gap-5">
@@ -66,49 +105,52 @@ export default function AdminDashboard() {
               </article>
             </div>
 
-            <section className="ag-panel overflow-hidden">
-              <div className="flex items-center justify-between border-b border-[var(--brand-line)] px-6 py-6">
-                <div>
-                  <h2 className="text-[2rem] font-bold tracking-tight text-[var(--brand-ink)]">
-                    Gestion de Accesos Bancarios
-                  </h2>
-                  <p className="mt-2 text-lg text-[var(--brand-muted)]">
-                    Configura que bancos pueden visualizar las carpetas de los productores.
-                  </p>
-                </div>
-                <Link
-                  href="/app/entidad/accesos"
-                  className="flex h-16 items-center gap-3 rounded-2xl bg-[var(--brand-green)] px-6 text-xl font-semibold text-white shadow-[0_16px_32px_rgba(6,60,49,0.22)]"
-                >
-                  <UserCog className="h-6 w-6" />
-                  Asignar Nuevo
-                </Link>
-              </div>
-
-              <div className="space-y-4 p-6">
-                {accessRows.map((row) => (
-                  <article
-                    key={`${row.producer}-${row.entity}`}
-                    className="rounded-[1.4rem] border border-[var(--brand-line)] bg-white px-5 py-5 shadow-sm"
-                  >
-                    <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto] lg:items-center">
-                      <div>
-                        <p className="text-sm text-[var(--brand-muted)]">Productor</p>
-                        <p className="mt-1 text-[1.45rem] font-semibold tracking-tight text-[var(--brand-ink)]">
-                          {row.producer}
-                        </p>
-                      </div>
-                      <ArrowRightLeft className="h-6 w-6 text-[var(--brand-muted)]" />
-                      <div>
-                        <p className="text-sm text-[var(--brand-muted)]">Entidad Financiera</p>
-                        <p className="mt-1 text-[1.45rem] font-semibold tracking-tight text-[var(--brand-ink)]">
-                          {row.entity}
-                        </p>
-                      </div>
-                      <span className="ag-chip bg-[#e4f7ec] text-[#2fa572]">{row.badge}</span>
+            <section className="ag-panel p-6">
+              <h2 className="mb-4 text-[1.8rem] font-bold tracking-tight text-[var(--brand-ink)]">
+                Tipos de organización
+              </h2>
+              {loading ? (
+                <p className="text-[var(--brand-muted)]">Cargando...</p>
+              ) : metrics ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { key: "system_user", label: "Productores / Clientes" },
+                    { key: "accounting_firm", label: "Estudios contables" },
+                    { key: "requesting_entity", label: "Entidades financieras" },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="rounded-xl border border-[var(--brand-line)] bg-white p-4">
+                      <p className="text-sm text-[var(--brand-muted)]">{label}</p>
+                      <p className="mt-1 text-3xl font-bold text-[var(--brand-ink)]">
+                        {(metrics.orgsByType[key] ?? 0).toLocaleString("es-AR")}
+                      </p>
                     </div>
-                  </article>
-                ))}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-[var(--brand-muted)]">No se pudieron cargar las métricas.</p>
+              )}
+            </section>
+
+            <section className="ag-panel p-6">
+              <h2 className="mb-2 text-[1.8rem] font-bold tracking-tight text-[var(--brand-ink)]">
+                Gestión de accesos
+              </h2>
+              <p className="mb-4 text-[var(--brand-muted)]">
+                Administrá estudios contables, aprobar organizaciones y revisar grants activos.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/app/admin/estudios"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--brand-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-surface-strong)]"
+                >
+                  Estudios contables
+                </Link>
+                <Link
+                  href="/app/admin/auditoria"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--brand-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-surface-strong)]"
+                >
+                  Log de auditoría
+                </Link>
               </div>
             </section>
           </div>
@@ -116,11 +158,7 @@ export default function AdminDashboard() {
           <aside className="rounded-[1.8rem] bg-[var(--brand-green)] p-6 text-white shadow-[0_18px_36px_rgba(6,60,49,0.24)]">
             <h2 className="text-[2rem] font-bold tracking-tight">Estado de Nodos</h2>
             <div className="mt-8 space-y-6">
-              {[
-                "API Gateway",
-                "Base de Datos",
-                "Storage (AWS S3)",
-              ].map((service) => (
+              {["API Gateway", "Base de Datos", "Storage (Firebase)"].map((service) => (
                 <div key={service}>
                   <div className="flex items-center justify-between text-lg">
                     <span>{service}</span>

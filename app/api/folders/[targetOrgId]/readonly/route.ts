@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { getAdminDb } from "@/lib/firebase/admin-sdk"
+import { getAdminDb, getAdminStorage } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import {
@@ -85,7 +85,7 @@ export async function GET(
     }
 
     if (!grant) {
-      return Response.json({ grant: null, org: null, balance: null, income: null, taxDocs: [] })
+      return Response.json({ grant: null, org: null, balance: null, income: null, taxDocs: [], assets: [], liabilities: [], documents: [] })
     }
 
     const orgSnap = await db.collection(COLLECTIONS.ORGANIZATIONS).doc(targetOrgId).get()
@@ -97,6 +97,9 @@ export async function GET(
       balance: null,
       income: null,
       taxDocs: [],
+      assets: [],
+      liabilities: [],
+      documents: [],
     }
 
     if (hasScope(grant, "balance_sheets") || hasScope(grant, "accounting_summary")) {
@@ -127,6 +130,42 @@ export async function GET(
         .limit(20)
         .get()
       payload.taxDocs = snap.docs.map((doc) => serializeDoc(doc))
+    }
+
+    if (hasScope(grant, "assets")) {
+      const snap = await db
+        .collection(COLLECTIONS.ASSETS)
+        .where("producerId", "==", targetOrgId)
+        .orderBy("createdAt", "desc")
+        .limit(50)
+        .get()
+      payload.assets = snap.docs.map((doc) => serializeDoc(doc))
+    }
+
+    if (hasScope(grant, "liabilities")) {
+      const snap = await db
+        .collection(COLLECTIONS.LIABILITIES)
+        .where("producerId", "==", targetOrgId)
+        .orderBy("createdAt", "desc")
+        .limit(50)
+        .get()
+      payload.liabilities = snap.docs.map((doc) => serializeDoc(doc))
+    }
+
+    if (hasScope(grant, "documents")) {
+      const snap = await db
+        .collection(COLLECTIONS.DOCUMENTS)
+        .where("producerId", "==", targetOrgId)
+        .orderBy("createdAt", "desc")
+        .limit(50)
+        .get()
+      // Return metadata only — no storage URLs; download is via signed endpoint
+      payload.documents = snap.docs.map((doc) => {
+        const d = serializeDoc(doc)
+        // Remove storagePath from client payload; serve via signed URL endpoint
+        const { storagePath: _omit, ...rest } = d as Record<string, unknown>
+        return rest
+      })
     }
 
     await writeAuditLog({

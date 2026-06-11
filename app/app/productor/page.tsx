@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import {
 import { ProducerLegajoHabilitationsPanel } from "@/components/access/ProducerLegajoHabilitationsPanel"
 import { RoleGate } from "@/components/auth/RoleGate"
 import { useSession } from "@/lib/auth/session"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -24,6 +25,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+
+const PROFILE_FIELDS = ["legalName", "taxId", "personType", "activity", "province", "city", "address", "phone", "email"] as const
+
+function calcProfileCompletion(org: Record<string, unknown>): number {
+  const filled = PROFILE_FIELDS.filter((f) => {
+    const v = org[f]
+    return v !== undefined && v !== null && v !== ""
+  })
+  return Math.round((filled.length / PROFILE_FIELDS.length) * 100)
+}
 
 const setupSteps = [
   {
@@ -105,6 +116,27 @@ type SystemGuide = (typeof systemGuides)[number]
 export default function ProducerDashboard() {
   const { user } = useSession()
   const [selectedGuide, setSelectedGuide] = useState<SystemGuide | null>(null)
+  const [profilePct, setProfilePct] = useState<number | null>(null)
+
+  const loadProfilePct = useCallback(async (orgId: string) => {
+    try {
+      const token = await getFreshIdToken()
+      if (!token) return
+      const res = await fetch(`/api/organizations/${orgId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      })
+      if (!res.ok) return
+      const { organization } = await res.json()
+      if (organization) setProfilePct(calcProfileCompletion(organization))
+    } catch {
+      // non-critical, ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user?.defaultOrganizationId) void loadProfilePct(user.defaultOrganizationId)
+  }, [user?.defaultOrganizationId, loadProfilePct])
 
   return (
     <RoleGate allowedRoles={["producer", "admin_platform"]}>
@@ -170,6 +202,22 @@ export default function ProducerDashboard() {
                     {user?.defaultOrganizationId ?? "Pendiente"}
                   </dd>
                 </div>
+                {profilePct !== null && (
+                  <div>
+                    <dt className="text-sm text-[var(--brand-muted)]">Carpeta completada</dt>
+                    <dd className="mt-1">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 flex-1 rounded-full bg-[var(--brand-line)]">
+                          <div
+                            className={`h-2 rounded-full transition-all ${profilePct >= 80 ? "bg-emerald-500" : profilePct >= 40 ? "bg-amber-400" : "bg-[var(--brand-muted)]"}`}
+                            style={{ width: `${profilePct}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-bold text-[var(--brand-ink)]">{profilePct}%</span>
+                      </div>
+                    </dd>
+                  </div>
+                )}
               </dl>
             </aside>
           </div>

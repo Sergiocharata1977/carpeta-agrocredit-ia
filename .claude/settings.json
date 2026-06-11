@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev)",
+      "Bash(npm test*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx eslint*)",
+      "Bash(firebase deploy --only firestore:rules)",
+      "Bash(firebase deploy --only firestore:indexes)",
+      "Bash(git status)",
+      "Bash(git log*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(firebase deploy)",
+      "Bash(git push --force*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$(git rev-parse --show-toplevel)\" && echo '--- TypeCheck al finalizar sesión ---' && npx tsc --noEmit 2>&1 | tail -10 && echo '--- Fin TypeCheck ---'"
+          }
+        ]
+      }
+    ]
+  }
+}

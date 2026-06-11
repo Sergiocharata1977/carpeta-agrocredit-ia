@@ -56,7 +56,7 @@ export default function EntityFinancingPage() {
   useEffect(() => {
     if (sessionLoading) return
     loadData().catch((err) => {
-      setError(err instanceof Error ? err.message : "No se pudo cargar financiacion")
+      setError(err instanceof Error ? err.message : "No se pudo cargar los pedidos")
       setLoadingData(false)
     })
   }, [loadData, sessionLoading])
@@ -74,7 +74,7 @@ export default function EntityFinancingPage() {
       await loadData()
       setShowDialog(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo crear solicitud")
+      setError(err instanceof Error ? err.message : "No se pudo crear el pedido")
     } finally {
       setSaving(false)
     }
@@ -90,7 +90,7 @@ export default function EntityFinancingPage() {
       await updateFinancingStatus(request.id, status, token, "Actualizado desde Kanban")
       await loadData()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo actualizar estado")
+      setError(err instanceof Error ? err.message : "No se pudo actualizar el estado")
     } finally {
       setSaving(false)
     }
@@ -102,14 +102,14 @@ export default function EntityFinancingPage() {
         {/* header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Financiacion</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Pedidos de información</h1>
             <p className="text-muted-foreground text-sm">
-              Tablero operativo de solicitudes crediticias y comerciales.
+              Pedidos de acceso a carpetas enviados y su estado de gestión.
             </p>
           </div>
           <Button onClick={() => setShowDialog(true)} disabled={!organizationId}>
             <Plus className="mr-2 h-4 w-4" />
-            Nueva solicitud
+            Nuevo pedido
           </Button>
         </div>
 
@@ -121,17 +121,17 @@ export default function EntityFinancingPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <SummaryCard title="Total" value={requests.length} icon={BarChart3} />
           <SummaryCard
-            title="En analisis"
+            title="En revisión"
             value={requests.filter((r) => r.status === "in_review").length}
             icon={Clock}
           />
           <SummaryCard
-            title="Observadas"
+            title="Observados"
             value={requests.filter((r) => r.status === "observed").length}
             icon={AlertCircle}
           />
           <SummaryCard
-            title="Aprobadas"
+            title="Aprobados"
             value={requests.filter((r) => r.status === "approved").length}
             icon={CheckCircle2}
           />
@@ -152,7 +152,7 @@ export default function EntityFinancingPage() {
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nueva solicitud de financiacion</DialogTitle>
+              <DialogTitle>Nuevo pedido de información</DialogTitle>
             </DialogHeader>
             {organizationId ? (
               <FinancingRequestForm
@@ -163,7 +163,7 @@ export default function EntityFinancingPage() {
               />
             ) : (
               <p className="text-sm text-muted-foreground">
-                Tu usuario no tiene organizacion por defecto en custom claims.
+                Tu usuario no tiene organización por defecto en custom claims.
               </p>
             )}
           </DialogContent>

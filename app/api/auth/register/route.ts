@@ -4,9 +4,17 @@ import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import { registrationSchema } from "@/lib/schemas/onboarding"
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/middleware/ratelimit"
 import { FieldValue } from "firebase-admin/firestore"
 
+// 10 registrations per IP per hour
+const REGISTER_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 }
+
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request)
+  const { allowed } = checkRateLimit(`register:${ip}`, REGISTER_LIMIT)
+  if (!allowed) return rateLimitResponse(3600)
+
   try {
     const body = await request.json()
     const data = registrationSchema.parse(body)

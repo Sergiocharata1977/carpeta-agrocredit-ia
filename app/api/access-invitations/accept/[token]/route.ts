@@ -5,6 +5,10 @@ import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import { getAuthErrorResponse, verifyRequestSession } from "@/lib/auth/server-session"
 import { hashInvitationToken } from "@/lib/auth/access-invitation-access"
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/middleware/ratelimit"
+
+// 20 token lookups per IP per 15 min — enough for legitimate use, blocks brute force
+const TOKEN_LOOKUP_LIMIT = { limit: 20, windowMs: 15 * 60 * 1000 }
 
 async function findInvitationByToken(token: string) {
   const db = getAdminDb()
@@ -19,9 +23,13 @@ async function findInvitationByToken(token: string) {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  const ip = getClientIp(request)
+  const { allowed } = checkRateLimit(`token-lookup:${ip}`, TOKEN_LOOKUP_LIMIT)
+  if (!allowed) return rateLimitResponse(900)
+
   try {
     const { token } = await params
     const invitation = await findInvitationByToken(token)
@@ -62,6 +70,10 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  const ip = getClientIp(request)
+  const { allowed } = checkRateLimit(`token-accept:${ip}`, { limit: 10, windowMs: 15 * 60 * 1000 })
+  if (!allowed) return rateLimitResponse(900)
+
   try {
     const session = await verifyRequestSession(request)
     const { token } = await params

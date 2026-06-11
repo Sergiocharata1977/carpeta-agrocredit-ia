@@ -13,6 +13,47 @@ import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 
+interface RouteContext {
+  params: Promise<{ orgId: string }>
+}
+
+export async function GET(_request: NextRequest, context: RouteContext) {
+  try {
+    const request = _request
+    const session = await verifyRequestSession(request)
+    const { orgId } = await context.params
+
+    const isOwner =
+      isAdminPlatform(session) ||
+      (isProducerRole(session) && requireDefaultOrganization(session) === orgId)
+
+    if (!isOwner) {
+      return Response.json({ error: "Sin acceso a esta organización" }, { status: 403 })
+    }
+
+    await assertActiveMembership(session, orgId)
+
+    const db = getAdminDb()
+    const snap = await db.collection(COLLECTIONS.ORGANIZATIONS).doc(orgId).get()
+    if (!snap.exists) {
+      return Response.json({ error: "Organización no encontrada" }, { status: 404 })
+    }
+
+    const data = snap.data()!
+    // Serialize timestamps
+    return Response.json({
+      organization: {
+        id: snap.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() ?? data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? data.updatedAt,
+      },
+    })
+  } catch (error) {
+    return getAuthErrorResponse(error)
+  }
+}
+
 const AGRO_ACTIVITIES = [
   "agriculture",
   "livestock",
