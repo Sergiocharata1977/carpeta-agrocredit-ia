@@ -554,6 +554,30 @@ Archivos nuevos:
 
 ---
 
+## Cambios de esta sesion — Fix dashboard admin: listas vacias de clientes/entidades/organizaciones
+
+**Fecha:** 2026-06-11  
+**pnpm type-check:** OK (`npx tsc --noEmit` sin errores)
+
+### Problema
+
+Las pantallas del superadmin (Clientes, Entidades/Financistas, Organizaciones) leian `organizations` directo desde Firestore en el browser. Con reglas deny-by-default e indices compuestos faltantes, las queries fallaban en silencio y las listas quedaban con skeletons/"..." eternos.
+
+### Cambios
+
+- **Nuevo:** `app/api/admin/organizations/route.ts` — GET unico para superadmin via Admin SDK. Requiere rol `admin_platform`. Filtros por query params: `type`, `status`, `subtype`. Normaliza timestamps a ISO y ordena por `createdAt` desc en servidor (sin depender de indices compuestos).
+- `app/app/admin/clientes/page.tsx` — migrada a `fetch /api/admin/organizations?type=system_user` con token; errores visibles en UI en lugar de falla silenciosa.
+- `app/app/admin/entidades/page.tsx` — migrada a `fetch ?type=requesting_entity`; contadores por subtipo calculados client-side sobre la respuesta.
+- `app/app/admin/organizaciones/page.tsx` — migrada al mismo endpoint sin filtro (vista consolidada).
+- `app/api/admin/accounting-firms/route.ts` — ya no usa query compuesta `type + status + createdAt` (filtra/ordena en memoria) para no depender de indices; tipado del map corregido.
+- `app/app/admin/estudios/page.tsx` — filtro inicial cambiado de `pending_approval` a `all` para que el superadmin vea la lista completa al entrar.
+
+### Resultado
+
+Todo el panel superadmin lee via API server-side con Admin SDK y validacion de rol; ninguna pantalla admin depende de lecturas Firestore del browser.
+
+---
+
 ## Cierre obligatorio para proximas sesiones
 
 1. Ejecutar `pnpm type-check`.

@@ -1,20 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getFirebaseDb } from "@/lib/firebase/config"
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore"
-import { COLLECTIONS } from "@/lib/firebase/collections"
 import { RoleGate } from "@/components/auth/RoleGate"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Building2, CheckCircle2, Clock } from "lucide-react"
 
 const SUBTYPE_LABELS: Record<string, string> = {
   bank: "Banco",
-  financial_entity: "Entidad Financiera",
+  financial_entity: "Financiera",
   agro_company: "Empresa Agro",
-  maquinaria_agricola: "Maquinaria Agrícola",
-  insumos_agricolas: "Insumos Agrícolas",
+  maquinaria_agricola: "Maquinaria Agricola",
+  insumos_agricolas: "Insumos Agricolas",
 }
 
 const SUBTYPE_COLORS: Record<string, string> = {
@@ -50,37 +48,44 @@ function initials(name: string) {
 export default function AdminEntidadesPage() {
   const [entities, setEntities] = useState<RequestingEntity[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [subtypeFilter, setSubtypeFilter] = useState<string>("all")
 
   useEffect(() => {
-    async function fetch() {
-      const db = getFirebaseDb()
-      if (!db) { setLoading(false); return }
-      const q = query(
-        collection(db, COLLECTIONS.ORGANIZATIONS),
-        where("type", "==", "requesting_entity"),
-        orderBy("createdAt", "desc"),
-      )
-      const snap = await getDocs(q)
-      setEntities(
-        snap.docs.map((d) => {
-          const data = d.data()
-          return {
-            id: d.id,
-            legalName: data.legalName ?? "Sin nombre",
-            taxId: data.taxId ?? "—",
-            subtype: data.subtype ?? null,
-            contactName: data.contactName ?? null,
-            contactEmail: data.contactEmail ?? null,
-            status: data.status ?? "pending",
-            createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
-          } as RequestingEntity
-        }),
-      )
-      setLoading(false)
+    async function fetchEntities() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const token = await getFreshIdToken()
+        const res = await fetch("/api/admin/organizations?type=requesting_entity", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? "No se pudieron cargar las entidades")
+
+        setEntities(
+          (json.organizations ?? []).map((data: Record<string, unknown>) => ({
+            id: String(data.id),
+            legalName: typeof data.legalName === "string" ? data.legalName : "Sin nombre",
+            taxId: typeof data.taxId === "string" ? data.taxId : "-",
+            subtype: typeof data.subtype === "string" ? data.subtype : null,
+            contactName: typeof data.contactName === "string" ? data.contactName : null,
+            contactEmail: typeof data.contactEmail === "string" ? data.contactEmail : null,
+            status: typeof data.status === "string" ? data.status : "pending",
+            createdAt: typeof data.createdAt === "string" ? data.createdAt : null,
+          })),
+        )
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudieron cargar las entidades")
+        setEntities([])
+      } finally {
+        setLoading(false)
+      }
     }
-    fetch()
+
+    fetchEntities()
   }, [])
 
   const filtered = entities.filter((e) => {
@@ -117,7 +122,6 @@ export default function AdminEntidadesPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Total", value: entities.length },
@@ -127,12 +131,11 @@ export default function AdminEntidadesPage() {
           ].map((s) => (
             <div key={s.label} className="rounded-xl border border-[var(--brand-line)] bg-white p-4">
               <p className="text-xs text-[var(--brand-muted)]">{s.label}</p>
-              <p className="mt-1 text-2xl font-bold text-[var(--brand-ink)]">{loading ? "…" : s.value}</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--brand-ink)]">{loading ? "..." : s.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <Input
             placeholder="Buscar por nombre o CUIT..."
@@ -157,8 +160,11 @@ export default function AdminEntidadesPage() {
           </div>
         </div>
 
-        {/* List */}
-        {loading ? (
+        {error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        ) : loading ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
           </div>
@@ -167,7 +173,7 @@ export default function AdminEntidadesPage() {
             <Building2 className="mx-auto mb-3 size-8 text-[var(--brand-muted)]/40" />
             <p className="text-sm font-semibold text-[var(--brand-ink)]">Sin entidades registradas</p>
             <p className="mt-1 text-xs text-[var(--brand-muted)]">
-              Las entidades que se registren como banco, financiera o empresa agro aparecerán aquí.
+              Las entidades que se registren como banco, financiera o empresa agro apareceran aqui.
             </p>
           </div>
         ) : (
@@ -192,7 +198,7 @@ export default function AdminEntidadesPage() {
                       </div>
                       <p className="mt-0.5 text-xs text-[var(--brand-muted)]">
                         CUIT: {e.taxId}
-                        {e.contactName && ` · ${e.contactName}`}
+                        {e.contactName && ` - ${e.contactName}`}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">

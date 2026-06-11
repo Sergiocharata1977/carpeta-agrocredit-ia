@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getFirebaseDb } from "@/lib/firebase/config"
-import { collection, getDocs, orderBy, query } from "firebase/firestore"
-import { COLLECTIONS } from "@/lib/firebase/collections"
 import { RoleGate } from "@/components/auth/RoleGate"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import {
   Table,
   TableBody,
@@ -22,22 +20,26 @@ import type { Organization } from "@/types/auth"
 
 const ORG_TYPE_LABELS: Record<Organization["type"], string> = {
   platform: "Plataforma",
-  system_user: "Usuario del Sistema",
-  system_user_entity: "Empresa (entidad hijo)",
+  system_user: "Usuario / Cliente",
+  system_user_entity: "Empresa del cliente",
   accounting_firm: "Estudio Contable",
-  requesting_entity: "Entidad Solicitante",
+  requesting_entity: "Entidad / Financista",
 }
 
-const ORG_STATUS_LABELS: Record<Organization["status"], string> = {
+const ORG_STATUS_LABELS: Record<string, string> = {
   active: "Activa",
   suspended: "Suspendida",
   pending: "Pendiente",
+  pending_approval: "Pendiente",
+  rejected: "Rechazada",
 }
 
-const ORG_STATUS_CLASSES: Record<Organization["status"], string> = {
+const ORG_STATUS_CLASSES: Record<string, string> = {
   active: "bg-green-100 text-green-800",
   suspended: "bg-red-100 text-red-700",
   pending: "bg-yellow-100 text-yellow-800",
+  pending_approval: "bg-yellow-100 text-yellow-800",
+  rejected: "bg-red-100 text-red-700",
 }
 
 type ViewMode = "list" | "grid"
@@ -51,7 +53,14 @@ function initials(name: string) {
     .toUpperCase()
 }
 
+function formatDate(value: unknown) {
+  return typeof value === "string" ? new Date(value).toLocaleDateString("es-AR") : "-"
+}
+
 function OrgCard({ org }: { org: Organization }) {
+  const statusClass = ORG_STATUS_CLASSES[org.status] ?? ORG_STATUS_CLASSES.pending
+  const statusLabel = ORG_STATUS_LABELS[org.status] ?? org.status
+
   return (
     <div className="rounded-xl border border-[#dde4dc] bg-white p-5 shadow-sm space-y-3">
       <div className="flex items-center gap-3">
@@ -64,18 +73,12 @@ function OrgCard({ org }: { org: Organization }) {
         </div>
       </div>
       <div className="flex items-center justify-between text-sm">
-        <span className="capitalize text-[#59675f]">{org.plan}</span>
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ORG_STATUS_CLASSES[org.status]}`}
-        >
-          {ORG_STATUS_LABELS[org.status]}
+        <span className="capitalize text-[#59675f]">{org.plan ?? "-"}</span>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClass}`}>
+          {statusLabel}
         </span>
       </div>
-      <p className="text-xs text-[#59675f]">
-        {typeof org.createdAt === "string"
-          ? new Date(org.createdAt).toLocaleDateString("es-AR")
-          : "—"}
-      </p>
+      <p className="text-xs text-[#59675f]">{formatDate(org.createdAt)}</p>
     </div>
   )
 }
@@ -83,24 +86,31 @@ function OrgCard({ org }: { org: Organization }) {
 function OrganizacionesContent() {
   const [orgs, setOrgs] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [search, setSearch] = useState("")
 
   useEffect(() => {
     async function fetchOrgs() {
-      const db = getFirebaseDb()
-      if (!db) {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const token = await getFreshIdToken()
+        const res = await fetch("/api/admin/organizations", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? "No se pudieron cargar las organizaciones")
+        setOrgs(json.organizations ?? [])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudieron cargar las organizaciones")
+        setOrgs([])
+      } finally {
         setLoading(false)
-        return
       }
-      const q = query(
-        collection(db, COLLECTIONS.ORGANIZATIONS),
-        orderBy("createdAt", "desc"),
-      )
-      const snap = await getDocs(q)
-      setOrgs(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Organization)))
-      setLoading(false)
     }
+
     fetchOrgs()
   }, [])
 
@@ -118,12 +128,19 @@ function OrganizacionesContent() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {error}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
-      {/* search + view toggle */}
       <div className="flex items-center gap-3">
         <Input
-          placeholder="Buscar organización..."
+          placeholder="Buscar organizacion..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -152,9 +169,7 @@ function OrganizacionesContent() {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Sin organizaciones</EmptyTitle>
-            <EmptyDescription>
-              Aun no hay organizaciones registradas. Podés crearlas desde Firebase Console.
-            </EmptyDescription>
+            <EmptyDescription>No hay organizaciones que coincidan con la busqueda.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : viewMode === "grid" ? (
@@ -175,25 +190,23 @@ function OrganizacionesContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((org) => (
-              <TableRow key={org.id}>
-                <TableCell className="font-medium">{org.legalName}</TableCell>
-                <TableCell>{ORG_TYPE_LABELS[org.type]}</TableCell>
-                <TableCell className="capitalize">{org.plan}</TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ORG_STATUS_CLASSES[org.status]}`}
-                  >
-                    {ORG_STATUS_LABELS[org.status]}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {typeof org.createdAt === "string"
-                    ? new Date(org.createdAt).toLocaleDateString("es-AR")
-                    : "—"}
-                </TableCell>
-              </TableRow>
-            ))}
+            {filtered.map((org) => {
+              const statusClass = ORG_STATUS_CLASSES[org.status] ?? ORG_STATUS_CLASSES.pending
+              const statusLabel = ORG_STATUS_LABELS[org.status] ?? org.status
+              return (
+                <TableRow key={org.id}>
+                  <TableCell className="font-medium">{org.legalName}</TableCell>
+                  <TableCell>{ORG_TYPE_LABELS[org.type]}</TableCell>
+                  <TableCell className="capitalize">{org.plan ?? "-"}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClass}`}>
+                      {statusLabel}
+                    </span>
+                  </TableCell>
+                  <TableCell>{formatDate(org.createdAt)}</TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       )}
@@ -208,7 +221,7 @@ export default function OrganizacionesPage() {
       fallback={
         <div className="p-6">
           <p className="text-destructive">
-            No tenés permisos para acceder a esta sección.
+            No tenes permisos para acceder a esta seccion.
           </p>
         </div>
       }
@@ -217,7 +230,7 @@ export default function OrganizacionesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Organizaciones</h1>
           <p className="text-muted-foreground text-sm">
-            Listado de todas las organizaciones registradas en la plataforma
+            Listado de todas las organizaciones registradas en la plataforma.
           </p>
         </div>
         <OrganizacionesContent />

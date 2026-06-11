@@ -41,7 +41,7 @@ type Filter = "all" | OrgStatus
 export default function AdminEstudiosPage() {
   const [firms, setFirms] = useState<AccountingFirm[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<Filter>("pending_approval")
+  const [filter, setFilter] = useState<Filter>("all")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   const load = useCallback(async () => {

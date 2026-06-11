@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getFirebaseDb } from "@/lib/firebase/config"
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore"
-import { COLLECTIONS } from "@/lib/firebase/collections"
 import { RoleGate } from "@/components/auth/RoleGate"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CheckCircle2, Clock, FileX, Sprout } from "lucide-react"
@@ -26,7 +24,7 @@ const FOLDER_STATUS_META: Record<string, { label: string; className: string; ico
     icon: <FileX className="size-3" />,
   },
   under_review: {
-    label: "En revisión",
+    label: "En revision",
     className: "bg-purple-50 text-purple-700 border-purple-200",
     icon: <Clock className="size-3" />,
   },
@@ -55,10 +53,10 @@ interface Producer {
 
 const ACTIVITY_LABELS: Record<string, string> = {
   agriculture: "Agricultura",
-  livestock: "Ganadería",
+  livestock: "Ganaderia",
   mixed: "Mixto",
   horticulture: "Horticultura",
-  forestry: "Forestación",
+  forestry: "Forestacion",
   other: "Otro",
 }
 
@@ -69,41 +67,49 @@ function initials(name: string) {
 export default function AdminClientesPage() {
   const [producers, setProducers] = useState<Producer[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [folderFilter, setFolderFilter] = useState<string>("all")
 
   useEffect(() => {
-    async function fetch() {
-      const db = getFirebaseDb()
-      if (!db) { setLoading(false); return }
-      const q = query(
-        collection(db, COLLECTIONS.ORGANIZATIONS),
-        where("type", "==", "system_user"),
-        orderBy("createdAt", "desc"),
-      )
-      const snap = await getDocs(q)
-      setProducers(
-        snap.docs.map((d) => {
-          const data = d.data()
-          return {
-            id: d.id,
-            legalName: data.legalName ?? "Sin nombre",
-            taxId: data.taxId ?? "—",
-            province: data.province ?? null,
-            city: data.city ?? null,
-            activity: data.activity ?? null,
-            folderStatus: data.folderStatus ?? null,
-            createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
-          } as Producer
-        }),
-      )
-      setLoading(false)
+    async function fetchProducers() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const token = await getFreshIdToken()
+        const res = await fetch("/api/admin/organizations?type=system_user", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? "No se pudieron cargar los clientes")
+
+        setProducers(
+          (json.organizations ?? []).map((data: Record<string, unknown>) => ({
+            id: String(data.id),
+            legalName: typeof data.legalName === "string" ? data.legalName : "Sin nombre",
+            taxId: typeof data.taxId === "string" ? data.taxId : "-",
+            province: typeof data.province === "string" ? data.province : null,
+            city: typeof data.city === "string" ? data.city : null,
+            activity: typeof data.activity === "string" ? data.activity : null,
+            folderStatus: typeof data.folderStatus === "string" ? data.folderStatus : null,
+            createdAt: typeof data.createdAt === "string" ? data.createdAt : null,
+          })),
+        )
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudieron cargar los clientes")
+        setProducers([])
+      } finally {
+        setLoading(false)
+      }
     }
-    fetch()
+
+    fetchProducers()
   }, [])
 
   const filtered = producers.filter((p) => {
-    const matchSearch = p.legalName.toLowerCase().includes(search.toLowerCase()) ||
+    const matchSearch =
+      p.legalName.toLowerCase().includes(search.toLowerCase()) ||
       p.taxId.includes(search)
     const matchFolder = folderFilter === "all" || p.folderStatus === folderFilter
     return matchSearch && matchFolder
@@ -133,7 +139,6 @@ export default function AdminClientesPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Total", value: producers.length },
@@ -143,12 +148,11 @@ export default function AdminClientesPage() {
           ].map((s) => (
             <div key={s.label} className="rounded-xl border border-[var(--brand-line)] bg-white p-4">
               <p className="text-xs text-[var(--brand-muted)]">{s.label}</p>
-              <p className="mt-1 text-2xl font-bold text-[var(--brand-ink)]">{loading ? "…" : s.value}</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--brand-ink)]">{loading ? "..." : s.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <Input
             placeholder="Buscar por nombre o CUIT..."
@@ -173,15 +177,18 @@ export default function AdminClientesPage() {
           </div>
         </div>
 
-        {/* List */}
-        {loading ? (
+        {error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        ) : loading ? (
           <div className="space-y-2">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-xl border border-dashed p-12 text-center">
             <Sprout className="mx-auto mb-3 size-8 text-[var(--brand-muted)]/40" />
-            <p className="text-sm text-[var(--brand-muted)]">No hay clientes que coincidan con la búsqueda.</p>
+            <p className="text-sm text-[var(--brand-muted)]">No hay clientes que coincidan con la busqueda.</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-[var(--brand-line)] bg-white">
@@ -197,8 +204,8 @@ export default function AdminClientesPage() {
                       <p className="truncate font-semibold text-[var(--brand-ink)]">{p.legalName}</p>
                       <p className="mt-0.5 text-xs text-[var(--brand-muted)]">
                         CUIT: {p.taxId}
-                        {p.activity && ` · ${ACTIVITY_LABELS[p.activity] ?? p.activity}`}
-                        {p.province && ` · ${p.city ? `${p.city}, ` : ""}${p.province}`}
+                        {p.activity && ` - ${ACTIVITY_LABELS[p.activity] ?? p.activity}`}
+                        {p.province && ` - ${p.city ? `${p.city}, ` : ""}${p.province}`}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
