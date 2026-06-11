@@ -7,22 +7,61 @@ import { NotificationBell } from "@/components/notifications/NotificationBell"
 import { AppUserMenu } from "@/components/layout/AppUserMenu"
 import { useSession } from "@/lib/auth/session"
 
-const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
+const PAGE_TITLES: Record<string, { title: string; subtitle: string; roleLabel?: string }> = {
   "/app/productor": {
     title: "Panel de Control",
-    subtitle: "Bienvenido de nuevo. Aqui tienes un resumen de tu actividad financiera.",
+    subtitle: "Resumen de tu carpeta, autorizaciones y estado del legajo.",
+    roleLabel: "Productor / Cliente",
   },
   "/app/entidad": {
-    title: "Panel de Evaluacion",
-    subtitle: "Gestion de cartera agricola y analisis de riesgo en tiempo real.",
+    title: "Panel de Entidad",
+    subtitle: "Carpetas autorizadas y pedidos de informacion activos.",
+    roleLabel: "Entidad Financiera / Comercial",
+  },
+  "/app/entidad/financiacion": {
+    title: "Pedidos de Informacion",
+    subtitle: "Pedidos de acceso a carpetas enviados y su estado de gestion.",
+    roleLabel: "Entidad Financiera / Comercial",
+  },
+  "/app/entidad/accesos": {
+    title: "Accesos y Grants",
+    subtitle: "Solicitudes de acceso y grants vigentes a carpetas de clientes.",
+    roleLabel: "Entidad Financiera / Comercial",
   },
   "/app/admin": {
     title: "Consola de Administracion",
     subtitle: "Control central del ecosistema, accesos y operaciones sensibles.",
+    roleLabel: "Administrador de Plataforma",
   },
   "/app/admin/auditoria": {
-    title: "Trazabilidad de Auditoria",
-    subtitle: "Seguimiento detallado de acciones, accesos y eventos criticos.",
+    title: "Auditoria del Sistema",
+    subtitle: "Registro completo de acciones sensibles: registros, aprobaciones, accesos y cambios de estado.",
+    roleLabel: "Administrador de Plataforma",
+  },
+  "/app/admin/estudios": {
+    title: "Estudios Contables",
+    subtitle: "Contadores y estudios registrados. Desde aqui podés habilitar o rechazar cuentas pendientes.",
+    roleLabel: "Administrador de Plataforma",
+  },
+  "/app/admin/clientes": {
+    title: "Clientes / Productores",
+    subtitle: "Todos los titulares de carpeta registrados y el estado de su legajo.",
+    roleLabel: "Administrador de Plataforma",
+  },
+  "/app/admin/entidades": {
+    title: "Entidades y Financistas",
+    subtitle: "Bancos, financieras y empresas agrocomerciales registradas en la plataforma.",
+    roleLabel: "Administrador de Plataforma",
+  },
+  "/app/admin/organizaciones": {
+    title: "Todas las Organizaciones",
+    subtitle: "Vista consolidada de todas las organizaciones registradas por tipo.",
+    roleLabel: "Administrador de Plataforma",
+  },
+  "/app/contador": {
+    title: "Panel Contador",
+    subtitle: "Gestion de carpetas de clientes y estudios contables.",
+    roleLabel: "Estudio Contable",
   },
 }
 
@@ -41,11 +80,17 @@ export function AppHeader() {
   const content = useMemo(() => {
     const directMatch = PAGE_TITLES[pathname]
     if (directMatch) return directMatch
-    if (pathname.startsWith("/app/productor")) return PAGE_TITLES["/app/productor"]
-    if (pathname.startsWith("/app/entidad")) return PAGE_TITLES["/app/entidad"]
     if (pathname.startsWith("/app/admin/auditoria")) return PAGE_TITLES["/app/admin/auditoria"]
+    if (pathname.startsWith("/app/admin/estudios")) return PAGE_TITLES["/app/admin/estudios"]
+    if (pathname.startsWith("/app/admin/clientes")) return PAGE_TITLES["/app/admin/clientes"]
+    if (pathname.startsWith("/app/admin/entidades")) return PAGE_TITLES["/app/admin/entidades"]
+    if (pathname.startsWith("/app/admin/organizaciones")) return PAGE_TITLES["/app/admin/organizaciones"]
     if (pathname.startsWith("/app/admin")) return PAGE_TITLES["/app/admin"]
-
+    if (pathname.startsWith("/app/productor")) return PAGE_TITLES["/app/productor"]
+    if (pathname.startsWith("/app/entidad/financiacion")) return PAGE_TITLES["/app/entidad/financiacion"]
+    if (pathname.startsWith("/app/entidad/accesos")) return PAGE_TITLES["/app/entidad/accesos"]
+    if (pathname.startsWith("/app/entidad")) return PAGE_TITLES["/app/entidad"]
+    if (pathname.startsWith("/app/contador")) return PAGE_TITLES["/app/contador"]
     return {
       title: "AgroCredit Hub",
       subtitle: user?.displayName ?? "Operacion agrofinanciera",
@@ -55,6 +100,11 @@ export function AppHeader() {
   return (
     <header className="flex flex-col gap-5 rounded-[1.8rem] border border-[var(--brand-line)] bg-white/85 px-5 py-5 shadow-[0_18px_40px_rgba(17,33,50,0.06)] backdrop-blur lg:flex-row lg:items-start lg:justify-between lg:px-7">
       <div className="min-w-0">
+        {content.roleLabel && (
+          <span className="mb-2 inline-flex items-center rounded-full border border-[var(--brand-line)] bg-[var(--brand-surface-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--brand-muted)]">
+            {content.roleLabel}
+          </span>
+        )}
         <h1 className="text-[2.2rem] font-extrabold tracking-tight text-[var(--brand-green)] lg:text-[3rem]">
           {content.title}
         </h1>
