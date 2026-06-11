@@ -98,7 +98,7 @@ export function RegistrationAccountStep({
                 id="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
-                placeholder="Mínimo 8 caracteres"
+                placeholder="Mínimo 6 caracteres"
                 className="pr-10"
                 {...form.register("password")}
               />

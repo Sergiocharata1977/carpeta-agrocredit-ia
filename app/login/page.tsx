@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 const loginSchema = z.object({
   email: z.string().email("Ingresa un email valido"),
-  password: z.string().min(6, "La contrasena debe tener al menos 6 caracteres"),
+  password: z.string().min(1, "Ingresa tu contrasena"),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>

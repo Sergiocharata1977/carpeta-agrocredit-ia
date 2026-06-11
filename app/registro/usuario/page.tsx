@@ -28,8 +28,8 @@ export default function RegistroUsuarioPage() {
     const password = (form.elements.namedItem("password") as HTMLInputElement).value
     const confirmPassword = (form.elements.namedItem("confirmPassword") as HTMLInputElement).value
 
-    if (password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres")
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres")
       return
     }
     if (password !== confirmPassword) {
@@ -98,8 +98,8 @@ export default function RegistroUsuarioPage() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo 8 caracteres"
-                  minLength={8}
+                  placeholder="Mínimo 6 caracteres"
+                  minLength={6}
                   required
                 />
                 <button
@@ -121,7 +121,7 @@ export default function RegistroUsuarioPage() {
                   name="confirmPassword"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Repetí la misma contraseña"
-                  minLength={8}
+                  minLength={6}
                   required
                 />
                 <button
