@@ -684,6 +684,34 @@ Todo el panel superadmin lee via API server-side con Admin SDK y validacion de r
 
 ---
 
+## Cambios de esta sesion - Reset total de datos + auditoria rigurosa
+
+**Fecha:** 2026-06-11
+**pnpm type-check:** OK
+
+### Reset de datos (confirmado por el usuario)
+
+El usuario habia borrado `organizations` desde la consola pero quedaron restos. Con su confirmacion explicita se completo el reset:
+
+- Firestore: borradas todas las colecciones restantes (`users`, `organization_members`, `producer_accountant_links`, `accounting_periods`, `audit_logs`, `notifications`) via `firebase firestore:delete --all-collections`.
+- Firebase Auth: borrados los 8 usuarios via `accounts:batchDelete`. **Verificado: Auth 0 usuarios, Firestore 0 docs, Storage 0 archivos.**
+- Para volver a operar: recrear el super admin via `/admin-setup` (bootstrap con clave de configuracion) y re-registrar cuentas de prueba.
+
+### Auditoria mas rigurosa
+
+- `lib/firebase/audit.ts` - `writeAuditLog` ahora captura **IP y user-agent automaticamente** desde los headers del request (`x-forwarded-for` / `x-real-ip` / `user-agent`) sin tocar las 41 llamadas existentes. Fuera de un request quedan en null.
+- `types/audit.ts` - `AuditLog` agrega `ip` y `userAgent`.
+- **Nuevo:** `GET /api/admin/audit-logs` - lista real via Admin SDK (solo admin_platform), limit configurable hasta 500, filtros `action`/`actorUid`, y enriquecimiento con email/nombre del actor desde `users`.
+- `app/app/admin/auditoria/page.tsx` - ya no lee Firestore desde el browser; usa la API admin. Columna IP muestra el dato real capturado (user-agent en tooltip).
+
+### Pendientes de auditoria (proxima iteracion)
+
+- Filtros funcionales en la UI (boton Filtrar es decorativo) y export CSV real.
+- Metricas de "Alertas criticas" y "Estado del sistema" siguen estaticas.
+- `lib/services/audit-logs.ts` (lectura client-side) queda solo para la vista de productor; migrarla a API tambien.
+
+---
+
 ## Cierre obligatorio para proximas sesiones
 
 1. Ejecutar `pnpm type-check`.

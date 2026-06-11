@@ -49,6 +49,9 @@ export interface AuditLog {
   targetId: string
   producerId?: string // si la acción afecta a un productor
   metadata: Record<string, unknown>
+  // Capturados automaticamente por lib/firebase/audit.ts desde el request
+  ip?: string | null
+  userAgent?: string | null
   createdAt: string
 }
 

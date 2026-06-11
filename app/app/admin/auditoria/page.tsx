@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react"
 import { RoleGate } from "@/components/auth/RoleGate"
-import { getRecentAuditLogs } from "@/lib/services/audit-logs"
+import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { Activity, AlertTriangle, Download, Filter, MapPin, ShieldCheck } from "lucide-react"
 import type { AuditLog } from "@/types/audit"
+
+type EnrichedAuditLog = AuditLog & {
+  actorEmail?: string | null
+  actorName?: string | null
+}
 
 function formatTimestamp(value: unknown): string {
   if (!value) return "—"
@@ -24,17 +29,28 @@ function readMetadataText(log: AuditLog, key: string, fallback: string): string 
 }
 
 export default function AuditPage() {
-  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [logs, setLogs] = useState<EnrichedAuditLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    getRecentAuditLogs()
-      .then(setLogs)
-      .catch((err) => {
+    async function load() {
+      try {
+        const token = await getFreshIdToken()
+        const res = await fetch("/api/admin/audit-logs?limit=200", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? "No se pudo cargar auditoria")
+        setLogs(json.logs ?? [])
+      } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo cargar auditoria")
-      })
-      .finally(() => setLoading(false))
+      } finally {
+        setLoading(false)
+      }
+    }
+    void load()
   }, [])
 
   return (
@@ -140,10 +156,10 @@ export default function AuditPage() {
                           <tr key={log.id} className="border-t border-[var(--brand-line)] bg-white align-top">
                             <td className="px-6 py-5">
                               <p className="text-[1.35rem] font-semibold tracking-tight text-[var(--brand-ink)]">
-                                {readMetadataText(log, "actorName", log.actorUid)}
+                                {log.actorName ?? readMetadataText(log, "actorName", log.actorUid)}
                               </p>
                               <p className="mt-1 text-base text-[var(--brand-muted)]">
-                                {readMetadataText(log, "actorEmail", "—")}
+                                {log.actorEmail ?? readMetadataText(log, "actorEmail", "—")}
                               </p>
                             </td>
                             <td className="px-6 py-5 text-[1.15rem] leading-8 text-[var(--brand-ink)]">
@@ -152,7 +168,9 @@ export default function AuditPage() {
                             <td className="px-6 py-5">
                               <div className="flex items-start gap-3 text-[1.1rem] text-[var(--brand-ink)]">
                                 <MapPin className="mt-1 h-5 w-5 text-[var(--brand-muted)]" />
-                                <span>{readMetadataText(log, "ipAddress", "—")}</span>
+                                <span title={log.userAgent ?? undefined}>
+                                  {log.ip ?? readMetadataText(log, "ipAddress", "—")}
+                                </span>
                               </div>
                             </td>
                             <td className="px-6 py-5 text-[1.05rem] font-semibold text-[var(--brand-ink)]">
