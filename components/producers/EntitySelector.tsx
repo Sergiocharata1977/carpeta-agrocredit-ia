@@ -66,6 +66,10 @@ const emptyForm = (): EntityFormState => ({
   entityOwnersText: "",
 })
 
+function normalizeTaxId(value: string) {
+  return value.replace(/\D/g, "").slice(0, 11)
+}
+
 async function getAuthHeaders() {
   const token = await getFreshIdToken()
   if (!token) throw new Error("No se pudo validar la sesion")
@@ -122,7 +126,7 @@ export function EntitySelector({
 
   async function handleCreateEntity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const taxId = form.taxId.replace(/\D/g, "")
+    const taxId = normalizeTaxId(form.taxId)
 
     if (form.legalName.trim().length < 3 || taxId.length !== 11) {
       toast.error("Completa razon social y CUIT de 11 digitos.")
@@ -147,11 +151,12 @@ export function EntitySelector({
         }),
       })
       const payload = (await response.json().catch(() => null)) as
-        | { id?: string; error?: string }
+        | { id?: string; error?: string; issues?: Array<{ message?: string }> }
         | null
 
       if (!response.ok || !payload?.id) {
-        throw new Error(payload?.error ?? "No se pudo crear la empresa")
+        const issueMessage = payload?.issues?.[0]?.message
+        throw new Error(issueMessage ?? payload?.error ?? "No se pudo crear la empresa")
       }
 
       toast.success("Empresa agregada correctamente")
@@ -165,6 +170,9 @@ export function EntitySelector({
       setSaving(false)
     }
   }
+
+  const formTaxId = normalizeTaxId(form.taxId)
+  const showTaxIdHelp = formTaxId.length > 0 && formTaxId.length < 11
 
   return (
     <div className="space-y-3">
@@ -247,10 +255,18 @@ export function EntitySelector({
                 <Input
                   id="entity-tax-id"
                   inputMode="numeric"
+                  maxLength={11}
+                  placeholder="11 digitos sin guiones"
                   value={form.taxId}
-                  onChange={(event) => setForm((prev) => ({ ...prev, taxId: event.target.value }))}
+                  onChange={(event) => setForm((prev) => ({ ...prev, taxId: normalizeTaxId(event.target.value) }))}
+                  aria-describedby={showTaxIdHelp ? "entity-tax-id-help" : undefined}
                   required
                 />
+                {showTaxIdHelp && (
+                  <p id="entity-tax-id-help" className="text-xs text-destructive">
+                    Ingresa el CUIT completo de 11 digitos; el DNI solo tiene 8.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

@@ -712,6 +712,29 @@ El usuario habia borrado `organizations` desde la consola pero quedaron restos. 
 
 ---
 
+## Cambios de esta sesion - Alta de empresas desde perfil contador
+
+**Fecha:** 2026-06-12
+**pnpm type-check:** OK
+
+### Fix aplicado
+
+- `app/app/contador/clientes/[clientId]/page.tsx` - el modal "Nueva empresa" ahora normaliza CUIT a solo numeros, limita a 11 digitos y muestra ayuda inline si se ingreso un DNI/incompleto.
+- `components/producers/EntitySelector.tsx` - mismo ajuste para el alta de empresas desde la carpeta del cliente.
+- Ambos flujos muestran el primer mensaje real de validacion Zod de la API si el backend rechaza el POST.
+
+### Validacion
+
+- `pnpm type-check`: OK.
+- Dev server local sobre `/login` y `/app/contador/clientes/test`: HTTP 200.
+- `agent-browser snapshot -i` en `/login`: renderiza campos de email/contrasena y boton de ingreso; `agent-browser errors`: sin errores.
+
+### Nota operativa
+
+- Para guardar empresas hijas el CUIT debe tener 11 digitos sin guiones. Un DNI de 8 digitos no pasa la validacion.
+
+---
+
 ## Cierre obligatorio para proximas sesiones
 
 1. Ejecutar `pnpm type-check`.

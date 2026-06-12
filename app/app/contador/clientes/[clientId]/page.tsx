@@ -70,6 +70,10 @@ const emptyEntityForm = (): EntityFormState => ({
   entityOwnersText: "",
 })
 
+function normalizeTaxId(value: string) {
+  return value.replace(/\D/g, "").slice(0, 11)
+}
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getFreshIdToken()
   if (!token) throw new Error("No se pudo validar la sesion")
@@ -125,7 +129,7 @@ export default function ClienteSinglePage({ params }: PageProps) {
 
   async function handleCreateEntity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const taxId = form.taxId.replace(/\D/g, "")
+    const taxId = normalizeTaxId(form.taxId)
     if (form.legalName.trim().length < 3 || taxId.length !== 11) {
       toast.error("Completa razon social y CUIT de 11 digitos.")
       return
@@ -151,9 +155,12 @@ export default function ClienteSinglePage({ params }: PageProps) {
         },
       )
       const payload = (await res.json().catch(() => null)) as
-        | { id?: string; error?: string }
+        | { id?: string; error?: string; issues?: Array<{ message?: string }> }
         | null
-      if (!res.ok || !payload?.id) throw new Error(payload?.error ?? "No se pudo crear la empresa")
+      if (!res.ok || !payload?.id) {
+        const issueMessage = payload?.issues?.[0]?.message
+        throw new Error(issueMessage ?? payload?.error ?? "No se pudo crear la empresa")
+      }
       toast.success("Empresa creada correctamente")
       setForm(emptyEntityForm())
       setDialogOpen(false)
@@ -179,6 +186,8 @@ export default function ClienteSinglePage({ params }: PageProps) {
   const sortedEntities = [...entities].sort((a, b) =>
     a.legalName.localeCompare(b.legalName, "es"),
   )
+  const formTaxId = normalizeTaxId(form.taxId)
+  const showTaxIdHelp = formTaxId.length > 0 && formTaxId.length < 11
 
   return (
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
@@ -309,10 +318,18 @@ export default function ClienteSinglePage({ params }: PageProps) {
                 <Input
                   id="e-cuit"
                   inputMode="numeric"
+                  maxLength={11}
+                  placeholder="11 digitos sin guiones"
                   value={form.taxId}
-                  onChange={(e) => setForm((p) => ({ ...p, taxId: e.target.value }))}
+                  onChange={(e) => setForm((p) => ({ ...p, taxId: normalizeTaxId(e.target.value) }))}
+                  aria-describedby={showTaxIdHelp ? "e-cuit-help" : undefined}
                   required
                 />
+                {showTaxIdHelp && (
+                  <p id="e-cuit-help" className="text-xs text-destructive">
+                    Ingresa el CUIT completo de 11 digitos; el DNI solo tiene 8.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="e-activity">Actividad</Label>
