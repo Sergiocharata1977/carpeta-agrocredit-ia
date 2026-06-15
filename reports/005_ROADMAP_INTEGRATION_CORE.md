@@ -4,6 +4,8 @@
 **Autor:** Sergio (visión estratégica) + Claude Code (arquitectura técnica)  
 **Estado:** Visión aprobada — pendiente de implementación por olas
 
+> **Nota (decisión del dueño, 2026-06-15):** Agro-Credit es un proyecto totalmente separado, sin conexión viva a 9001app ni a los proyectos Agro Biciuffa. Las integraciones externas mencionadas en este roadmap son planificación futura vía API gateway y requieren confirmación explícita del dueño antes de implementarse.
+
 ---
 
 ## 1. El problema que resuelve este roadmap

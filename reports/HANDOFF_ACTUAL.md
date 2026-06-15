@@ -312,7 +312,7 @@ Archivos principales:
 
 Cambios realizados:
 
-- Se agrego un menu de usuario arriba a la derecha del shell privado, similar al patron de `9001app-firebase`: avatar circular con iniciales, dropdown de identidad, accesos rapidos y cierre de sesion.
+- Se agrego un menu de usuario arriba a la derecha del shell privado, similar al patron de `9001app-firebase` (solo referencia de diseno; Agro-Credit es standalone, sin conexion a ese proyecto): avatar circular con iniciales, dropdown de identidad, accesos rapidos y cierre de sesion.
 - Se movio el cierre de sesion y la tarjeta de identidad fuera del sidebar para que todo lo relativo al usuario quede en el header.
 - Se mantuvo el boton operativo del sidebar (`Nueva Solicitud`, `Nueva Carpeta`, etc.) y se cambio el chip superior a `Sesion activa`.
 
@@ -401,7 +401,7 @@ Archivos principales:
 
 Cambios realizados:
 
-- Se analizo el flujo OCR existente en `9001app-firebase`: provider intercambiable, endpoint de extraccion de facturas, upload a Storage, borrador intermedio, preview editable y confirmacion separada.
+- Se analizo el flujo OCR existente en `9001app-firebase` (solo referencia historica de patron; Agro-Credit es standalone, sin conexion a ese proyecto): provider intercambiable, endpoint de extraccion de facturas, upload a Storage, borrador intermedio, preview editable y confirmacion separada.
 - Se documento que el provider actual de 9001 es `MockOCRProvider`; la arquitectura es reutilizable, pero no hay motor OCR/IA productivo copiable tal cual.
 - Se creo un plan multi-agente por olas para Agro-Credit con upload PDF/imagen/Excel, extraccion OCR/IA, mapper a rubros contables, previsualizacion editable y aplicacion manual a Balance/Resultados.
 - El plan define la coleccion propuesta `financial_statement_imports`, endpoints server-side, validacion contador-cliente, reglas Firestore/Storage, componentes UI y cierre con validacion.
@@ -736,6 +736,25 @@ El usuario habia borrado `organizations` desde la consola pero quedaron restos. 
 ---
 
 ## Cierre obligatorio para proximas sesiones
+
+## Cambios de esta sesion - Auditoria limpieza control tecnico Legajo
+
+Se aplico el prompt de auditoria de seguridad, deuda tecnica y limpieza segura a Agro-Credit con nombre comercial **Legajo**.
+
+Archivos modificados:
+- `app/api/auth/setup-claims/route.ts` — se bloqueo la reasignacion de claims por usuarios no-admin y se exige coincidencia entre rol solicitado y membership activa.
+- `app/api/hub/producers/route.ts` — se corrigieron campos canonicos de grants (`grantedToOrganizationId`, `targetOrganizationId`).
+- `app/api/hub/credit-folders/[producerId]/route.ts` — se corrigieron campos canonicos de grants para validar acceso a carpeta.
+- `CLAUDE.md` — se agrego regla anti-recaida para no abrir datos de legajo por rol en Firestore/Storage.
+- `reports/013_AUDITORIA_LIMPIEZA_CONTROL_TECNICO_LEGAJO.md` — entregable de auditoria, metricas y pendientes.
+
+Validacion:
+- `pnpm exec tsx scripts/check-security-shape.ts` OK.
+- `pnpm exec tsc --noEmit --pretty false` quedo sin resultado por timeout a 5 minutos.
+
+Pendientes P1:
+- Migrar CRUD cliente de carpeta/documentos a APIs server-side antes de endurecer `firestore.rules` y `storage.rules`.
+- Agregar tests negativos para `/api/auth/setup-claims` y tests de hub con grant vigente/vencido.
 
 1. Ejecutar `pnpm type-check`.
 2. Actualizar este handoff y `docs/MODULE_REGISTRY.md` si cambia una ruta, API, coleccion o modulo.

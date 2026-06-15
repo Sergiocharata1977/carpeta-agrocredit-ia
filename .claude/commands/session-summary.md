@@ -51,7 +51,7 @@ Genera un **resumen ejecutivo de la sesión actual** — qué se hizo, qué arch
 
 ## Cómo retomar (prompt para la próxima IA)
 
-> Continuamos el proyecto 9001app-firebase. Hoy se hizo: [resumen en 2 líneas].
+> Continuamos el proyecto Agro-Credit. Hoy se hizo: [resumen en 2 líneas].
 > La próxima tarea es: [tarea pendiente principal].
 > Contexto: [archivo o ruta clave para arrancar].
 ```

@@ -1,37 +1,15 @@
-# deploy — Administración completa Firebase / GitHub / Vercel via CLI
+# deploy — Administración Firebase / GitHub / Vercel via CLI (Agro-Credit)
 
-Sos el agente de deploy de Don Cándido. Tenés acceso completo a Firebase CLI, GitHub CLI (gh) y Vercel CLI desde la terminal. **Todos los builds Android van directo a producción** — no usar flavors Dev porque la máquina local es pequeña y no hay necesidad de entorno de desarrollo separado.
+Sos el agente de deploy de **Agro-Credit (Legajo)**. Tenés acceso completo a Firebase CLI, GitHub CLI (gh) y Vercel CLI desde la terminal. Proyecto **standalone**: sin conexión a `9001app-firebase` ni a los proyectos Agro Biciuffa. Es una web app pura (sin apps Android).
 
 ## Contexto del proyecto
 
-- **Web app:** Next.js 14 en Vercel → proyecto `doncandidoia`
-- **Firebase:** proyecto `app-4b05c` (Firestore, Auth, Storage)
-- **GitHub:** repo `Sergiocharata1977/9001app-v8` branch `main`
-- **Android:** dos apps, builds siempre a `Prod`
+- **Web app:** Next.js 14 en Vercel → proyecto vinculado a este repo (verificar el nombre exacto con `vercel ls` / `vercel project ls`)
+- **Firebase:** proyecto `agrocredit-ia-saas` (Firestore, Auth, Storage)
+- **GitHub:** repo `Sergiocharata1977/carpeta-agrocredit-ia` branch `main`
+- **Cron:** `vercel.json` define `/api/cron/expire-grants` diario a las 02:00 (vence grants de acceso)
 
 ## Comandos por área
-
-### Android APK — SIEMPRE producción
-
-```bash
-# App CRM Vendedor (package: com.doncandido.vendedor)
-cd android && ./gradlew assembleCrmProdRelease
-# APK: android/app/build/outputs/apk/crmProd/release/app-crmProd-release.apk
-
-# App Operaciones (package: com.doncandido.vendedor.operaciones)
-cd android && ./gradlew assembleOperacionesProdRelease
-# APK: android/app/build/outputs/apk/operacionesProd/release/app-operacionesProd-release.apk
-
-# Instalar en dispositivo conectado:
-adb install -r android/app/build/outputs/apk/crmProd/release/app-crmProd-release.apk
-adb install -r android/app/build/outputs/apk/operacionesProd/release/app-operacionesProd-release.apk
-
-# Ambas apps en paralelo:
-cd android && ./gradlew assembleCrmProdRelease assembleOperacionesProdRelease
-```
-
-> ⚠️ NUNCA usar `assembleCrmDebug`, `assembleCrmDev`, ni flavors `Dev` — el google-services.json
-> solo tiene registrados `com.doncandido.vendedor` y `com.doncandido.vendedor.operaciones`.
 
 ### Vercel — Web app
 
@@ -65,7 +43,7 @@ firebase deploy --only storage
 # Todo Firebase (reglas + índices + storage)
 firebase deploy --only firestore,storage
 
-# Ver proyecto activo
+# Ver proyecto activo (debe ser agrocredit-ia-saas)
 firebase use
 ```
 
@@ -96,10 +74,7 @@ Cuando el usuario pide un deploy completo:
 2. **Commit y push:** `git add ... && git commit && git push origin main`
 3. **Vercel:** se despliega automáticamente via GitHub Actions al hacer push a main
 4. **Firebase rules** si hubo cambios en `firestore.rules` o `storage.rules`:
-   `firebase deploy --only firestore:rules,firestore:indexes`
-5. **Android** si hubo cambios en `android/`:
-   `cd android && ./gradlew assembleCrmProdRelease assembleOperacionesProdRelease`
-   Instalar con `adb install -r`
+   `firebase deploy --only firestore:rules,firestore:indexes,storage`
 
 ## Verificación post-deploy
 
@@ -107,9 +82,9 @@ Cuando el usuario pide un deploy completo:
 # Verificar que Vercel deployó OK
 vercel ls --limit 1
 
-# Verificar que Firebase rules están actualizadas
-firebase firestore:rules
+# Verificar proyecto Firebase activo
+firebase use
 
-# Ver dispositivo conectado para Android
-adb devices
+# Verificar que el cron de expire-grants quedó registrado en Vercel
+vercel crons ls
 ```

@@ -2,6 +2,8 @@
 
 SaaS privado multi-tenant de carpeta crediticia agrofinanciera. Next.js App Router + Firebase + TypeScript. Productores, contadores, bancos y empresas agrocomerciales.
 
+> **Proyecto STANDALONE (regla anti-recaída):** Agro-Credit es un proyecto totalmente independiente, SIN conexión alguna a `9001app-firebase` / Don Cándido ni a los proyectos Agro Biciuffa. Toda integración externa futura va por API gateway y requiere confirmación explícita del dueño. No reconectar ni deployar a repos/proyectos de Don Cándido.
+
 ## Comandos esenciales
 
 ```bash
@@ -143,6 +145,7 @@ Aplicar este protocolo cuando el usuario escriba:
 - Buscar en `docs/MODULE_REGISTRY.md` antes de crear rutas, APIs, servicios, componentes o colecciones.
 - No crear colecciones fuera del registro canonico sin actualizar `docs/MODULE_REGISTRY.md` primero.
 - Nunca tomar `organizationId` del cliente; siempre derivarlo de Auth, claims o membership validado server-side.
+- No habilitar lectura/escritura directa por rol en Firestore/Storage para datos de legajo. El acceso de contadores y entidades debe pasar por APIs server-side con vínculo, grant, scope y expiración validados.
 - Firestore y Storage quedan deny-by-default; toda regla permisiva debe ser deliberada y documentada.
 - Toda accion sensible (crear productor, vincular, autorizar, revocar, subir documento) genera `audit_logs`.
 
