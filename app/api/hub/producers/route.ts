@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     // bank / financial entity / agro_company — acceso via grants
     const grantsSnap = await db
       .collection(COLLECTIONS.ACCESS_GRANTS)
-      .where("granteeOrganizationId", "==", auth.organizationId)
+      .where("grantedToOrganizationId", "==", auth.organizationId)
       .where("status", "==", "approved")
       .get()
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         const exp = d.data().expiresAt as string | null
         return !exp || exp > now
       })
-      .map((d) => d.data().producerOrganizationId as string)
+      .map((d) => d.data().targetOrganizationId as string)
   }
 
   if (producerIds.length === 0) {

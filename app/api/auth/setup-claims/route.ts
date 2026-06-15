@@ -18,8 +18,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = setupClaimsSchema.parse(body)
 
-    // Solo el propio usuario o un admin pueden setear claims
-    if (session.uid !== data.uid && !isAdminPlatform(session)) {
+    // Solo admin puede reasignar roles. El alta normal setea claims desde los flujos
+    // server-side de registro/onboarding; este endpoint queda para operación interna.
+    if (!isAdminPlatform(session)) {
       return Response.json({ error: "Sin permisos para esta acción" }, { status: 403 })
     }
 
@@ -37,6 +38,9 @@ export async function POST(request: NextRequest) {
     const memberSnap = await db.collection(COLLECTIONS.ORGANIZATION_MEMBERS).doc(memberId).get()
     if (!memberSnap.exists || memberSnap.data()?.status !== "active") {
       return Response.json({ error: "No sos miembro activo de esa organización" }, { status: 403 })
+    }
+    if (memberSnap.data()?.role !== data.role) {
+      return Response.json({ error: "El rol solicitado no coincide con la membresía activa" }, { status: 403 })
     }
 
     await auth.setCustomUserClaims(data.uid, {

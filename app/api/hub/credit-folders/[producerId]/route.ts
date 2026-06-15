@@ -39,8 +39,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const now = new Date().toISOString()
     const grantSnap = await db
       .collection(COLLECTIONS.ACCESS_GRANTS)
-      .where("granteeOrganizationId", "==", auth.organizationId)
-      .where("producerOrganizationId", "==", producerId)
+      .where("grantedToOrganizationId", "==", auth.organizationId)
+      .where("targetOrganizationId", "==", producerId)
       .where("status", "==", "approved")
       .limit(1)
       .get()
