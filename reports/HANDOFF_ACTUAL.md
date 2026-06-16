@@ -737,6 +737,30 @@ El usuario habia borrado `organizations` desde la consola pero quedaron restos. 
 
 ## Cierre obligatorio para proximas sesiones
 
+## Cambios de esta sesion - CreditoHub IA Ola 0, 1 y 2
+
+**Fecha:** 2026-06-16
+**Commits locales previos al cierre:**
+- `cb69e88` - `feat(credito-hub): Ola 0+1 - plan v2, capa IA multiproveedor, modelo de datos canonico y docs`
+- `fdb64b2` - `feat(credito-hub): Ola 2 - cola con lease, clasificador IA y extractores con procedencia`
+
+### Implementado
+
+- Ola 0/1: plan v2 en `reports/014_PLAN_CREDITO_HUB_IA.md`, docs en `docs/credito-hub/`, capa IA multiproveedor `lib/ai/*`, schemas y tipos de CreditoHub, variables xAI en `.env.example`, colecciones nuevas en `lib/firebase/collections.ts` y acciones de auditoria.
+- Ola 2: cola documental con lease e idempotencia (`lib/services/document-jobs.ts`), clasificador IA (`lib/ai/classification/document-classifier.ts`), servicios de clasificacion/campos/perfil canonico y extractores con procedencia (`lib/ai/extraction/extractors.ts`).
+- Tests agregados para provider, schemas, cola, clasificador y extractores bajo `__tests__/credito-hub/`.
+- `docs/MODULE_REGISTRY.md` actualizado con dominio `CREDITO HUB IA` y colecciones canonicas nuevas.
+
+### Pendientes
+
+- Ejecutar Ola 3: APIs de intake masivo, worker `/api/credito-hub/jobs/process`, API de jobs, motor de requisitos bancarios, matching y endpoints de revision profesional.
+- Mantener regla de seguridad: ninguna API nueva debe tomar `organizationId` desde body editable; derivar siempre desde sesion, membership, link o grant.
+- Antes de usar documentos reales sensibles, coordinar con Plan 012 de cifrado V1 de archivos fuente.
+
+### Validacion de cierre
+
+- Control simple: tests puntuales de CreditoHub a ejecutar antes del push.
+
 ## Cambios de esta sesion - Auditoria limpieza control tecnico Legajo
 
 Se aplico el prompt de auditoria de seguridad, deuda tecnica y limpieza segura a Agro-Credit con nombre comercial **Legajo**.

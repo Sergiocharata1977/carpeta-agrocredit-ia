@@ -103,6 +103,19 @@
 |---|---|---|---|---|
 | `statement_imports` | ga | `/app/contador/productores/[producerId]/carpeta` · `/app/contador/empresas/[empresaId]/carpeta` | `app/api/accounting/statements/extract` · `app/api/accounting/statement-imports/*` · `lib/services/statement-imports-admin.ts` · `lib/ocr/*` · `components/accounting/StatementImport*` | `financial_statement_imports` |
 
+### DOMINIO: CREDITO HUB IA
+
+| Modulo | Estado | Ruta frontend | Servicio | Colecciones |
+|---|---|---|---|---|
+| `credito_hub_plan` | draft | - | `reports/014_PLAN_CREDITO_HUB_IA.md` - `docs/credito-hub/*` | - |
+| `ai_provider_router` | beta | - | `lib/ai/*` | - |
+| `document_jobs` | beta | - | `lib/services/document-jobs.ts` | `document_jobs` |
+| `document_classification` | beta | - | `lib/ai/classification/document-classifier.ts` - `lib/services/document-classification.ts` | `document_classifications` |
+| `extracted_fields` | beta | - | `lib/ai/extraction/extractors.ts` - `lib/services/extracted-fields.ts` | `extracted_fields` |
+| `canonical_credit_profiles` | beta | - | `lib/services/canonical-profile.ts` | `canonical_credit_profiles` |
+| `bank_requirements` | draft | - | `types/bank-requirements.ts` - `lib/schemas/bank-requirements.ts` | `bank_requirement_templates` - `requirement_matches` |
+| `credit_applications` | draft | - | `types/bank-requirements.ts` | `credit_applications` |
+
 ### DOMINIO: HABILITACIÓN DE ESTUDIOS (ADMIN)
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
@@ -172,6 +185,13 @@
 | `financial_statement_imports` | statement_imports | ga | Borradores de importación OCR/IA de EECC |
 | `access_invitations` | access_invitations | ga | Invitaciones de acceso por link |
 | `api_keys` | api_keys | beta | Claves de API para integraciones externas (hash SHA-256, scoped) |
+| `document_jobs` | document_jobs | beta | Cola asincronica de procesamiento documental CreditoHub con lease e idempotencia |
+| `document_classifications` | document_classification | beta | Clasificaciones IA de documentos fuente con confianza y revision |
+| `extracted_fields` | extracted_fields | beta | Campos extraidos con procedencia obligatoria por documento, pagina y metodo |
+| `canonical_credit_profiles` | canonical_credit_profiles | beta | Perfil crediticio canonico basado en referencias a campos extraidos |
+| `bank_requirement_templates` | bank_requirements | draft | Plantillas versionadas de requisitos bancarios |
+| `credit_applications` | credit_applications | draft | Solicitudes crediticias que unen carpeta, entidad y template de requisitos |
+| `requirement_matches` | bank_requirements | draft | Resultado del cruce entre requisitos bancarios y legajo disponible |
 
 ---
 
