@@ -246,3 +246,17 @@ firebase deploy --only firestore:indexes    # índices Firestore
 - Claims legacy `producer` y `bank_user` activos por compatibilidad hacia atrás.
 - Reglas Firestore e índices pendientes de deploy tras los últimos cambios.
 - No se implementó aún el estado `pending_approval` para contadores nuevos.
+
+---
+
+## Actualizacion 2026-06-16 - CreditoHub IA MVP
+
+Plan 014 `reports/014_PLAN_CREDITO_HUB_IA.md` ejecutado completo en alcance MVP:
+
+- Capa IA multiproveedor `lib/ai/*` con xAI/Anthropic/Mock.
+- Cola documental asincronica `document_jobs` con lease, clasificacion, extraccion y perfil canonico con procedencia.
+- APIs `app/api/credito-hub/*` para intake, worker, jobs, revision profesional, requisitos bancarios, credit applications y matching.
+- UI inicial para contador: carga masiva/progreso y revision de campos.
+- UI inicial para entidad: constructor de requisitos y matriz de cumplimiento.
+
+Pendientes post-MVP: prueba con documentos reales tras cerrar cifrado V1, expediente bancario final, mas tipos documentales e integracion bancaria viva.

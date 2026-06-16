@@ -107,14 +107,14 @@
 
 | Modulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `credito_hub_plan` | draft | - | `reports/014_PLAN_CREDITO_HUB_IA.md` - `docs/credito-hub/*` | - |
+| `credito_hub_plan` | ga | `/app/contador/productores/[producerId]/legajo` - `/app/contador/productores/[producerId]/revision` - `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `reports/014_PLAN_CREDITO_HUB_IA.md` - `docs/credito-hub/*` | - |
 | `ai_provider_router` | beta | - | `lib/ai/*` | - |
-| `document_jobs` | beta | - | `lib/services/document-jobs.ts` | `document_jobs` |
+| `document_jobs` | beta | `/app/contador/productores/[producerId]/legajo` | `app/api/credito-hub/intake` - `app/api/credito-hub/jobs` - `app/api/credito-hub/jobs/process` - `lib/services/document-jobs.ts` | `document_jobs` |
 | `document_classification` | beta | - | `lib/ai/classification/document-classifier.ts` - `lib/services/document-classification.ts` | `document_classifications` |
-| `extracted_fields` | beta | - | `lib/ai/extraction/extractors.ts` - `lib/services/extracted-fields.ts` | `extracted_fields` |
-| `canonical_credit_profiles` | beta | - | `lib/services/canonical-profile.ts` | `canonical_credit_profiles` |
-| `bank_requirements` | draft | - | `types/bank-requirements.ts` - `lib/schemas/bank-requirements.ts` | `bank_requirement_templates` - `requirement_matches` |
-| `credit_applications` | draft | - | `types/bank-requirements.ts` | `credit_applications` |
+| `extracted_fields` | beta | `/app/contador/productores/[producerId]/revision` | `lib/ai/extraction/extractors.ts` - `lib/services/extracted-fields.ts` - `app/api/credito-hub/review/*` | `extracted_fields` |
+| `canonical_credit_profiles` | beta | `/app/contador/productores/[producerId]/revision` | `lib/services/canonical-profile.ts` - `app/api/credito-hub/canonical-profile/[targetOrganizationId]` | `canonical_credit_profiles` |
+| `bank_requirements` | beta | `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `app/api/credito-hub/bank-requirements/*` - `lib/services/bank-requirements.ts` - `lib/services/requirement-matching.ts` | `bank_requirement_templates` - `requirement_matches` |
+| `credit_applications` | beta | `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `app/api/credito-hub/credit-applications` - `lib/services/credit-applications.ts` | `credit_applications` |
 
 ### DOMINIO: HABILITACIÓN DE ESTUDIOS (ADMIN)
 

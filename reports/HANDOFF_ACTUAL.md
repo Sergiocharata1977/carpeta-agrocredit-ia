@@ -248,6 +248,8 @@ Cambios realizados:
 Validacion:
 
 - `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test`: OK (6 archivos, 93 tests).
 - `pnpm build`: OK, 35 paginas generadas.
 
 Pendiente:
@@ -784,3 +786,27 @@ Pendientes P1:
 2. Actualizar este handoff y `docs/MODULE_REGISTRY.md` si cambia una ruta, API, coleccion o modulo.
 3. Hacer `git status --short` y `git diff --stat`.
 4. Git add selectivo + commit.
+
+---
+
+## Cambios de esta sesion - Cierre completo Plan 014 CreditoHub IA
+
+**Fecha:** 2026-06-16
+
+### Implementado en esta pasada
+
+- Ola 3: APIs `app/api/credito-hub/intake`, `jobs`, `jobs/process`, `review/*`, `canonical-profile/*`, `bank-requirements/*`, `credit-applications`.
+- Ola 3: servicios `lib/services/bank-requirements.ts`, `credit-applications.ts`, `requirement-matching.ts` y parser `lib/ai/bank-requirements/parser.ts`.
+- Ola 4: componentes `components/credito-hub/MassUploadDropzone.tsx`, `JobProgressList.tsx`, `ReviewWorkbench.tsx`, `FieldReviewRow.tsx`, `RequirementBuilder.tsx`, `ComplianceMatrix.tsx`.
+- Ola 4: rutas UI `/app/contador/productores/[producerId]/legajo`, `/revision`, `/app/entidad/requisitos`, `/app/entidad/carpetas/[targetOrgId]/cumplimiento`.
+- Navegacion: `ProducerSubNav` agrega Legajo IA/Revision y `AppSidebar` agrega Requisitos para entidad.
+- Ola 5: `docs/MODULE_REGISTRY.md` y `reports/014_PLAN_CREDITO_HUB_IA.md` actualizados con cierre completo.
+
+### Validacion
+
+- `pnpm type-check`: OK.
+
+### Pendientes post-MVP
+
+- Prueba funcional con Firebase/Storage reales y `CREDITO_HUB_ALLOW_REAL_DATA=true` solo luego de cerrar cifrado V1 real de archivos fuente.
+- Generacion de expediente bancario final y tipos documentales adicionales.

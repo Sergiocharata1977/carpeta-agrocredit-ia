@@ -481,3 +481,30 @@ Registrá en MODULE_REGISTRY los módulos nuevos (lib/ai, document-jobs, classif
 - Verificación automática de matrícula vía API de Consejos Profesionales.
 - Antifraude avanzado, scoring, firma digital propia, WhatsApp, integración bancaria viva.
 - Cifrado V1 real de archivos fuente (Plan 012 Ola 3) — el MVP queda forward-compatible y limitado a staging hasta cerrarlo.
+
+---
+
+## Cierre de ejecucion 2026-06-16
+
+**Estado:** plan ejecutado completo en alcance MVP.
+
+### Olas cerradas
+
+- Ola 0: decisiones, nombres canonicos, flag de datos reales, limites y docs.
+- Ola 1: capa IA multiproveedor, tipos/schemas/colecciones/auditoria y documentacion.
+- Ola 2: cola con lease, clasificador, extractores, campos extraidos y perfil canonico.
+- Ola 3: APIs de intake, jobs, worker, revision profesional, perfil canonico, requisitos bancarios, credit applications y matching.
+- Ola 4: UI de carga masiva/progreso, revision de campos, constructor de requisitos y matriz de cumplimiento.
+- Ola 5: registro en `docs/MODULE_REGISTRY.md`, handoff, estado actual y validacion.
+
+### Validacion
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test`: OK (6 archivos, 93 tests).
+
+### Pendientes post-MVP
+
+- Ejecutar pruebas con documentos reales solo cuando `CREDITO_HUB_ALLOW_REAL_DATA=true` y se cierre el cifrado V1 real de archivos fuente.
+- Generacion de expediente bancario final.
+- Tipos documentales adicionales e integracion bancaria viva.

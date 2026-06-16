@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FileText, FolderOpen, Landmark, UserRound } from "lucide-react"
+import { Bot, ClipboardCheck, FileText, FolderOpen, Landmark, UserRound } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ProducerSubNavProps {
@@ -14,6 +14,8 @@ const NAV_ITEMS = [
   { label: "Carpeta contable", href: "/carpeta", icon: FolderOpen },
   { label: "Patrimonio", href: "/bienes", icon: Landmark },
   { label: "Documentos", href: "/documentos", icon: FileText },
+  { label: "Legajo IA", href: "/legajo", icon: Bot },
+  { label: "Revision", href: "/revision", icon: ClipboardCheck },
 ] as const
 
 export function ProducerSubNav({ producerId }: ProducerSubNavProps) {
