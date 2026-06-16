@@ -23,6 +23,14 @@ export const COLLECTIONS = {
   NOTIFICATIONS: "notifications",
   FINANCIAL_STATEMENT_IMPORTS: "financial_statement_imports",
   API_KEYS: "api_keys",
+  // CreditoHub (Ola 1)
+  DOCUMENT_JOBS: "document_jobs",
+  DOCUMENT_CLASSIFICATIONS: "document_classifications",
+  EXTRACTED_FIELDS: "extracted_fields",
+  CANONICAL_CREDIT_PROFILES: "canonical_credit_profiles",
+  BANK_REQUIREMENT_TEMPLATES: "bank_requirement_templates",
+  CREDIT_APPLICATIONS: "credit_applications",
+  REQUIREMENT_MATCHES: "requirement_matches",
 } as const
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS]

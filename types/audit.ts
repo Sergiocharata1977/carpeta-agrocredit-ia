@@ -38,6 +38,20 @@ export type AuditAction =
   | "statement_import.reviewed"
   | "statement_import.applied"
   | "statement_import.rejected"
+  // CreditoHub (Ola 1)
+  | "document.classified"
+  | "document.job_queued"
+  | "document.job_failed"
+  | "field.extracted"
+  | "field.confirmed"
+  | "field.corrected"
+  | "field.rejected"
+  | "canonical_profile.updated"
+  | "bank_requirement.created"
+  | "bank_requirement.parsed"
+  | "requirement.matched"
+  | "credit_application.created"
+  | "credit_package.generated"
 
 // Entrada de auditoría (colección: audit_logs)
 export interface AuditLog {
