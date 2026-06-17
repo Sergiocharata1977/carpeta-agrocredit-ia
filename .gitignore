@@ -42,5 +42,10 @@ firebase-debug.log
 firestore-debug.log
 storage-debug.log
 ui-debug.log
+# service account keys (NUNCA commitear secretos)
+*serviceaccount*.json
+*service-account*.json
+*-adminsdk-*.json
+*firebase-adminsdk*.json
 
 .vercel
