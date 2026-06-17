@@ -103,6 +103,7 @@ El contador habilitado carga la información contable, fiscal y patrimonial del 
 | `013_AUDITORIA_LIMPIEZA_CONTROL_TECNICO_LEGAJO.md` | 🟢 Vivo | Auditoría de seguridad y deuda técnica |
 | `014_PLAN_CREDITO_HUB_IA.md` | ✅ Completado (MVP) | CreditoHub IA completo en alcance MVP |
 | `015_CHECKLIST_VERIFICACION_FRONTEND.md` | 🟢 Vivo | Checklist de verificación pantalla por pantalla |
+| `016_INFORMACION_CARGA_CLIENTE.md` | 🟢 Vivo | Inventario de info que carga un cliente y sus empresas |
 | `HANDOFF_ACTUAL.md` | 🟢 Vivo | Estado por sesión, archivos modificados, pendientes |
 
 **Números retirados (planes completados y eliminados):** `001` plan original · `002` reorganización BD · `003` vistas por rol · `006` OCR/IA EECC · `007` perfil extendido · `008` ABM clientes/empresas · `009` invitaciones por link. No reasignar.
