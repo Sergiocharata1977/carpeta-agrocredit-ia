@@ -810,3 +810,21 @@ Pendientes P1:
 
 - Prueba funcional con Firebase/Storage reales y `CREDITO_HUB_ALLOW_REAL_DATA=true` solo luego de cerrar cifrado V1 real de archivos fuente.
 - Generacion de expediente bancario final y tipos documentales adicionales.
+
+---
+
+## Revision de seguridad post-cierre (2026-06-17)
+
+Revision manual de las rutas de CreditoHub (los tests de aislamiento de Ola 5 no se habian escrito). Se detectaron y corrigieron 3 brechas de autorizacion:
+
+1. **`bank-requirements/[templateId]/match` — sin autorizacion (ALTA).** Cualquier sesion activa podia correr el matching de una `creditApplicationId` ajena y leer evidencias del legajo del cliente. Fix: la ruta carga la solicitud y exige admin / entidad solicitante con grant vigente / gestor del legajo.
+2. **`bank-requirements` (GET/POST) — solo chequeaba rol (MEDIA).** Una entidad podia leer/crear/publicar templates de otra org pasando otro `requestingEntityOrganizationId`. Fix: para no-admin la org se liga a la sesion (`resolveEntityOrg`) y `publish` verifica pertenencia del template.
+3. **`credit-applications` POST — `requestingEntityOrganizationId` desde el body (MEDIA).** Una entidad financiera podia atribuir la solicitud a otra entidad. Fix: para entidad no-admin se fuerza la org de la sesion.
+
+Adicional: se extrajo `assertEntityGrant` a `lib/auth/entity-grant.ts` (compartido por match y credit-applications) y se agregaron tests de aislamiento `__tests__/security/credito-hub-isolation.test.ts` (12 casos allow/deny).
+
+### Validacion post-fix
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test`: OK — 7 archivos, 105 tests.

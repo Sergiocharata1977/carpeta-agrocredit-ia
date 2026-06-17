@@ -6,29 +6,10 @@ import {
   getAuthErrorResponse,
   isAdminPlatform,
   isFinancialEntity,
-  AuthError,
 } from "@/lib/auth/server-session"
 import { assertCanManageAccountingFolder } from "@/lib/auth/accounting-access"
+import { assertEntityGrant } from "@/lib/auth/entity-grant"
 import { createCreditApplication, listCreditApplications } from "@/lib/services/credit-applications"
-import { getAdminDb } from "@/lib/firebase/admin-sdk"
-import { COLLECTIONS } from "@/lib/firebase/collections"
-
-async function assertEntityGrant(sessionOrganizationId: string, targetOrganizationId: string): Promise<void> {
-  const snap = await getAdminDb()
-    .collection(COLLECTIONS.ACCESS_GRANTS)
-    .where("targetOrganizationId", "==", targetOrganizationId)
-    .where("grantedToOrganizationId", "==", sessionOrganizationId)
-    .where("status", "==", "approved")
-    .limit(5)
-    .get()
-  const now = new Date()
-  const hasGrant = snap.docs.some((doc) => {
-    const data = doc.data()
-    const expiresAt = data.expiresAt?.toDate?.() ?? new Date(data.expiresAt)
-    return expiresAt > now
-  })
-  if (!hasGrant) throw new AuthError("La entidad no tiene grant vigente para este legajo", 403)
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,7 +43,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const targetOrganizationId = String(body.targetOrganizationId ?? "")
     const requirementTemplateId = String(body.requirementTemplateId ?? "")
-    const requestingEntityOrganizationId = String(body.requestingEntityOrganizationId ?? session.defaultOrganizationId ?? "")
+    // Una entidad financiera (no admin) solo puede atribuir la solicitud a su propia org:
+    // se ignora el valor del body para evitar suplantacion de otra entidad.
+    const requestingEntityOrganizationId =
+      isFinancialEntity(session) && !isAdminPlatform(session)
+        ? String(session.defaultOrganizationId ?? "")
+        : String(body.requestingEntityOrganizationId ?? session.defaultOrganizationId ?? "")
     if (!targetOrganizationId || !requirementTemplateId || !requestingEntityOrganizationId) {
       return Response.json({ error: "targetOrganizationId, requestingEntityOrganizationId y requirementTemplateId son requeridos" }, { status: 400 })
     }
