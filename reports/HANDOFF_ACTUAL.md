@@ -935,3 +935,32 @@ El dueño necesita administrar entidades (bancos/financieras/agro) desde el pane
 ## Próximo — Formulario único de cliente operado por el contador (en diseño)
 
 **Pedido del dueño:** un formulario único que el **contador** use para cargar toda la info de un cliente, **organizado por carpeta** (datos personales / datos de cada empresa), donde se **suban carpetas/documentos directamente** y la **IA busque y extraiga** para prellenar. Primero diseño y aprobación; recién después se implementa. (Diseño presentado en chat 2026-06-17; pendiente de aprobación para volcarlo a `reports/017`.)
+
+---
+
+## Legajo único — Olas 1 y 2 implementadas (2026-06-17)
+
+Plan: `reports/017_PLAN_LEGAJO_UNICO_CONTADOR.md` (ajustado con recomendaciones de 2ª IA: asistente movido a Ola 2, endpoint con `targetOrganizationId`, colecciones `folder_certifications` y `document_routing_decisions`, modelo mixto de perfil por empresa, ruta canónica).
+
+### Ola 1 — Shell del legajo único
+
+- **Nuevo** `app/app/contador/clientes/[clientId]/legajo/page.tsx`: ruta canónica con **pestañas por carpeta** (Titular + empresas), **completitud por sección** (Identidad/Perfil/Contable/Patrimonio/Documentos) leída de `/api/folders/[orgId]/status`, % por carpeta, y links a las pantallas existentes. Botón "Validar y certificar" deshabilitado (Ola 5).
+- `app/app/contador/clientes/[clientId]/page.tsx`: botón "Abrir Legajo".
+
+### Ola 2 — Asistente IA contextual (read-only)
+
+- **Nuevo** `app/api/credito-hub/assistant/[targetOrganizationId]/route.ts`: POST `{ message, history? }`. Auth `assertCanManageAccountingFolder` (nada sensible en body). Rate limit en memoria (20/5min por uid+carpeta), límite de chars/history. Guardrails: responde solo con evidencias del legajo, dice "no consta" si falta, no recomienda aprobar/rechazar crédito, no modifica datos. Audita `assistant.queried`.
+- **Nuevo** `lib/credito-hub/assistant-context.ts`: arma contexto server-side (identidad, perfil extendido, totales de balance/resultados, secciones con/sin datos).
+- **Nuevo** `components/credito-hub/LegajoAssistantChat.tsx`: modal con preguntas sugeridas, historial e input; aviso de modo demo si el provider es mock. Reusa la capa IA (`resolveAIProvider().complete`).
+- `types/audit.ts`: acción `assistant.queried`. `docs/MODULE_REGISTRY.md`: módulos `legajo_unico_contador` y `legajo_assistant`.
+
+### Validación
+
+- `pnpm type-check`: OK · `pnpm check:security-shape`: OK · `pnpm test`: OK (113).
+
+### Pendiente (próximas olas del 017)
+
+- Ola 3: carga única + auto-routing (`document_routing_decisions`).
+- Ola 4: revisión embebida por sección.
+- Ola 5: certificación (`folder_certifications`) + sello + invalidación automática.
+- Ola 6: indicadores de completitud finos + tests de aislamiento del asistente.

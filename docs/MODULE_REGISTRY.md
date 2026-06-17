@@ -115,6 +115,8 @@
 | `canonical_credit_profiles` | beta | `/app/contador/productores/[producerId]/revision` | `lib/services/canonical-profile.ts` - `app/api/credito-hub/canonical-profile/[targetOrganizationId]` | `canonical_credit_profiles` |
 | `bank_requirements` | beta | `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `app/api/credito-hub/bank-requirements/*` - `lib/services/bank-requirements.ts` - `lib/services/requirement-matching.ts` | `bank_requirement_templates` - `requirement_matches` |
 | `credit_applications` | beta | `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `app/api/credito-hub/credit-applications` - `lib/services/credit-applications.ts` | `credit_applications` |
+| `legajo_unico_contador` | beta | `/app/contador/clientes/[clientId]/legajo` | (shell; reusa entities + folders status) | `organizations` |
+| `legajo_assistant` | beta | (modal en legajo) | `app/api/credito-hub/assistant/[targetOrganizationId]` · `lib/credito-hub/assistant-context.ts` · `components/credito-hub/LegajoAssistantChat.tsx` | (solo lectura) |
 
 ### DOMINIO: HABILITACIÓN DE ESTUDIOS (ADMIN)
 

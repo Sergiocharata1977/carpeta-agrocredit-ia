@@ -53,6 +53,7 @@ export type AuditAction =
   | "requirement.matched"
   | "credit_application.created"
   | "credit_package.generated"
+  | "assistant.queried"
   // Plataforma
   | "ai_provider.changed"
 

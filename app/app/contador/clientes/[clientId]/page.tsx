@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { Building2, PlusCircle, Send, UserRound } from "lucide-react"
+import { Building2, FolderOpen, PlusCircle, Send, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { getDoc, doc } from "firebase/firestore"
 import { Badge } from "@/components/ui/badge"
@@ -213,10 +213,16 @@ export default function ClienteSinglePage({ params }: PageProps) {
             )}
           </div>
         </div>
-        <Button variant="outline" className="gap-2" onClick={() => setInviteDialogOpen(true)}>
-          <Send className="size-4" />
-          Compartir con financista
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button className="gap-2" onClick={() => router.push(`/app/contador/clientes/${clientId}/legajo`)}>
+            <FolderOpen className="size-4" />
+            Abrir Legajo
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => setInviteDialogOpen(true)}>
+            <Send className="size-4" />
+            Compartir con financista
+          </Button>
+        </div>
       </div>
 
       {/* Datos personales */}
