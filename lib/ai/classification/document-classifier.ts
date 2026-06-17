@@ -7,7 +7,7 @@
  * lib/services/document-classification.ts). No lee Firestore ni Storage.
  */
 
-import { getAIProvider } from "@/lib/ai"
+import { resolveAIProvider } from "@/lib/ai/provider-config"
 import type { AIClassificationHints } from "@/lib/ai/AIProvider"
 import type { DocumentClassification } from "@/types/credito-hub"
 
@@ -78,7 +78,7 @@ export async function classify(
   // parámetro (a diferencia de extractStructured); cada provider conoce el
   // dominio de tipos documentales. CLASSIFICATION_SCHEMA_PROMPT queda exportado
   // como referencia canónica de los tipos esperados.
-  const provider = getAIProvider()
+  const provider = await resolveAIProvider()
   const result = await provider.classifyDocument(buffer, mimeType, hints)
 
   const confidence = clampConfidence(result.confidence)

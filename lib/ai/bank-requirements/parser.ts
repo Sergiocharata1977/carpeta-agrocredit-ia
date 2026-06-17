@@ -1,4 +1,4 @@
-import { getAIProvider } from "@/lib/ai"
+import { resolveAIProvider } from "@/lib/ai/provider-config"
 import type { BankRequirement } from "@/types/bank-requirements"
 
 const REQUIREMENTS_SCHEMA_PROMPT = `Converti un documento de requisitos bancarios argentinos a JSON.
@@ -68,7 +68,7 @@ export async function parseRequirementsFromDocument(
   mimeType: string,
   hints?: { fileName?: string },
 ): Promise<{ requirements: BankRequirement[]; warnings: string[]; overallConfidence: number }> {
-  const provider = getAIProvider()
+  const provider = await resolveAIProvider()
   const result = await provider.extractStructured(buffer, mimeType, REQUIREMENTS_SCHEMA_PROMPT, {
     fileName: hints?.fileName,
     documentType: "bank_requirements",

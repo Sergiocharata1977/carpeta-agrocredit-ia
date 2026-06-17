@@ -52,6 +52,8 @@ export type AuditAction =
   | "requirement.matched"
   | "credit_application.created"
   | "credit_package.generated"
+  // Plataforma
+  | "ai_provider.changed"
 
 // Entrada de auditoría (colección: audit_logs)
 export interface AuditLog {

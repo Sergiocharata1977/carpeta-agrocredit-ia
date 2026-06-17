@@ -23,6 +23,7 @@ export const COLLECTIONS = {
   NOTIFICATIONS: "notifications",
   FINANCIAL_STATEMENT_IMPORTS: "financial_statement_imports",
   API_KEYS: "api_keys",
+  PLATFORM_SETTINGS: "platform_settings",
   // CreditoHub (Ola 1)
   DOCUMENT_JOBS: "document_jobs",
   DOCUMENT_CLASSIFICATIONS: "document_classifications",

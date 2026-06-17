@@ -844,3 +844,30 @@ El alta de carpeta (`NuevoProductorDialog`) ahora ofrece DOS opciones: cargar a 
 ### Checklist de verificación
 
 `reports/015_CHECKLIST_VERIFICACION_FRONTEND.md` — verificación pantalla por pantalla de todos los flujos. Bloqueantes detectados: (1) falta cron del worker `jobs/process` en `vercel.json`; (2) falta link de navegación a "Cumplimiento". Mejoras UX pendientes: visor de documento en Revisión, requisitos editables, selector de template en la matriz.
+
+---
+
+## Selector de proveedor IA (Groq + Anthropic) en super admin (2026-06-17)
+
+Pedido del dueño: dos IA opcionales seleccionables y comparables desde config de super admin (Groq para probar primero, Anthropic después). Plan Vercel Hobby.
+
+### Implementado
+
+- **GroqProvider** (`lib/ai/GroqProvider.ts`): clon OpenAI-compatible de XaiProvider con baseURL Groq, resolución de modelo con visión (default `meta-llama/llama-4-scout-17b-16e-instruct`) y `__resetGroqModelCache` para tests.
+- **Factory** (`lib/ai/index.ts`): `AI_PROVIDER_NAMES`, `hasProviderKey`, `createProvider(name)`. `getAIProvider()` sigue sync por env (compat tests). Soporta `groq | anthropic | xai`.
+- **Config en runtime** (`lib/ai/provider-config.ts`): doc `platform_settings/ai` vía Admin SDK con cache ~15s. `resolveAIProvider()` usa la config y cae al env `AI_PROVIDER`; si falta la key, Mock. Los 4 callers del pipeline (extractors, classifier, parser, afip-prefill) ahora usan `await resolveAIProvider()`.
+- **API admin**: `GET/PATCH /api/admin/ai-config` (estado + cambiar proveedor activo, audita `ai_provider.changed`) y `POST /api/admin/ai-config/test` (ping `complete()` por proveedor con key, mide latencia → comparar).
+- **UI**: `/app/admin/ia` (RoleGate admin_platform): cards por proveedor con disponibilidad de key, activar con click, "Probar y comparar". Sidebar admin: items **IA** y **API Keys**.
+- Colección `platform_settings` en `collections.ts`; acción `ai_provider.changed` en `types/audit.ts`; `.env.example` con `GROQ_*` y `AI_PROVIDER=groq`.
+- Tests nuevos: `__tests__/credito-hub/groq-provider.test.ts` (8 casos). Mocks de extractors/classifier migrados a `@/lib/ai/provider-config`.
+
+### Validación
+
+- `pnpm type-check`: OK.
+- `pnpm test`: OK — 8 archivos, 113 tests.
+
+### PENDIENTE — decisión del dueño (bloquea correr en local)
+
+- `.env.local` creado con las keys de IA (Groq + Anthropic) y `AI_PROVIDER=groq`, pero el **bloque Firebase quedó como placeholder**. Usar el Firebase de `agro-biciuffa` contradice la regla STANDALONE de `CLAUDE.md` (acopla auth+datos de las dos apps); además el clasificador del harness bloqueó leer los `.env.local` de los proyectos vecinos por la misma razón. Falta que el dueño confirme: (A) reusar agro-biciuffa solo en local, o (B) proyecto Firebase dedicado a Agro-Credit. Recién con eso el `pnpm dev` arranca.
+- En prod (Vercel): cargar `GROQ_API_KEY` / `ANTHROPIC_API_KEY` en env vars. Sin key, el proveedor cae a Mock (modo demo).
+- `platform_settings` queda deny-by-default en Firestore (se opera solo por Admin SDK); no requiere regla nueva.

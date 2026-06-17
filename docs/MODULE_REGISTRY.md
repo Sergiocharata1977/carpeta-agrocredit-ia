@@ -108,7 +108,7 @@
 | Modulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
 | `credito_hub_plan` | ga | `/app/contador/productores/[producerId]/legajo` - `/app/contador/productores/[producerId]/revision` - `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `reports/014_PLAN_CREDITO_HUB_IA.md` - `docs/credito-hub/*` | - |
-| `ai_provider_router` | beta | - | `lib/ai/*` | - |
+| `ai_provider_router` | beta | `/app/admin/ia` | `lib/ai/*` (Groq · Anthropic · xAI · Mock) - `lib/ai/provider-config.ts` - `app/api/admin/ai-config/*` | `platform_settings` |
 | `document_jobs` | beta | `/app/contador/productores/[producerId]/legajo` | `app/api/credito-hub/intake` - `app/api/credito-hub/jobs` - `app/api/credito-hub/jobs/process` - `lib/services/document-jobs.ts` | `document_jobs` |
 | `document_classification` | beta | - | `lib/ai/classification/document-classifier.ts` - `lib/services/document-classification.ts` | `document_classifications` |
 | `extracted_fields` | beta | `/app/contador/productores/[producerId]/revision` | `lib/ai/extraction/extractors.ts` - `lib/services/extracted-fields.ts` - `app/api/credito-hub/review/*` | `extracted_fields` |
@@ -192,6 +192,7 @@
 | `bank_requirement_templates` | bank_requirements | draft | Plantillas versionadas de requisitos bancarios |
 | `credit_applications` | credit_applications | draft | Solicitudes crediticias que unen carpeta, entidad y template de requisitos |
 | `requirement_matches` | bank_requirements | draft | Resultado del cruce entre requisitos bancarios y legajo disponible |
+| `platform_settings` | ai_provider_router | beta | Config de plataforma (doc `ai`: proveedor IA activo). Solo Admin SDK; deny-by-default para el cliente |
 
 ---
 

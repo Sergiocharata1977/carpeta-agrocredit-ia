@@ -8,9 +8,11 @@ import {
   Activity,
   Banknote,
   Bell,
+  Bot,
   Building2,
   ClipboardList,
   FileText,
+  KeyRound,
   LayoutDashboard,
   Plus,
   Settings,
@@ -54,6 +56,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Entidades", href: "/app/admin/entidades", icon: Users, roles: ["admin_platform"] },
   { label: "Organizaciones", href: "/app/admin/organizaciones", icon: LayoutDashboard, roles: ["admin_platform"] },
   { label: "Auditoria", href: "/app/admin/auditoria", icon: FileText, roles: ["admin_platform"] },
+  { label: "IA", href: "/app/admin/ia", icon: Bot, roles: ["admin_platform"] },
+  { label: "API Keys", href: "/app/admin/api-keys", icon: KeyRound, roles: ["admin_platform"] },
   { label: "Configuracion", href: "/app/notificaciones", icon: Settings, roles: ["admin_platform"] },
 
   // Contador

@@ -16,7 +16,7 @@
  */
 
 import { randomUUID } from "node:crypto"
-import { getAIProvider } from "@/lib/ai"
+import { resolveAIProvider } from "@/lib/ai/provider-config"
 import type { AIExtractedField, AIExtractionResult } from "@/lib/ai/AIProvider"
 import type { ExtractedField } from "@/types/credito-hub"
 
@@ -185,7 +185,7 @@ async function runExtraction(
   params: ExtractorParams,
 ): Promise<ExtractedField[]> {
   const { prompt } = SCHEMA_PROMPTS[docType]
-  const provider = getAIProvider()
+  const provider = await resolveAIProvider()
   const result = await provider.extractStructured(params.buffer, params.mimeType, prompt, {
     fileName: params.fileName,
     documentType: docType,

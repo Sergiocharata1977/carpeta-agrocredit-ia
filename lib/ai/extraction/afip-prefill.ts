@@ -1,4 +1,4 @@
-import { getAIProvider } from "@/lib/ai"
+import { resolveAIProvider } from "@/lib/ai/provider-config"
 
 /**
  * Prefill del alta de productor a partir de una constancia de inscripcion AFIP.
@@ -101,7 +101,7 @@ export async function extractAfipPrefill(
   mimeType: string,
   hints?: { fileName?: string },
 ): Promise<AfipPrefillResult> {
-  const provider = getAIProvider()
+  const provider = await resolveAIProvider()
   const result = await provider.extractStructured(buffer, mimeType, SCHEMA_PROMPT, {
     ...hints,
     documentType: "constancia_cuit",

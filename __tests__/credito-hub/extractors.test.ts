@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { AIExtractionResult } from "@/lib/ai/AIProvider"
 
-// ─── Mock de getAIProvider: nunca llama red ni carga SDKs ──────────────────────
+// ─── Mock de resolveAIProvider: nunca llama red ni carga SDKs/Firestore ───────
 const mockExtractStructured = vi.fn<
   (...args: unknown[]) => Promise<AIExtractionResult>
 >()
 
-vi.mock("@/lib/ai", () => ({
-  getAIProvider: () => ({
+vi.mock("@/lib/ai/provider-config", () => ({
+  resolveAIProvider: async () => ({
     name: "mock-test",
     classifyDocument: vi.fn(),
     extractStructured: mockExtractStructured,

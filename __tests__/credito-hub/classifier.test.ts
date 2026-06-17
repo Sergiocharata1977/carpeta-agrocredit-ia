@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { AIClassificationResult, AIProvider } from "@/lib/ai/AIProvider"
 
-// ─── Mock del factory getAIProvider para inyectar un provider controlado ──────
+// ─── Mock de resolveAIProvider para inyectar un provider controlado ───────────
 const mockClassifyDocument = vi.fn()
 
-vi.mock("@/lib/ai", () => ({
-  getAIProvider: (): AIProvider => ({
+vi.mock("@/lib/ai/provider-config", () => ({
+  resolveAIProvider: async (): Promise<AIProvider> => ({
     name: "mock-test",
     classifyDocument: mockClassifyDocument,
     extractStructured: vi.fn(),
