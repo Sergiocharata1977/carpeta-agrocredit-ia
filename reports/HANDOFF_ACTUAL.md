@@ -828,3 +828,19 @@ Adicional: se extrajo `assertEntityGrant` a `lib/auth/entity-grant.ts` (comparti
 - `pnpm type-check`: OK.
 - `pnpm check:security-shape`: OK.
 - `pnpm test`: OK — 7 archivos, 105 tests.
+
+---
+
+## Alta de carpeta con IA + checklist de frontend (2026-06-17)
+
+### Alta desde constancia AFIP (commit `e95f1b4`)
+
+El alta de carpeta (`NuevoProductorDialog`) ahora ofrece DOS opciones: cargar a mano o subir la constancia de AFIP para que la IA prellene el formulario. El humano revisa y confirma al Guardar.
+
+- `lib/ai/extraction/afip-prefill.ts`: lee la constancia y propone campos (deriva `personType` del prefijo de CUIT, mapea actividad al enum agro). Avisa si corre en modo mock.
+- `app/api/credito-hub/afip-prefill/route.ts`: parse-only (no persiste), auth `accountant`/`accounting_firm_admin`/`admin_platform`.
+- `ProducerForm`: prop `prefillValues` repuebla sin pisar lo tipeado.
+
+### Checklist de verificación
+
+`reports/015_CHECKLIST_VERIFICACION_FRONTEND.md` — verificación pantalla por pantalla de todos los flujos. Bloqueantes detectados: (1) falta cron del worker `jobs/process` en `vercel.json`; (2) falta link de navegación a "Cumplimiento". Mejoras UX pendientes: visor de documento en Revisión, requisitos editables, selector de template en la matriz.

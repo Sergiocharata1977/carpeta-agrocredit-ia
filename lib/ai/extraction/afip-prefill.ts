@@ -111,6 +111,9 @@ export async function extractAfipPrefill(
   const cuit = cleanCuit(get("cuit"))
   const activityDescription = asString(get("actividadDescripcion"))
   const warnings = [...(result.warnings ?? [])]
+  if (provider.name === "mock") {
+    warnings.push("IA en modo demo (sin credenciales): los datos son de ejemplo, no del documento.")
+  }
   if (!cuit) warnings.push("No se pudo leer un CUIT valido de 11 digitos.")
 
   const fields: AfipPrefillFields = {
