@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createProducerSchema, type CreateProducerInput } from "@/lib/schemas/producer"
@@ -17,6 +18,8 @@ import { Spinner } from "@/components/ui/spinner"
 
 interface ProducerFormProps {
   defaultValues?: Partial<CreateProducerInput>
+  /** Valores propuestos por la IA (constancia AFIP). Al cambiar, repueblan el form. */
+  prefillValues?: Partial<CreateProducerInput> | null
   onSubmit: (data: CreateProducerInput) => void
   isLoading?: boolean
 }
@@ -37,6 +40,7 @@ const ACTIVITY_OPTIONS = [
 
 export function ProducerForm({
   defaultValues,
+  prefillValues,
   onSubmit,
   isLoading = false,
 }: ProducerFormProps) {
@@ -45,11 +49,26 @@ export function ProducerForm({
     handleSubmit,
     setValue,
     watch,
+    reset,
+    getValues,
     formState: { errors },
   } = useForm<CreateProducerInput>({
     resolver: zodResolver(createProducerSchema),
     defaultValues,
   })
+
+  // Cuando la IA propone valores, se repueblan los campos leidos sin pisar lo ya tipeado.
+  useEffect(() => {
+    if (!prefillValues) return
+    const current = getValues()
+    const merged = { ...current }
+    for (const [key, value] of Object.entries(prefillValues)) {
+      if (value !== undefined && value !== null && value !== "") {
+        merged[key as keyof CreateProducerInput] = value as never
+      }
+    }
+    reset(merged, { keepDefaultValues: true })
+  }, [prefillValues, getValues, reset])
 
   const personTypeValue = watch("personType")
   const activityValue = watch("activity")

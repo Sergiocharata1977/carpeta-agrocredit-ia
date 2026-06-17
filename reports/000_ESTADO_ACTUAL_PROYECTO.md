@@ -260,3 +260,25 @@ Plan 014 `reports/014_PLAN_CREDITO_HUB_IA.md` ejecutado completo en alcance MVP:
 - UI inicial para entidad: constructor de requisitos y matriz de cumplimiento.
 
 Pendientes post-MVP: prueba con documentos reales tras cerrar cifrado V1, expediente bancario final, mas tipos documentales e integracion bancaria viva.
+
+---
+
+## Actualizacion 2026-06-17 - Revision de seguridad + estado real del frontend
+
+### Hardening de autorizacion (aplicado, commit `88ef67c`)
+
+Revision manual post-cierre. Se cerraron 3 brechas de autorizacion en rutas CreditoHub y se agregaron tests de aislamiento (`__tests__/security/credito-hub-isolation.test.ts`, 12 casos). Detalle en `HANDOFF_ACTUAL.md`. Validacion: `type-check` OK, `check:security-shape` OK, **105 tests** OK.
+
+- `bank-requirements/[templateId]/match`: ahora exige admin / entidad solicitante con grant / gestor del legajo.
+- `bank-requirements` (GET/POST): la org se liga a la sesion para no-admin; `publish` verifica pertenencia.
+- `credit-applications` POST: fuerza `requestingEntityOrganizationId` a la org de la entidad financiera.
+
+### Bloqueantes funcionales del frontend (detectados, NO resueltos)
+
+Ver checklist completo en `reports/015_CHECKLIST_VERIFICACION_FRONTEND.md`.
+
+1. **Worker sin cron.** `vercel.json` solo agenda `expire-grants`. `jobs/process` no se dispara solo: los documentos cargados quedan en `queued` y el pipeline IA nunca avanza en la UI. Fix pendiente: agregar el cron (segun plan Vercel) o un disparador manual.
+2. **`cumplimiento` sin navegacion.** La ruta `/app/entidad/carpetas/[targetOrgId]/cumplimiento` existe pero ningun link la enlaza; solo se llega por URL directa.
+3. **Visor de documento es placeholder.** `ReviewWorkbench` no renderiza el PDF/imagen origen (panel informativo).
+4. **Requisitos no editables.** `RequirementBuilder` muestra la propuesta IA pero no permite editarla antes de publicar.
+5. **Matriz pide template ID a mano.** `ComplianceMatrix` requiere pegar el `requirementTemplateId`; no hay selector.
