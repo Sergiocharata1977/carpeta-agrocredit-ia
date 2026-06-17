@@ -1,0 +1,138 @@
+// Pipeline de procesamiento de un job documental: classify -> extract -> perfil.
+// Compartido por el worker cron (global) y el boton "Procesar con IA" (scopeado
+// por legajo). Mantiene una sola fuente de verdad para la orquestacion.
+
+import { getAdminDb, getAdminStorage } from "@/lib/firebase/admin-sdk"
+import { COLLECTIONS } from "@/lib/firebase/collections"
+import {
+  claimJobById,
+  claimNextQueuedJob,
+  listJobs,
+  reclaimStalledJobs,
+  transitionJob,
+  CLAIMABLE_STATUSES,
+} from "@/lib/services/document-jobs"
+import { classify } from "@/lib/ai/classification/document-classifier"
+import { saveClassification } from "@/lib/services/document-classification"
+import {
+  extractBalance,
+  extractForm931,
+  extractIncome,
+  extractIvaReturn,
+} from "@/lib/ai/extraction/extractors"
+import { saveFields, getFieldsByOwner } from "@/lib/services/extracted-fields"
+import { upsertProfileFromFields } from "@/lib/services/canonical-profile"
+import { MAX_JOBS_PER_RUN } from "@/lib/credito-hub/limits"
+import type { DocumentJob, ExtractedField } from "@/types/credito-hub"
+
+function extractorFor(documentType: string) {
+  if (documentType === "estado_situacion_patrimonial") return extractBalance
+  if (documentType === "estado_resultados") return extractIncome
+  if (documentType === "ddjj_iva") return extractIvaReturn
+  if (documentType === "formulario_931") return extractForm931
+  return null
+}
+
+export interface ProcessResult {
+  jobId: string
+  status: string
+  error?: string
+}
+
+/**
+ * Procesa un job YA reclamado (estado preprocessing): descarga el documento,
+ * clasifica, extrae segun tipo, actualiza el perfil canonico y deja el job en
+ * awaiting_review (o failed con su error). No reclama: el caller ya hizo claim.
+ */
+export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult> {
+  try {
+    const docSnap = await getAdminDb()
+      .collection(COLLECTIONS.DOCUMENTS)
+      .doc(job.documentId)
+      .get()
+    if (!docSnap.exists) throw new Error("Documento fuente no encontrado")
+    const doc = docSnap.data()!
+    const storagePath = doc.storagePath as string
+    const [buffer] = await getAdminStorage().bucket().file(storagePath).download()
+    const mimeType = (doc.mimeType as string) || "application/pdf"
+
+    await transitionJob(job.id, "classifying")
+    const classification = await classify(buffer, mimeType, { fileName: doc.fileName })
+    await saveClassification({
+      documentId: job.documentId,
+      folderOwnerOrganizationId: job.folderOwnerOrganizationId,
+      classification,
+      actorUid: "cron",
+      actorOrganizationId: null,
+    })
+
+    const extractor = extractorFor(classification.documentType)
+    let fields: ExtractedField[] = []
+    if (extractor) {
+      await transitionJob(job.id, "extracting")
+      fields = await extractor({
+        buffer,
+        mimeType,
+        folderOwnerOrganizationId: job.folderOwnerOrganizationId,
+        documentId: job.documentId,
+        fileName: doc.fileName,
+        defaultCurrency: "ARS",
+      })
+      await saveFields(fields, { actorUid: "cron", actorOrganizationId: null })
+    }
+
+    await transitionJob(job.id, "validating")
+    if (fields.length > 0) {
+      const allFields = await getFieldsByOwner(job.folderOwnerOrganizationId)
+      if (allFields.length > 0) {
+        await upsertProfileFromFields(job.folderOwnerOrganizationId, allFields, {
+          actorUid: "cron",
+          actorOrganizationId: null,
+        })
+      }
+    }
+    await transitionJob(job.id, "awaiting_review")
+    return { jobId: job.id, status: "awaiting_review" }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error desconocido"
+    await transitionJob(job.id, "failed", { error: message, actorUid: "cron", actorOrganizationId: null })
+    return { jobId: job.id, status: "failed", error: message }
+  }
+}
+
+/**
+ * Worker global (cron): recupera stalled y procesa hasta MAX_JOBS_PER_RUN jobs
+ * de cualquier legajo.
+ */
+export async function runWorkerGlobal(workerId: string): Promise<ProcessResult[]> {
+  await reclaimStalledJobs()
+  const processed: ProcessResult[] = []
+  for (let i = 0; i < MAX_JOBS_PER_RUN; i++) {
+    const job = await claimNextQueuedJob(workerId)
+    if (!job) break
+    processed.push(await processClaimedJob(job))
+  }
+  return processed
+}
+
+/**
+ * Procesamiento scopeado a un legajo (boton "Procesar con IA" del contador):
+ * toma los jobs reclamables SOLO de ese folderOwnerOrganizationId y los procesa.
+ */
+export async function runWorkerForFolder(
+  workerId: string,
+  folderOwnerOrganizationId: string,
+): Promise<ProcessResult[]> {
+  const jobs = await listJobs(folderOwnerOrganizationId)
+  const claimable = jobs
+    .filter((j) => CLAIMABLE_STATUSES.includes(j.status))
+    .slice(0, MAX_JOBS_PER_RUN)
+
+  const processed: ProcessResult[] = []
+  for (const candidate of claimable) {
+    const claimed = await claimJobById(candidate.id, workerId)
+    if (!claimed) continue // otro worker lo tomó
+    processed.push(await processClaimedJob(claimed))
+  }
+  return processed
+}

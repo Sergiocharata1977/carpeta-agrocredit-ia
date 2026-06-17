@@ -55,8 +55,12 @@ Pantalla: Productor → pestaña **"Legajo IA"** (`/app/contador/productores/[id
 - [ ] "Encolar documentos" sube y muestra toast "N documento(s) encolados".
 - [ ] La sección "Procesamiento" lista un job por documento, refrescando cada ~4s.
 - [ ] Cada job arranca en estado `queued`.
-- [ ] ⛔ **Los jobs avanzan a `awaiting_review`.** HOY NO: no hay cron que dispare `jobs/process`. **Fix:** agregar a `vercel.json` un cron para `/api/credito-hub/jobs/process` (según plan Vercel) o un disparador manual. Para probar manual: `POST /api/credito-hub/jobs/process` con header `Authorization: Bearer $CRON_SECRET`.
-- [ ] (Tras correr el worker) un job inválido queda `failed` con su error; el resto `awaiting_review`.
+- [ ] **Botón "Procesar con IA (N)"** visible en la sección Procesamiento (se habilita si hay pendientes).
+- [ ] Al apretarlo, la IA procesa los documentos de ESE legajo y los lleva a `awaiting_review` (toast "N documento(s) procesados").
+- [ ] Un documento que la IA no puede leer queda `failed` con su error; el resto `awaiting_review`.
+- [ ] (Opcional) En plan Vercel pago, el cron `/api/credito-hub/jobs/process` (Bearer `CRON_SECRET`) procesa en lote sin intervención. En Hobby (1 cron/día) se usa el botón.
+
+> ✅ **Resuelto:** el procesamiento ya NO depende del cron. Ruta on-demand `POST /api/credito-hub/jobs/process-now` (auth de contador, scopeada al legajo).
 
 ---
 
@@ -116,11 +120,11 @@ Pantalla: Entidad → carpeta autorizada → **"Cumplimiento"** (`/app/entidad/c
 
 | # | Severidad | Qué falta | Dónde |
 |---|-----------|-----------|-------|
-| 1 | ⛔ Bloqueante | Cron para el worker `jobs/process` (sin él, la carga nunca se procesa) | `vercel.json` |
+| 1 | ✅ Resuelto | Procesamiento on-demand con botón "Procesar con IA" (ya no depende del cron) | `JobProgressList` + `jobs/process-now` |
 | 2 | ⛔ Bloqueante | Link de navegación a "Cumplimiento" | vista carpeta entidad |
 | 3 | ⚠️ UX | Visor real del documento en Revisión (hoy placeholder) | `ReviewWorkbench` |
 | 4 | ⚠️ UX | Requisitos editables antes de publicar | `RequirementBuilder` |
 | 5 | ⚠️ UX | Selector de template en la matriz (hoy ID a mano) | `ComplianceMatrix` |
 | 6 | ℹ️ Config | Clave de IA en prod (sin ella, modo mock/demo) | env |
 
-> Bloqueantes 1 y 2 son los que impiden el flujo end-to-end. Los ⚠️ son mejoras de UX; el flujo funciona sin ellas.
+> Queda 1 bloqueante de navegación (#2). Los ⚠️ son mejoras de UX; el flujo funciona sin ellas.

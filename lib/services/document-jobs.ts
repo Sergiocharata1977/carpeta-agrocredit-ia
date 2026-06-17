@@ -317,6 +317,49 @@ export async function claimNextQueuedJob(
   })
 }
 
+/**
+ * Toma (claim) un job específico por id, en transacción, solo si sigue reclamable
+ * ("queued" o "stalled"). Lo pasa a "preprocessing" con lease. Retorna el job o
+ * null si ya no es reclamable (otro worker lo tomó). Útil para procesamiento
+ * scopeado por legajo (botón "Procesar con IA"), sin índices compuestos.
+ */
+export async function claimJobById(
+  jobId: string,
+  workerId: string,
+): Promise<DocumentJob | null> {
+  const db = getAdminDb()
+  const ref = db.collection(COLLECTIONS.DOCUMENT_JOBS).doc(jobId)
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) return null
+    const data = snap.data() ?? {}
+    const status = data.status as JobStatus
+    if (!CLAIMABLE_STATUSES.includes(status)) return null
+
+    const now = new Date()
+    const leaseExpiresAt = new Date(now.getTime() + LEASE_MS)
+    tx.update(ref, {
+      status: "preprocessing" as JobStatus,
+      claimedBy: workerId,
+      claimedAt: FieldValue.serverTimestamp(),
+      leaseExpiresAt,
+      attempts: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    return mapJob(snap.id, {
+      ...data,
+      status: "preprocessing",
+      claimedBy: workerId,
+      claimedAt: now,
+      leaseExpiresAt,
+      attempts: ((data.attempts as number) ?? 0) + 1,
+      updatedAt: now,
+    })
+  })
+}
+
 // ─── reclaimStalledJobs ───────────────────────────────────────────────────────
 
 /**
