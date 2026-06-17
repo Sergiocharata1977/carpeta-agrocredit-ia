@@ -8,7 +8,7 @@ import {
   type AIExtractedField,
   parseFirstJsonBlock,
 } from "./AIProvider"
-import { extractPdfText, pdfToImages, PdfRasterizationError } from "./pdf-to-images"
+import { extractPdfText } from "./pdf-to-images"
 
 /**
  * Proveedor IA basado en xAI (Grok) vía SDK `openai` con baseURL override.
@@ -24,7 +24,6 @@ import { extractPdfText, pdfToImages, PdfRasterizationError } from "./pdf-to-ima
  */
 
 const VISION_HINTS = ["vision", "image", "grok-2-vision", "grok-3", "grok-4", "multimodal"]
-const MAX_PDF_PAGES = 8
 
 // Cache de modelo a nivel módulo (no por instancia).
 let cachedVisionModel: string | null = null
@@ -107,12 +106,13 @@ export class XaiProvider implements AIProvider {
       }
 
       // Rasterización fallback. Si falla, propaga PdfRasterizationError al caller.
-      const dataUrls = await pdfToImages(buffer, MAX_PDF_PAGES)
       return {
-        blocks: dataUrls.map((url) => ({
-          type: "image_url" as const,
-          image_url: { url },
-        })),
+        blocks: [
+          {
+            type: "text",
+            text: "El PDF no tiene texto nativo suficiente y la rasterizacion server-side esta deshabilitada en Vercel. Requiere revision manual o procesamiento con un provider con PDF nativo.",
+          },
+        ],
         warnings,
       }
     }
@@ -205,7 +205,6 @@ export class XaiProvider implements AIProvider {
         warnings: [...warnings, ...(parsed.warnings ?? [])],
       }
     } catch (err) {
-      if (err instanceof PdfRasterizationError) throw err
       return {
         documentType: "unknown",
         confidence: 0,
@@ -281,7 +280,6 @@ Devolvé SOLO un JSON con esta forma:
         overallConfidence,
       }
     } catch (err) {
-      if (err instanceof PdfRasterizationError) throw err
       return {
         fields: {},
         warnings: [...warnings, `Error de extracción xAI: ${errMsg(err)}`],

@@ -7,6 +7,26 @@
 
 ---
 
+## Fix deploy Vercel 2026-06-17 - pdf-to-img/canvas
+
+Problema:
+- Deploys en Vercel fallaban con `Module not found: Can't resolve '../build/Release/canvas.node'`.
+- Import trace: `pdf-to-img` -> `canvas` -> `lib/ai/pdf-to-images.ts` -> providers IA -> rutas `credito-hub`.
+
+Solucion:
+- Se removio `pdf-to-img` de `package.json`/`pnpm-lock.yaml`.
+- `lib/ai/pdf-to-images.ts` queda sin dependencias `canvas`: solo extrae texto nativo con `pdfjs-dist`.
+- `XaiProvider` y `GroqProvider` ya no intentan rasterizar PDFs escaneados; devuelven advertencia y fuerzan revision manual/provider con PDF nativo.
+
+Validacion:
+- `pnpm type-check`: OK.
+- `pnpm build`: OK, 72 paginas generadas, sin error `canvas`.
+
+Pendiente funcional:
+- Si se necesita vision sobre PDFs escaneados, usar Anthropic con bloque `document` nativo o mover rasterizacion a un worker externo compatible.
+
+---
+
 ## Cierre 2026-06-03 - OCR/IA EECC e invitaciones por link
 
 Implementado:

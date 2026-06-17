@@ -8,7 +8,7 @@ import {
   type AIExtractedField,
   parseFirstJsonBlock,
 } from "./AIProvider"
-import { extractPdfText, pdfToImages, PdfRasterizationError } from "./pdf-to-images"
+import { extractPdfText } from "./pdf-to-images"
 
 /**
  * Proveedor IA basado en Groq vía SDK `openai` con baseURL override.
@@ -26,7 +26,6 @@ import { extractPdfText, pdfToImages, PdfRasterizationError } from "./pdf-to-ima
 
 const VISION_HINTS = ["llama-4", "scout", "maverick", "vision", "llava", "multimodal"]
 const DEFAULT_GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
-const MAX_PDF_PAGES = 8
 
 let cachedVisionModel: string | null = null
 let modelResolutionPromise: Promise<string> | null = null
@@ -100,12 +99,13 @@ export class GroqProvider implements AIProvider {
         warnings.push("No se pudo extraer texto nativo del PDF — se intenta rasterización")
       }
 
-      const dataUrls = await pdfToImages(buffer, MAX_PDF_PAGES)
       return {
-        blocks: dataUrls.map((url) => ({
-          type: "image_url" as const,
-          image_url: { url },
-        })),
+        blocks: [
+          {
+            type: "text",
+            text: "El PDF no tiene texto nativo suficiente y la rasterizacion server-side esta deshabilitada en Vercel. Requiere revision manual o procesamiento con un provider con PDF nativo.",
+          },
+        ],
         warnings,
       }
     }
@@ -196,7 +196,6 @@ export class GroqProvider implements AIProvider {
         warnings: [...warnings, ...(parsed.warnings ?? [])],
       }
     } catch (err) {
-      if (err instanceof PdfRasterizationError) throw err
       return {
         documentType: "unknown",
         confidence: 0,
@@ -272,7 +271,6 @@ Devolvé SOLO un JSON con esta forma:
         overallConfidence,
       }
     } catch (err) {
-      if (err instanceof PdfRasterizationError) throw err
       return {
         fields: {},
         warnings: [...warnings, `Error de extracción Groq: ${errMsg(err)}`],
