@@ -919,3 +919,19 @@ El dueño necesita administrar entidades (bancos/financieras/agro) desde el pane
 ### Validación
 
 - `pnpm type-check`: OK.
+
+---
+
+## Decisión de producto — Carga y certificación por el contador (2026-06-17)
+
+**Decisión del dueño:** por el momento, **toda la información del legajo la carga el contador habilitado y él es el autorizado a validarla**. El cliente no carga datos directamente en esta etapa.
+
+**Por qué:** que un profesional matriculado cargue y valide la información le da más seguridad al financista de que los datos son ciertos — queda "certificada" por el contador. Es un diferencial de confianza del producto.
+
+**Implicancia:** no se abren (por ahora) pantallas de carga al cliente. El cliente mantiene su rol de autorizar accesos (grants) y, a lo sumo, completar perfil básico. El foco de UX de carga es el del contador. Ver diseño del formulario único de cliente operado por el contador (próximo: `reports/017_*`).
+
+---
+
+## Próximo — Formulario único de cliente operado por el contador (en diseño)
+
+**Pedido del dueño:** un formulario único que el **contador** use para cargar toda la info de un cliente, **organizado por carpeta** (datos personales / datos de cada empresa), donde se **suban carpetas/documentos directamente** y la **IA busque y extraiga** para prellenar. Primero diseño y aprobación; recién después se implementa. (Diseño presentado en chat 2026-06-17; pendiente de aprobación para volcarlo a `reports/017`.)
