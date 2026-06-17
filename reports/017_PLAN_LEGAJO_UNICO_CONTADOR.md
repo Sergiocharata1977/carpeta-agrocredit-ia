@@ -11,6 +11,8 @@
 
 Una sola pantalla de trabajo donde el **contador** carga toda la información de un cliente, organizada **por carpeta** (Titular + cada Empresa). El contador sube los documentos en una zona única, la **IA los clasifica y reparte** a la carpeta y sección correctas y prellena los campos; el contador **revisa, corrige y certifica**. Esa certificación profesional es el sello de confianza para el financista.
 
+Además, cada cliente tiene un **botón "Asistente IA"** que abre un **chat contextual** ya cargado con el legajo de ese cliente, para asesorar al contador (estado financiero, qué falta para certificar, riesgos, resumen). Patrón de UX inspirado en "IA de Originación" de otro producto — **es inspiración visual, no conexión de datos** (Agro-Credit sigue standalone; el chat solo lee el legajo propio del cliente vía Admin SDK).
+
 > No es un módulo desde cero: **orquesta** lo ya existente (Legajo IA / carga masiva, cola `document_jobs`, clasificador y extractores, revisión de campos, prefill AFIP, formularios de identidad/contable/patrimonio).
 
 ## Decisiones aprobadas (dueño, 2026-06-17)
@@ -23,7 +25,7 @@ Una sola pantalla de trabajo donde el **contador** carga toda la información de
 ## Layout
 
 ```
-┌─ LEGAJO · {Cliente} ({CUIT})            [⚠ NN% completo]  [✓ Validar y certificar] ┐
+┌─ LEGAJO · {Cliente} ({CUIT})   [⚠ NN%]  [🤖 Asistente IA]  [✓ Validar y certificar] ┐
 │  📥 Zona única: soltar PDF/imagen/Excel/.zip → IA clasifica, reparte y prellena    │
 │  [ 👤 Titular ] [ 🏢 Empresa 1 ] [ 🏢 Empresa 2 ] [ + Empresa ]                    │
 │  Secciones de la carpeta activa (con estado ✓/◑/○):                                │
@@ -31,6 +33,18 @@ Una sola pantalla de trabajo donde el **contador** carga toda la información de
 │  Al abrir sección: documento origen (izq) + campos extraídos con % conf. (der)     │
 │  → [Confirmar] / [Corregir]                                                        │
 └────────────────────────────────────────────────────────────────────────────────────┘
+
+[🤖 Asistente IA] abre un modal de chat contextual (ver sección "Asistente IA"):
+┌─ Asistente IA · Hector Gramajo ───────────────────────────── x ┐
+│ Preguntas útiles:                                              │
+│ [Estado financiero] [Qué falta para certificar] [Riesgos]     │
+│ [Resumen del legajo] [Capacidad de pago]                      │
+│ ────────────────────────────────────────────────────────     │
+│ (conversación)                                                │
+│ ┌──────────────────────────────────────────────┐  [ ➤ ]      │
+│ │ Escribí tu pregunta…                          │            │
+│ └──────────────────────────────────────────────┘            │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ## Secciones por carpeta (campos = ver `016`)
@@ -49,6 +63,19 @@ Una sola pantalla de trabajo donde el **contador** carga toda la información de
 
 **Regla de routing:** si el CUIT del documento no matchea ninguna carpeta, queda en bandeja "Sin asignar" para que el contador lo rutee a mano (nunca se asigna a ciegas).
 
+## Asistente IA por cliente (chat contextual)
+
+Botón **"🤖 Asistente IA"** en el header del legajo de cada cliente. Abre un modal de chat ya preparado para asesorar al contador sobre **ese** cliente.
+
+- **Preguntas sugeridas (chips):** Estado financiero · Qué falta para certificar · Riesgos / alertas · Resumen del legajo · Capacidad de pago estimada. (Editable después.)
+- **Contexto:** el endpoint arma server-side el contexto del cliente desde lo ya cargado — `canonical_credit_profiles`, totales de balance/resultados, perfil, estado de completitud (`getFolderDataStatus`) y campos en revisión. Ese contexto va como system prompt; **no** se manda desde el cliente.
+- **Motor:** reusa la capa IA multiproveedor — `resolveAIProvider().complete(systemPrompt, pregunta)` (Groq/Anthropic según `/app/admin/ia`). Sin key → responde en modo demo con aviso.
+- **Endpoint:** `POST /api/credito-hub/assistant` con `{ clientId, message, history? }`. Auth: contador con **vínculo activo** al cliente (o admin); deriva el `folderOwnerOrganizationId` de la sesión + vínculo, nunca del body. Audita `assistant.queried`.
+- **Alcance v1:** asesor de lectura — explica, resume y señala faltantes/riesgos sobre el legajo. **No** ejecuta acciones ni modifica datos. No inventa: si un dato no está en el legajo, lo dice.
+- **Componente:** `components/credito-hub/LegajoAssistantChat.tsx` (modal con chips + historial + input), montado en el header del legajo.
+
+> Nota anti-recaída: el patrón visual se inspira en "IA de Originación" de Agro Biciuffa, pero **no hay conexión de datos ni código** con ese proyecto. El asistente solo lee el legajo del propio cliente en `agrocredit-ia-saas`.
+
 ## Cambios de datos (mínimos)
 
 - Certificación: agregar a la organización (titular/empresa) o a un doc dedicado `folder_certifications`:
@@ -64,6 +91,7 @@ Una sola pantalla de trabajo donde el **contador** carga toda la información de
 | 3 | Revisión embebida por sección (documento origen + campos + confirmar/corregir) reusando `ReviewWorkbench`. |
 | 4 | Certificación: campos en datos, botón "Validar y certificar", sello visible para el financista en la carpeta read-only. |
 | 5 | Indicadores de completitud (por sección/carpeta/total) y QA + docs. |
+| 6 | Asistente IA por cliente: endpoint `POST /api/credito-hub/assistant` (contexto del legajo server-side + `resolveAIProvider().complete`), modal `LegajoAssistantChat` con preguntas sugeridas, auditoría y guardrails (solo lectura, no inventa). |
 
 ## Riesgos / preguntas abiertas
 
