@@ -35,6 +35,7 @@ Al retomar el proyecto o iniciar una sesión (`protocolo`, `cargar contexto`):
 | 014 | `014_PLAN_CREDITO_HUB_IA.md` | Plan | ✅ Completado (MVP) | CreditoHub IA: capa multiproveedor, cola documental, clasificación/extracción con procedencia, revisión profesional, requisitos y matriz. |
 | 015 | `015_CHECKLIST_VERIFICACION_FRONTEND.md` | Checklist | 🟢 Vivo | Verificación pantalla por pantalla de los flujos (alta AFIP, Legajo IA, revisión, requisitos, cumplimiento) con bloqueantes marcados. |
 | 016 | `016_INFORMACION_CARGA_CLIENTE.md` | Referencia | 🟢 Vivo | Inventario completo de la información que debe cargar un cliente y sus empresas (datos personales, perfil, contable, patrimonio, documentos), relevado de todos los formularios y schemas. |
+| 017 | `017_PLAN_LEGAJO_UNICO_CONTADOR.md` | Plan | 📐 Planificado | Formulario/legajo único operado por el contador: pestañas por carpeta (titular + empresas), zona única de carga con auto-routing por IA y certificación profesional con sello. |
 
 **Leyenda de estado:** 🟢 Vivo (se mantiene actualizado) · ✅ Completado · 🟡 En progreso · 📐 Planificado (no implementado).
 
@@ -57,7 +58,7 @@ Material técnico estable que complementa a los planes:
 
 - **Numeración:** `NNN_TITULO_EN_MAYUSCULAS.md`, tres dígitos, correlativo. El número no se reutiliza.
 - **Números retirados** (planes ya completados y eliminados a pedido del dueño): `001` (plan original), `002` (reorganización de base de datos), `003` (vistas por rol), `006` (OCR/IA EECC), `007` (perfil extendido), `008` (ABM clientes/empresas), `009` (invitaciones por link). No reasignar.
-- **Próximo número libre:** `017`.
+- **Próximo número libre:** `018`.
 - **Tipos:** Estado · Plan · Roadmap · Checklist · Auditoría · Referencia · Bitácora.
 - Cada plan declara su estado y, si aplica, sus olas con estado individual.
 
