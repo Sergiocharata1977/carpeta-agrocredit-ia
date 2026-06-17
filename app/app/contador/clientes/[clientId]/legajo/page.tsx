@@ -16,6 +16,8 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LegajoAssistantChat } from "@/components/credito-hub/LegajoAssistantChat"
+import { CarpetaUploadSection } from "@/components/credito-hub/CarpetaUploadSection"
+import { UnassignedDocsTray } from "@/components/credito-hub/UnassignedDocsTray"
 import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { getFreshIdToken } from "@/lib/firebase/auth-client"
@@ -209,6 +211,19 @@ export default function LegajoUnicoPage({ params }: PageProps) {
             Validar y certificar
           </Button>
         </div>
+      </div>
+
+      {/* Carga única con IA (la IA reparte por CUIT) */}
+      <div className="space-y-3 rounded-xl border bg-card p-5">
+        <CarpetaUploadSection
+          targetOrganizationId={clientId}
+          onUploaded={() => loadStatus(activeOrgId)}
+        />
+        <UnassignedDocsTray
+          rootOrganizationId={clientId}
+          carpetas={carpetas.map((c) => ({ orgId: c.orgId, label: c.isTitular ? "Titular" : c.label }))}
+          onAssigned={() => loadStatus(activeOrgId)}
+        />
       </div>
 
       {/* Pestañas por carpeta */}

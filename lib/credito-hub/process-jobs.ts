@@ -23,6 +23,10 @@ import {
 import { saveFields, getFieldsByOwner } from "@/lib/services/extracted-fields"
 import { upsertProfileFromFields } from "@/lib/services/canonical-profile"
 import { MAX_JOBS_PER_RUN } from "@/lib/credito-hub/limits"
+import { resolveFolderByCuit } from "@/lib/credito-hub/folder-routing"
+import { recordRoutingDecision } from "@/lib/services/document-routing"
+import { writeAuditLog } from "@/lib/firebase/audit"
+import { FieldValue } from "firebase-admin/firestore"
 import type { DocumentJob, ExtractedField } from "@/types/credito-hub"
 
 function extractorFor(documentType: string) {
@@ -58,9 +62,83 @@ export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult
 
     await transitionJob(job.id, "classifying")
     const classification = await classify(buffer, mimeType, { fileName: doc.fileName })
+
+    // Auto-routing por CUIT: el intake del legajo sube al titular raíz, así que
+    // el folderOwnerOrganizationId del job es la raíz del grupo. Tras clasificar,
+    // comparamos el CUIT detectado contra el taxId de la raíz y sus empresas
+    // hijas. Si matchea una carpeta distinta, reasignamos el legajo del job y de
+    // los campos extraídos a esa carpeta; si no, queda needs_manual_assignment
+    // en la raíz. Todo el procesamiento posterior usa folderOwnerOrganizationId.
+    const rootOrganizationId = job.folderOwnerOrganizationId
+    const detectedCuit = classification.cuit ?? null
+    const routing = await resolveFolderByCuit(rootOrganizationId, detectedCuit)
+    let folderOwnerOrganizationId = rootOrganizationId
+
+    if (routing.orgId && routing.orgId !== rootOrganizationId) {
+      // Matcheó una carpeta hija distinta: reasignar el job a esa carpeta.
+      folderOwnerOrganizationId = routing.orgId
+      await getAdminDb()
+        .collection(COLLECTIONS.DOCUMENT_JOBS)
+        .doc(job.id)
+        .update({
+          folderOwnerOrganizationId,
+          updatedAt: FieldValue.serverTimestamp(),
+        })
+      await recordRoutingDecision({
+        documentId: job.documentId,
+        rootOrganizationId,
+        detectedCuit,
+        detectedDocumentType: classification.documentType,
+        suggestedFolderOwnerOrganizationId: routing.orgId,
+        assignedFolderOwnerOrganizationId: routing.orgId,
+        routingStatus: "auto_assigned",
+        routingConfidence: classification.confidence ?? null,
+      })
+      await writeAuditLog({
+        actorUid: "cron",
+        actorOrganizationId: null,
+        action: "document.routed",
+        targetType: "document",
+        targetId: job.documentId,
+        metadata: {
+          rootOrganizationId,
+          assignedFolderOwnerOrganizationId: routing.orgId,
+          detectedCuit,
+          routingStatus: "auto_assigned",
+        },
+      })
+    } else if (!routing.orgId) {
+      // No matcheó ninguna carpeta del grupo: requiere asignación manual.
+      // El job permanece en la raíz.
+      await recordRoutingDecision({
+        documentId: job.documentId,
+        rootOrganizationId,
+        detectedCuit,
+        detectedDocumentType: classification.documentType,
+        suggestedFolderOwnerOrganizationId: null,
+        assignedFolderOwnerOrganizationId: null,
+        routingStatus: "needs_manual_assignment",
+        routingConfidence: classification.confidence ?? null,
+      })
+      await writeAuditLog({
+        actorUid: "cron",
+        actorOrganizationId: null,
+        action: "document.routed",
+        targetType: "document",
+        targetId: job.documentId,
+        metadata: {
+          rootOrganizationId,
+          detectedCuit,
+          routingStatus: "needs_manual_assignment",
+        },
+      })
+    }
+    // Si routing.orgId === rootOrganizationId, el documento ya está en la
+    // carpeta correcta (la raíz): no se reasigna ni se registra decisión.
+
     await saveClassification({
       documentId: job.documentId,
-      folderOwnerOrganizationId: job.folderOwnerOrganizationId,
+      folderOwnerOrganizationId,
       classification,
       actorUid: "cron",
       actorOrganizationId: null,
@@ -73,7 +151,7 @@ export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult
       fields = await extractor({
         buffer,
         mimeType,
-        folderOwnerOrganizationId: job.folderOwnerOrganizationId,
+        folderOwnerOrganizationId,
         documentId: job.documentId,
         fileName: doc.fileName,
         defaultCurrency: "ARS",
@@ -83,9 +161,9 @@ export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult
 
     await transitionJob(job.id, "validating")
     if (fields.length > 0) {
-      const allFields = await getFieldsByOwner(job.folderOwnerOrganizationId)
+      const allFields = await getFieldsByOwner(folderOwnerOrganizationId)
       if (allFields.length > 0) {
-        await upsertProfileFromFields(job.folderOwnerOrganizationId, allFields, {
+        await upsertProfileFromFields(folderOwnerOrganizationId, allFields, {
           actorUid: "cron",
           actorOrganizationId: null,
         })

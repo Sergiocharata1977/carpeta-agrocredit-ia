@@ -32,6 +32,8 @@ export const COLLECTIONS = {
   BANK_REQUIREMENT_TEMPLATES: "bank_requirement_templates",
   CREDIT_APPLICATIONS: "credit_applications",
   REQUIREMENT_MATCHES: "requirement_matches",
+  DOCUMENT_ROUTING_DECISIONS: "document_routing_decisions",
+  FOLDER_CERTIFICATIONS: "folder_certifications",
 } as const
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS]

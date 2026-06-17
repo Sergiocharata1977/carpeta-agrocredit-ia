@@ -54,6 +54,10 @@ export type AuditAction =
   | "credit_application.created"
   | "credit_package.generated"
   | "assistant.queried"
+  | "document.routed"
+  | "document.routing_reassigned"
+  | "folder.certified"
+  | "folder.certification_invalidated"
   // Plataforma
   | "ai_provider.changed"
 
