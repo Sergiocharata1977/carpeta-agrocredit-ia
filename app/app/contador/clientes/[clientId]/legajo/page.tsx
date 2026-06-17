@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Circle,
   CircleDashed,
-  ShieldCheck,
   UserRound,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -19,6 +18,8 @@ import { LegajoAssistantChat } from "@/components/credito-hub/LegajoAssistantCha
 import { CarpetaUploadSection } from "@/components/credito-hub/CarpetaUploadSection"
 import { UnassignedDocsTray } from "@/components/credito-hub/UnassignedDocsTray"
 import { CarpetaReviewSection } from "@/components/credito-hub/CarpetaReviewSection"
+import { CertificationBadge } from "@/components/credito-hub/CertificationBadge"
+import { CertifyFolderButton } from "@/components/credito-hub/CertifyFolderButton"
 import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { getFreshIdToken } from "@/lib/firebase/auth-client"
@@ -67,6 +68,7 @@ export default function LegajoUnicoPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [statusLoading, setStatusLoading] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const [certRefresh, setCertRefresh] = useState(0)
 
   const loadCarpetas = useCallback(async () => {
     setLoading(true)
@@ -207,10 +209,12 @@ export default function LegajoUnicoPage({ params }: PageProps) {
             <Bot className="h-4 w-4 text-[#0369a1]" />
             Asistente IA
           </Button>
-          <Button className="gap-2" disabled title="Disponible en la Ola 5">
-            <ShieldCheck className="h-4 w-4" />
-            Validar y certificar
-          </Button>
+          {activeCarpeta && (
+            <CertifyFolderButton
+              targetOrganizationId={activeCarpeta.orgId}
+              onCertified={() => setCertRefresh((n) => n + 1)}
+            />
+          )}
         </div>
       </div>
 
@@ -264,9 +268,14 @@ export default function LegajoUnicoPage({ params }: PageProps) {
               <span className="text-xs text-muted-foreground">CUIT {activeCarpeta.taxId}</span>
             )}
           </div>
-          <span className="text-sm font-medium text-muted-foreground">
-            {statusLoading ? "…" : `${percent}% completo`}
-          </span>
+          <div className="flex items-center gap-3">
+            {activeCarpeta && (
+              <CertificationBadge targetOrganizationId={activeCarpeta.orgId} refreshKey={certRefresh} />
+            )}
+            <span className="text-sm font-medium text-muted-foreground">
+              {statusLoading ? "…" : `${percent}% completo`}
+            </span>
+          </div>
         </div>
 
         <div className="divide-y">
