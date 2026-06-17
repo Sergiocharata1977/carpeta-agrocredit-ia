@@ -49,8 +49,14 @@ Además, cada cliente tiene un **botón "Asistente IA"** que abre un **chat cont
 
 ## Secciones por carpeta (campos = ver `016`)
 
-- **Titular:** Identidad · Perfil (fiscal/productivo/financiero/patrimonial) · Contable · Patrimonio · Documentos.
-- **Empresa:** Identidad · Contable · Patrimonio · Documentos (el perfil productivo/financiero vive en el titular; revisar si alguna empresa lo necesita propio).
+**Modelo mixto (decidido):**
+- **Titular:** Identidad · Perfil (fiscal, productivo, financiero general, patrimonio global) · Contable · Patrimonio · Documentos.
+- **Empresa:** Identidad (CUIT, actividad) · Contable · Fiscal · Patrimonio propio · Documentos.
+- **Perfil productivo/financiero propio por empresa:** opcional — se habilita solo si la empresa tiene actividad separada o carpeta bancaria propia. Así no se duplica carga pero queda margen para casos reales.
+
+## Ruta canónica
+
+Toda la superficie nueva vive en **`/app/contador/clientes/[clientId]/legajo`**. No seguir expandiendo `/app/contador/productores/*` salvo por compatibilidad (ese árbol queda como legacy; ver deuda técnica de `000`).
 
 ## Flujo IA (auto-routing)
 
@@ -70,35 +76,72 @@ Botón **"🤖 Asistente IA"** en el header del legajo de cada cliente. Abre un 
 - **Preguntas sugeridas (chips):** Estado financiero · Qué falta para certificar · Riesgos / alertas · Resumen del legajo · Capacidad de pago estimada. (Editable después.)
 - **Contexto:** el endpoint arma server-side el contexto del cliente desde lo ya cargado — `canonical_credit_profiles`, totales de balance/resultados, perfil, estado de completitud (`getFolderDataStatus`) y campos en revisión. Ese contexto va como system prompt; **no** se manda desde el cliente.
 - **Motor:** reusa la capa IA multiproveedor — `resolveAIProvider().complete(systemPrompt, pregunta)` (Groq/Anthropic según `/app/admin/ia`). Sin key → responde en modo demo con aviso.
-- **Endpoint:** `POST /api/credito-hub/assistant` con `{ clientId, message, history? }`. Auth: contador con **vínculo activo** al cliente (o admin); deriva el `folderOwnerOrganizationId` de la sesión + vínculo, nunca del body. Audita `assistant.queried`.
-- **Alcance v1:** asesor de lectura — explica, resume y señala faltantes/riesgos sobre el legajo. **No** ejecuta acciones ni modifica datos. No inventa: si un dato no está en el legajo, lo dice.
+- **Endpoint (corregido):** `POST /api/credito-hub/assistant/[targetOrganizationId]`. Body solo `{ message, history? }` — **nada sensible viaja en el body** (ni `clientId`/`organizationId`). El backend deriva acceso con `assertCanManageAccountingFolder(session, targetOrganizationId)` (contador con vínculo activo o admin) y obtiene el `folderOwnerOrganizationId` de ahí. Audita `assistant.queried`.
+- **Guardrails v1 (reforzados):**
+  - Responde **con base en evidencias del legajo** ("según el balance 2024…", "faltan estos documentos…"). Si un dato no está, dice **"no consta en el legajo"** — no inventa.
+  - **No recomienda aprobar/rechazar** un crédito (es asesor del contador, no decisor).
+  - **Solo lectura:** no ejecuta acciones ni modifica datos.
+  - **Límite de tokens** por respuesta y **rate limit** por contador/cliente.
 - **Componente:** `components/credito-hub/LegajoAssistantChat.tsx` (modal con chips + historial + input), montado en el header del legajo.
 
 > Nota anti-recaída: el patrón visual se inspira en "IA de Originación" de Agro Biciuffa, pero **no hay conexión de datos ni código** con ese proyecto. El asistente solo lee el legajo del propio cliente en `agrocredit-ia-saas`.
 
-## Cambios de datos (mínimos)
+## Cambios de datos
 
-- Certificación: agregar a la organización (titular/empresa) o a un doc dedicado `folder_certifications`:
-  `certificationStatus` (`draft` | `certified` | `outdated`), `certifiedByUid`, `certifiedByName`, `certifiedAt`. Auditar `folder.certified`.
-- Reusar `document_jobs`, `extracted_fields`, `canonical_credit_profiles`, `documents` tal como están.
+Reusar `document_jobs`, `extracted_fields`, `canonical_credit_profiles`, `documents`. Dos colecciones nuevas (no mezclar en `organizations`):
 
-## Olas de implementación (propuestas)
+### `folder_certifications`
+Certificación profesional por carpeta. Un cambio posterior en un campo confirmado / documento / balance debe pasar la certificación a `outdated`.
+
+```
+folderOwnerOrganizationId   // carpeta certificada (titular o empresa)
+accountingFirmId            // estudio que certifica
+certificationScope          // identity | accounting | fiscal | patrimonial | full_folder
+status                      // draft | certified | outdated | revoked
+certifiedByUid
+certifiedByName
+certifiedAt
+sourceVersion               // huella de los datos certificados (para detectar cambios)
+invalidatedAt
+invalidatedReason
+```
+Auditar `folder.certified` / `folder.certification_invalidated`.
+
+### `document_routing_decisions`
+Trazabilidad de a qué carpeta fue cada documento (auditar por qué cayó en Titular, Empresa 1 o "Sin asignar").
+
+```
+documentId
+detectedCuit
+detectedDocumentType
+suggestedFolderOwnerOrganizationId
+assignedFolderOwnerOrganizationId
+routingStatus               // auto_assigned | needs_manual_assignment | manually_assigned | rejected
+routingConfidence
+reviewedBy
+reviewedAt
+```
+(Alternativa: estos campos embebidos en `documents`; se decide en Ola 3.)
+
+## Olas de implementación
+
+> Orden revisado (recomendación 2ª IA, aprobado): el **Asistente IA va temprano** (Ola 2) porque es visible, de alto valor comercial y seguro si es solo lectura; la carga masiva/auto-routing (más riesgosa) queda después.
 
 | Ola | Alcance |
 |-----|---------|
-| 1 | Shell del Legajo único: ruta `/app/contador/clientes/[clientId]/legajo`, pestañas por carpeta (titular + empresas), secciones con estado de completitud (solo lectura/links a lo existente). |
-| 2 | Zona única de carga + auto-routing: dropzone que encola a `document_jobs`, asignación de carpeta por CUIT/tipo, bandeja "Sin asignar". |
-| 3 | Revisión embebida por sección (documento origen + campos + confirmar/corregir) reusando `ReviewWorkbench`. |
-| 4 | Certificación: campos en datos, botón "Validar y certificar", sello visible para el financista en la carpeta read-only. |
-| 5 | Indicadores de completitud (por sección/carpeta/total) y QA + docs. |
-| 6 | Asistente IA por cliente: endpoint `POST /api/credito-hub/assistant` (contexto del legajo server-side + `resolveAIProvider().complete`), modal `LegajoAssistantChat` con preguntas sugeridas, auditoría y guardrails (solo lectura, no inventa). |
+| 1 | **Shell del Legajo único:** ruta canónica `/app/contador/clientes/[clientId]/legajo`, pestañas por carpeta (titular + empresas), secciones con estado de completitud (solo lectura/links a lo existente). |
+| 2 | **Asistente IA contextual (read-only):** endpoint `POST /api/credito-hub/assistant/[targetOrganizationId]` (contexto del legajo server-side + `resolveAIProvider().complete`), modal `LegajoAssistantChat` con preguntas sugeridas, guardrails (fuentes, no inventa, no aprueba crédito), auditoría y rate limit. |
+| 3 | **Carga única + auto-routing:** dropzone que encola a `document_jobs`, decisión de routing por CUIT/tipo (`document_routing_decisions`), bandeja "Sin asignar". |
+| 4 | **Revisión embebida** por sección (documento origen + campos + confirmar/corregir) reusando `ReviewWorkbench`. |
+| 5 | **Certificación:** colección `folder_certifications`, botón "Validar y certificar", invalidación automática a `outdated` al cambiar datos, sello visible para el financista en la carpeta read-only. |
+| 6 | **Completitud + QA:** indicadores (por sección/carpeta/total), tests de aislamiento y docs. |
 
 ## Riesgos / preguntas abiertas
 
 - **Visor de documento** sigue pendiente (placeholder en `ReviewWorkbench`) — afecta la columna "documento origen" de la sección 3.
 - **PDFs escaneados:** la rasterización server-side está deshabilitada en Vercel (ver fix canvas en HANDOFF). Para visión sobre escaneados usar Anthropic (bloque PDF nativo) o worker externo.
-- **Datos reales:** mantener `CREDITO_HUB_ALLOW_REAL_DATA=false` hasta cerrar cifrado V1 (Plan 012).
-- ¿La empresa necesita su propio perfil productivo/financiero o alcanza con el del titular?
+- **Datos reales:** mantener `CREDITO_HUB_ALLOW_REAL_DATA=false` para pruebas. **No habilitar carga real masiva** hasta resolver cifrado V1 (Plan 012) o documentar una excepción explícita.
+- **Perfil por empresa:** resuelto con modelo mixto (ver sección "Secciones por carpeta").
 
 ## Validación al cerrar cada ola
 
