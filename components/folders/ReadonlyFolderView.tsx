@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Building2, Download, Eye, FileText, Landmark, Loader2, Receipt, Scale, TrendingUp } from "lucide-react"
+import { Building2, Download, Eye, FileText, Landmark, Loader2, Receipt, Scale, ShieldAlert, ShieldCheck, ShieldQuestion, TrendingUp } from "lucide-react"
 import { GrantExpiredBlocker } from "@/components/access/GrantExpiredBlocker"
 import { GrantStatusBanner } from "@/components/access/GrantStatusBanner"
 import { ScopeGuard } from "@/components/access/ScopeGuard"
@@ -68,6 +68,14 @@ interface DocumentItem {
   createdAt?: string
 }
 
+interface FolderCertification {
+  id: string
+  status: "draft" | "certified" | "outdated" | "revoked"
+  certifiedByName?: string | null
+  certifiedAt?: string | null
+  invalidatedReason?: string | null
+}
+
 const TABS = [
   { id: "resumen", label: "Resumen", scope: "accounting_summary" as const, icon: Building2 },
   { id: "balance", label: "Balance", scope: "balance_sheets" as const, icon: Scale },
@@ -92,6 +100,7 @@ export function ReadonlyFolderView({ targetOrgId, ownerView = false }: ReadonlyF
   const [assets, setAssets] = useState<AssetItem[]>([])
   const [liabilities, setLiabilities] = useState<LiabilityItem[]>([])
   const [documents, setDocuments] = useState<DocumentItem[]>([])
+  const [certification, setCertification] = useState<FolderCertification | null>(null)
   const [activeTab, setActiveTab] = useState("resumen")
   const [loading, setLoading] = useState(true)
 
@@ -113,9 +122,11 @@ export function ReadonlyFolderView({ targetOrgId, ownerView = false }: ReadonlyF
       setAssets(json.assets ?? [])
       setLiabilities(json.liabilities ?? [])
       setDocuments(json.documents ?? [])
+      setCertification(json.certification ?? null)
     } catch {
       setGrant(null)
       setOrg(null)
+      setCertification(null)
     } finally {
       setLoading(false)
     }
@@ -150,6 +161,11 @@ export function ReadonlyFolderView({ targetOrgId, ownerView = false }: ReadonlyF
           {org?.legalName ?? (loading ? "Cargando..." : "Sin acceso")}
         </h1>
         {org?.taxId && <p className="text-sm text-muted-foreground">CUIT {org.taxId}</p>}
+        {!loading && grant && (
+          <div className="mt-3">
+            <ReadonlyCertificationBadge certification={certification} />
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -282,6 +298,44 @@ export function ReadonlyFolderView({ targetOrgId, ownerView = false }: ReadonlyF
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function formatCertificationDate(value?: string | null) {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString("es-AR")
+}
+
+function ReadonlyCertificationBadge({ certification }: { certification: FolderCertification | null }) {
+  if (certification?.status === "certified") {
+    const date = formatCertificationDate(certification.certifiedAt)
+    return (
+      <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <ShieldCheck className="size-4 shrink-0" />
+        <span className="min-w-0">
+          Certificado por {certification.certifiedByName ?? "contador"}
+          {date ? ` · ${date}` : ""}
+        </span>
+      </div>
+    )
+  }
+
+  if (certification?.status === "outdated") {
+    return (
+      <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <ShieldAlert className="size-4 shrink-0" />
+        <span className="min-w-0">Certificacion desactualizada por cambios en el legajo</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-[var(--brand-line)] bg-white px-3 py-2 text-sm text-muted-foreground">
+      <ShieldQuestion className="size-4 shrink-0" />
+      <span className="min-w-0">Sin certificacion profesional vigente</span>
     </div>
   )
 }

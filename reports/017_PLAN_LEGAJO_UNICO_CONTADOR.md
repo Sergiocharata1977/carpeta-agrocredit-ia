@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-06-17
 **Tipo:** Plan
-**Estado:** 🟡 En progreso — Olas 1 a 6 implementadas (2026-06-17); restan refinamientos (visor de documento real, sello visible para el financista en la carpeta read-only).
+**Estado:** 🟡 En progreso — Olas 1 a 6 implementadas (2026-06-17); sello visible para financista cerrado; restan refinamientos (visor de documento real y completitud global).
 **Relacionados:** [[014_PLAN_CREDITO_HUB_IA]] (carga masiva / revisión / extractores) · [[016_INFORMACION_CARGA_CLIENTE]] (inventario de campos) · [[012_PLAN_LANZAMIENTO_SEGURO_ENCRIPTACION]] (cifrado de archivos fuente).
 
 ---
@@ -76,7 +76,7 @@ Botón **"🤖 Asistente IA"** en el header del legajo de cada cliente. Abre un 
 - **Preguntas sugeridas (chips):** Estado financiero · Qué falta para certificar · Riesgos / alertas · Resumen del legajo · Capacidad de pago estimada. (Editable después.)
 - **Contexto:** el endpoint arma server-side el contexto del cliente desde lo ya cargado — `canonical_credit_profiles`, totales de balance/resultados, perfil, estado de completitud (`getFolderDataStatus`) y campos en revisión. Ese contexto va como system prompt; **no** se manda desde el cliente.
 - **Motor:** reusa la capa IA multiproveedor — `resolveAIProvider().complete(systemPrompt, pregunta)` (Groq/Anthropic según `/app/admin/ia`). Sin key → responde en modo demo con aviso.
-- **Endpoint (corregido):** `POST /api/credito-hub/assistant/[targetOrganizationId]`. Body solo `{ message, history? }` — **nada sensible viaja en el body** (ni `clientId`/`organizationId`). El backend deriva acceso con `assertCanManageAccountingFolder(session, targetOrganizationId)` (contador con vínculo activo o admin) y obtiene el `folderOwnerOrganizationId` de ahí. Audita `assistant.queried`.
+- **Endpoint (corregido):** `POST /api/credito-hub/assistant/[targetOrganizationId]`. Body solo `{ message, history? }` — **nada sensible viaja en el body** (ni `clientId`/`organizationId`). El backend deriva acceso con `assertCanManageAccountingFolder(session, targetOrganizationId)`, exige rol `accountant` / `accounting_firm_admin` / `admin_platform` y obtiene el `folderOwnerOrganizationId` de ahí. Audita `assistant.queried`.
 - **Guardrails v1 (reforzados):**
   - Responde **con base en evidencias del legajo** ("según el balance 2024…", "faltan estos documentos…"). Si un dato no está, dice **"no consta en el legajo"** — no inventa.
   - **No recomienda aprobar/rechazar** un crédito (es asesor del contador, no decisor).

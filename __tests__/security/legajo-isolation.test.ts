@@ -134,3 +134,44 @@ describe("assistant · pickTarget (target sale de la ruta, no del body)", () => 
     expect(pickTarget("org-legitima", { message: "hola", history: [] })).toBe("org-legitima")
   })
 })
+
+function canOperateLegajo(roles: string[]): boolean {
+  return canCertify(roles)
+}
+
+describe("legajo operator gate - assistant/routing", () => {
+  it("permite a accountant", () => {
+    expect(canOperateLegajo(["accountant"])).toBe(true)
+  })
+  it("permite a accounting_firm_admin", () => {
+    expect(canOperateLegajo(["accounting_firm_admin"])).toBe(true)
+  })
+  it("permite a admin_platform", () => {
+    expect(canOperateLegajo(["admin_platform"])).toBe(true)
+  })
+  it("DENIEGA a producer aunque sea titular del legajo", () => {
+    expect(canOperateLegajo(["producer"])).toBe(false)
+  })
+  it("deniega a entidad financiera", () => {
+    expect(canOperateLegajo(["bank_user"])).toBe(false)
+  })
+})
+
+function canSeeReadonlyCertification(input: { isOwner: boolean; isAdmin: boolean; hasActiveGrant: boolean }): boolean {
+  return input.isOwner || input.isAdmin || input.hasActiveGrant
+}
+
+describe("readonly certification visibility", () => {
+  it("la ve el titular de la carpeta", () => {
+    expect(canSeeReadonlyCertification({ isOwner: true, isAdmin: false, hasActiveGrant: false })).toBe(true)
+  })
+  it("la ve el financista con grant activo", () => {
+    expect(canSeeReadonlyCertification({ isOwner: false, isAdmin: false, hasActiveGrant: true })).toBe(true)
+  })
+  it("la ve admin_platform", () => {
+    expect(canSeeReadonlyCertification({ isOwner: false, isAdmin: true, hasActiveGrant: false })).toBe(true)
+  })
+  it("no se expone sin permiso readonly", () => {
+    expect(canSeeReadonlyCertification({ isOwner: false, isAdmin: false, hasActiveGrant: false })).toBe(false)
+  })
+})

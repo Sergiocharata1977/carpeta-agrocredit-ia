@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { getAdminDb, getAdminStorage } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
+import { getCurrentCertification } from "@/lib/services/folder-certification"
 import {
   getAuthErrorResponse,
   isProducerRole,
@@ -107,7 +108,7 @@ export async function GET(
     }
 
     if (!grant) {
-      return Response.json({ grant: null, org: null, balance: null, income: null, taxDocs: [], assets: [], liabilities: [], documents: [] })
+      return Response.json({ grant: null, org: null, balance: null, income: null, taxDocs: [], assets: [], liabilities: [], documents: [], certification: null })
     }
 
     const orgSnap = await db.collection(COLLECTIONS.ORGANIZATIONS).doc(targetOrgId).get()
@@ -122,6 +123,7 @@ export async function GET(
       assets: [],
       liabilities: [],
       documents: [],
+      certification: await getCurrentCertification(targetOrgId),
     }
 
     if (hasScope(grant, "balance_sheets") || hasScope(grant, "accounting_summary")) {

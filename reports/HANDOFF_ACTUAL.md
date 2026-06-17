@@ -965,15 +965,20 @@ Ejecutadas wave-by-wave con agentes paralelos de archivos disjuntos; integració
 - **Ola 3 — carga única + auto-routing** (commit `0579555`): `lib/credito-hub/folder-routing.ts` (`resolveFolderByCuit`), `lib/services/document-routing.ts` + `types/document-routing.ts`, pipeline `process-jobs.ts` reasigna `folderOwnerOrganizationId` por CUIT o marca `needs_manual_assignment`, API `routing/[rootOrganizationId]` (GET) y `/[decisionId]` (PATCH), componentes `CarpetaUploadSection` + `UnassignedDocsTray` integrados. Colección `document_routing_decisions`.
 - **Ola 4 — revisión embebida** (commit `d3d1c0d`): `components/credito-hub/CarpetaReviewSection.tsx` (reusa `ReviewWorkbench`), integrada por carpeta activa.
 - **Ola 5 — certificación** (commit `299f900`): `types/folder-certification.ts`, `lib/services/folder-certification.ts` (invalidación PEREZOSA a `outdated` por huella `folder-fingerprint.ts`), API `certification/[targetOrganizationId]` GET/POST (solo contador/admin), `CertificationBadge` + `CertifyFolderButton` en el legajo. Colección `folder_certifications`.
-- **Ola 6 — tests de aislamiento**: `__tests__/security/legajo-isolation.test.ts` (16 casos: canCertify, assignedFolderBelongsToGroup, rateLimited, pickTarget). Suite total **129 tests**.
+- **Ola 6 — tests de aislamiento**: `__tests__/security/legajo-isolation.test.ts` (25 casos: canCertify, operator gate, assignedFolderBelongsToGroup, rateLimited, pickTarget, visibilidad readonly de certificación). Suite total **138 tests**.
+
+### Ajuste de cierre Codex (2026-06-17)
+
+- Se endureció `assistant/[targetOrganizationId]` y `routing/[rootOrganizationId]/*`: además de `assertCanManageAccountingFolder`, ahora exigen rol operador (`accountant`, `accounting_firm_admin` o `admin_platform`). El productor titular conserva lectura, pero no usa asistente del contador ni reasigna documentos.
+- Se expone `certification` en `GET /api/folders/[targetOrgId]/readonly` después de validar titular/admin/grant activo, y `ReadonlyFolderView` muestra badge vigente/desactualizado/sin certificación para financistas.
+- Se corrigió auditoría de `assistant.queried` y `document.routing_reassigned` para registrar la organización activa del contador/admin como actor.
 
 ### Validación
 
-- `pnpm type-check`: OK · `pnpm check:security-shape`: OK · `pnpm test`: OK (129).
+- `pnpm type-check`: OK · `pnpm check:security-shape`: OK · `pnpm test`: OK (138) · `pnpm build`: OK.
 
 ### Refinamientos pendientes (no bloqueantes)
 
 - Visor de documento real en revisión (hoy placeholder en `ReviewWorkbench`).
-- Sello de certificación visible para el **financista** en la carpeta read-only (hoy el badge solo en el panel del contador; el GET de certificación usa `assertCanManageAccountingFolder`, que no incluye a la entidad — extender el endpoint readonly).
 - Indicador de completitud global por cliente (hoy es por carpeta activa).
 - Auto-routing: el intake del legajo sube al titular como inbox; afinar UX cuando el documento corresponde directamente a una empresa.

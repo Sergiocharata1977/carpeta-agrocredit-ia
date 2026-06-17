@@ -3,6 +3,7 @@ import {
   verifyRequestSession,
   requireActiveOrg,
   getAuthErrorResponse,
+  AuthError,
 } from "@/lib/auth/server-session"
 import { assertCanManageAccountingFolder } from "@/lib/auth/accounting-access"
 import { listDecisionsNeedingAssignment } from "@/lib/services/document-routing"
@@ -17,6 +18,14 @@ export async function GET(
   try {
     const session = await verifyRequestSession(request)
     requireActiveOrg(session)
+    const canRoute =
+      session.roles.includes("accountant") ||
+      session.roles.includes("accounting_firm_admin") ||
+      session.roles.includes("admin_platform")
+    if (!canRoute) {
+      throw new AuthError("Solo el contador o admin puede rutear documentos del legajo", 403)
+    }
+
     const { rootOrganizationId } = await params
     await assertCanManageAccountingFolder(session, rootOrganizationId)
 

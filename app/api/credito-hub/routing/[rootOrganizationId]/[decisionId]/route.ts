@@ -26,8 +26,16 @@ export async function PATCH(
   try {
     const session = await verifyRequestSession(request)
     requireActiveOrg(session)
+    const canRoute =
+      session.roles.includes("accountant") ||
+      session.roles.includes("accounting_firm_admin") ||
+      session.roles.includes("admin_platform")
+    if (!canRoute) {
+      throw new AuthError("Solo el contador o admin puede rutear documentos del legajo", 403)
+    }
+
     const { rootOrganizationId, decisionId } = await params
-    const { folderOwnerOrganizationId } = await assertCanManageAccountingFolder(
+    await assertCanManageAccountingFolder(
       session,
       rootOrganizationId,
     )
@@ -106,7 +114,7 @@ export async function PATCH(
 
     await writeAuditLog({
       actorUid: session.uid,
-      actorOrganizationId: folderOwnerOrganizationId,
+      actorOrganizationId: session.defaultOrganizationId,
       action: "document.routing_reassigned",
       targetType: "document",
       targetId: decision.documentId,

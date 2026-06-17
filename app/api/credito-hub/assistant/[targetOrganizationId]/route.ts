@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server"
 import {
   verifyRequestSession,
+  requireActiveOrg,
   getAuthErrorResponse,
+  AuthError,
 } from "@/lib/auth/server-session"
 import { assertCanManageAccountingFolder } from "@/lib/auth/accounting-access"
 import { resolveAIProvider } from "@/lib/ai/provider-config"
@@ -56,6 +58,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
     const { targetOrganizationId } = await params
     const session = await verifyRequestSession(request)
+    requireActiveOrg(session)
+
+    const canUseAssistant =
+      session.roles.includes("accountant") ||
+      session.roles.includes("accounting_firm_admin") ||
+      session.roles.includes("admin_platform")
+    if (!canUseAssistant) {
+      throw new AuthError("Solo el contador o admin puede usar el asistente del legajo", 403)
+    }
+
     const { folderOwnerOrganizationId, accountingFirmId } = await assertCanManageAccountingFolder(
       session,
       targetOrganizationId,
@@ -101,7 +113,7 @@ ${context.text}
 
     await writeAuditLog({
       actorUid: session.uid,
-      actorOrganizationId: accountingFirmId,
+      actorOrganizationId: accountingFirmId ?? session.defaultOrganizationId,
       action: "assistant.queried",
       targetType: "credit_folder",
       targetId: folderOwnerOrganizationId,
