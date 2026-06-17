@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { LegajoAssistantChat } from "@/components/credito-hub/LegajoAssistantChat"
 import { CarpetaUploadSection } from "@/components/credito-hub/CarpetaUploadSection"
 import { UnassignedDocsTray } from "@/components/credito-hub/UnassignedDocsTray"
+import { CarpetaReviewSection } from "@/components/credito-hub/CarpetaReviewSection"
 import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { getFreshIdToken } from "@/lib/firebase/auth-client"
@@ -285,10 +286,12 @@ export default function LegajoUnicoPage({ params }: PageProps) {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Próximamente: carga única con IA que reparte los documentos a cada carpeta (Ola 3) y
-        certificación con sello profesional (Ola 5).
-      </p>
+      {/* Revisión de campos de la carpeta activa */}
+      {activeCarpeta && (
+        <div className="rounded-xl border bg-card p-5">
+          <CarpetaReviewSection targetOrganizationId={activeCarpeta.orgId} />
+        </div>
+      )}
 
       {activeCarpeta && (
         <LegajoAssistantChat
