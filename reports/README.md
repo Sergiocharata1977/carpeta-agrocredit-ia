@@ -35,7 +35,7 @@ Al retomar el proyecto o iniciar una sesión (`protocolo`, `cargar contexto`):
 | 014 | `014_PLAN_CREDITO_HUB_IA.md` | Plan | ✅ Completado (MVP) | CreditoHub IA: capa multiproveedor, cola documental, clasificación/extracción con procedencia, revisión profesional, requisitos y matriz. |
 | 015 | `015_CHECKLIST_VERIFICACION_FRONTEND.md` | Checklist | 🟢 Vivo | Verificación pantalla por pantalla de los flujos (alta AFIP, Legajo IA, revisión, requisitos, cumplimiento) con bloqueantes marcados. |
 | 016 | `016_INFORMACION_CARGA_CLIENTE.md` | Referencia | 🟢 Vivo | Inventario completo de la información que debe cargar un cliente y sus empresas (datos personales, perfil, contable, patrimonio, documentos), relevado de todos los formularios y schemas. |
-| 017 | `017_PLAN_LEGAJO_UNICO_CONTADOR.md` | Plan | 📐 Planificado | Formulario/legajo único operado por el contador: pestañas por carpeta (titular + empresas), zona única de carga con auto-routing por IA, certificación profesional con sello y asistente IA contextual por cliente. |
+| 017 | `017_PLAN_LEGAJO_UNICO_CONTADOR.md` | Plan | 🟡 En progreso | Legajo único operado por el contador: pestañas por carpeta, carga única con auto-routing por IA, revisión embebida, certificación profesional con sello y asistente IA contextual. Olas 1-6 implementadas. |
 
 **Leyenda de estado:** 🟢 Vivo (se mantiene actualizado) · ✅ Completado · 🟡 En progreso · 📐 Planificado (no implementado).
 

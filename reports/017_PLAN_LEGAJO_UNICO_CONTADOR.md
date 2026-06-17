@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-06-17
 **Tipo:** Plan
-**Estado:** 📐 Planificado — diseño aprobado, pendiente de implementar
+**Estado:** 🟡 En progreso — Olas 1 a 6 implementadas (2026-06-17); restan refinamientos (visor de documento real, sello visible para el financista en la carpeta read-only).
 **Relacionados:** [[014_PLAN_CREDITO_HUB_IA]] (carga masiva / revisión / extractores) · [[016_INFORMACION_CARGA_CLIENTE]] (inventario de campos) · [[012_PLAN_LANZAMIENTO_SEGURO_ENCRIPTACION]] (cifrado de archivos fuente).
 
 ---

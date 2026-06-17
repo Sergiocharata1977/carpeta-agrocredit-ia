@@ -958,9 +958,22 @@ Plan: `reports/017_PLAN_LEGAJO_UNICO_CONTADOR.md` (ajustado con recomendaciones 
 
 - `pnpm type-check`: OK · `pnpm check:security-shape`: OK · `pnpm test`: OK (113).
 
-### Pendiente (próximas olas del 017)
+## Legajo único — Olas 3 a 6 implementadas (2026-06-17, agentes en paralelo por ola)
 
-- Ola 3: carga única + auto-routing (`document_routing_decisions`).
-- Ola 4: revisión embebida por sección.
-- Ola 5: certificación (`folder_certifications`) + sello + invalidación automática.
-- Ola 6: indicadores de completitud finos + tests de aislamiento del asistente.
+Ejecutadas wave-by-wave con agentes paralelos de archivos disjuntos; integración/validación/commit por el orquestador entre olas.
+
+- **Ola 3 — carga única + auto-routing** (commit `0579555`): `lib/credito-hub/folder-routing.ts` (`resolveFolderByCuit`), `lib/services/document-routing.ts` + `types/document-routing.ts`, pipeline `process-jobs.ts` reasigna `folderOwnerOrganizationId` por CUIT o marca `needs_manual_assignment`, API `routing/[rootOrganizationId]` (GET) y `/[decisionId]` (PATCH), componentes `CarpetaUploadSection` + `UnassignedDocsTray` integrados. Colección `document_routing_decisions`.
+- **Ola 4 — revisión embebida** (commit `d3d1c0d`): `components/credito-hub/CarpetaReviewSection.tsx` (reusa `ReviewWorkbench`), integrada por carpeta activa.
+- **Ola 5 — certificación** (commit `299f900`): `types/folder-certification.ts`, `lib/services/folder-certification.ts` (invalidación PEREZOSA a `outdated` por huella `folder-fingerprint.ts`), API `certification/[targetOrganizationId]` GET/POST (solo contador/admin), `CertificationBadge` + `CertifyFolderButton` en el legajo. Colección `folder_certifications`.
+- **Ola 6 — tests de aislamiento**: `__tests__/security/legajo-isolation.test.ts` (16 casos: canCertify, assignedFolderBelongsToGroup, rateLimited, pickTarget). Suite total **129 tests**.
+
+### Validación
+
+- `pnpm type-check`: OK · `pnpm check:security-shape`: OK · `pnpm test`: OK (129).
+
+### Refinamientos pendientes (no bloqueantes)
+
+- Visor de documento real en revisión (hoy placeholder en `ReviewWorkbench`).
+- Sello de certificación visible para el **financista** en la carpeta read-only (hoy el badge solo en el panel del contador; el GET de certificación usa `assertCanManageAccountingFolder`, que no incluye a la entidad — extender el endpoint readonly).
+- Indicador de completitud global por cliente (hoy es por carpeta activa).
+- Auto-routing: el intake del legajo sube al titular como inbox; afinar UX cuando el documento corresponde directamente a una empresa.

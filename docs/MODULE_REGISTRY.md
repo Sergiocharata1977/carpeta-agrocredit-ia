@@ -117,6 +117,9 @@
 | `credit_applications` | beta | `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `app/api/credito-hub/credit-applications` - `lib/services/credit-applications.ts` | `credit_applications` |
 | `legajo_unico_contador` | beta | `/app/contador/clientes/[clientId]/legajo` | (shell; reusa entities + folders status) | `organizations` |
 | `legajo_assistant` | beta | (modal en legajo) | `app/api/credito-hub/assistant/[targetOrganizationId]` · `lib/credito-hub/assistant-context.ts` · `components/credito-hub/LegajoAssistantChat.tsx` | (solo lectura) |
+| `legajo_routing` | beta | (en legajo) | `app/api/credito-hub/routing/[rootOrganizationId]/*` · `lib/services/document-routing.ts` · `lib/credito-hub/folder-routing.ts` · `components/credito-hub/{CarpetaUploadSection,UnassignedDocsTray}.tsx` | `document_routing_decisions` |
+| `legajo_review` | beta | (en legajo) | `components/credito-hub/CarpetaReviewSection.tsx` (reusa `ReviewWorkbench`) | `extracted_fields` |
+| `legajo_certification` | beta | (en legajo) | `app/api/credito-hub/certification/[targetOrganizationId]` · `lib/services/folder-certification.ts` · `lib/credito-hub/folder-fingerprint.ts` · `components/credito-hub/{CertificationBadge,CertifyFolderButton}.tsx` | `folder_certifications` |
 
 ### DOMINIO: HABILITACIÓN DE ESTUDIOS (ADMIN)
 
@@ -196,6 +199,8 @@
 | `credit_applications` | credit_applications | draft | Solicitudes crediticias que unen carpeta, entidad y template de requisitos |
 | `requirement_matches` | bank_requirements | draft | Resultado del cruce entre requisitos bancarios y legajo disponible |
 | `platform_settings` | ai_provider_router | beta | Config de plataforma (doc `ai`: proveedor IA activo). Solo Admin SDK; deny-by-default para el cliente |
+| `document_routing_decisions` | legajo_routing | beta | Trazabilidad de a qué carpeta fue cada documento (auto/manual) por CUIT y tipo |
+| `folder_certifications` | legajo_certification | beta | Certificación profesional por carpeta (sello del contador, invalidación perezosa a outdated) |
 
 ---
 
