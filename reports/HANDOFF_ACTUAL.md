@@ -871,3 +871,31 @@ Pedido del dueño: dos IA opcionales seleccionables y comparables desde config d
 - `.env.local` creado con las keys de IA (Groq + Anthropic) y `AI_PROVIDER=groq`, pero el **bloque Firebase quedó como placeholder**. Usar el Firebase de `agro-biciuffa` contradice la regla STANDALONE de `CLAUDE.md` (acopla auth+datos de las dos apps); además el clasificador del harness bloqueó leer los `.env.local` de los proyectos vecinos por la misma razón. Falta que el dueño confirme: (A) reusar agro-biciuffa solo en local, o (B) proyecto Firebase dedicado a Agro-Credit. Recién con eso el `pnpm dev` arranca.
 - En prod (Vercel): cargar `GROQ_API_KEY` / `ANTHROPIC_API_KEY` en env vars. Sin key, el proveedor cae a Mock (modo demo).
 - `platform_settings` queda deny-by-default en Firestore (se opera solo por Admin SDK); no requiere regla nueva.
+
+### Firebase dedicado conectado (2026-06-17)
+
+- Resuelto: Agro-Credit usa su **proyecto Firebase propio y aislado `agrocredit-ia-saas`** (no agro-biciuffa). `.firebaserc` ya apuntaba ahí. Config cliente obtenida por `firebase apps:sdkconfig WEB` y Admin SDK cableado con service account del dueño. **Verificado**: Admin SDK conecta (lee `organizations` y Auth). `.gitignore` endurecido para bloquear `*adminsdk*.json` / `*service-account*.json`.
+- Vercel (`agrocredit-hub`): `AI_PROVIDER=groq` y `GROQ_API_KEY` agregadas a Production y Development por CLI (la `ANTHROPIC_API_KEY` y las 9 de Firebase ya estaban). **Preview pendiente** (bug del CLI 50.23.2 con ramas; queda para dashboard o por rama). Falta redeploy para que tomen efecto.
+
+---
+
+## Alta de entidades por admin + sistema documental en reports (2026-06-17)
+
+### Alta de entidades financieras desde el super admin
+
+El dueño necesita administrar entidades (bancos/financieras/agro) desde el panel. Antes `/app/admin/entidades` solo listaba.
+
+- **Nuevo** `app/api/admin/entities/route.ts` (POST): crea una `requesting_entity` (status `active`) sin crear usuario, sin membership y **sin tocar los claims del admin** (a diferencia de `/api/onboarding/requesting-entity`, que convierte al caller en `bank_user`). Solo `admin_platform`. Audita `organization.requesting_entity_created`.
+- **Nuevo** `components/admin/NuevaEntidadDialog.tsx`: formulario (tipo, razón social, CUIT normalizado a 11 dígitos, contacto, email, teléfono).
+- `app/app/admin/entidades/page.tsx`: botón "Nueva entidad" en el header + CTA en el empty-state; refresca la lista al crear.
+- `lib/schemas/onboarding.ts`: `adminCreateRequestingEntitySchema`. `types/audit.ts`: acción agregada al enum canónico.
+- `docs/MODULE_REGISTRY.md`: módulo `admin_requesting_entity_create`.
+
+### Sistema documental en reports
+
+- **Nuevo** `reports/README.md`: índice único del sistema documental — orden de lectura obligatorio, catálogo completo (000–015 + HANDOFF con estado), referencia a `docs/`, convenciones de numeración, números retirados (001/002/003/006/007/008/009) y cómo agregar un doc. Próximo número libre: `016`.
+- `reports/000_ESTADO_ACTUAL_PROYECTO.md`: índice de la sección 4 reconciliado (estaba desactualizado, no listaba 010–015) y apunta al README como canónico.
+
+### Validación
+
+- `pnpm type-check`: OK.

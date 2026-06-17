@@ -121,6 +121,7 @@
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
 | `accounting_firm_approval` | ga | `/app/admin/estudios` | `app/api/admin/accounting-firms/*` | `organizations` |
+| `admin_requesting_entity_create` | beta | `/app/admin/entidades` | `app/api/admin/entities` (POST) · `components/admin/NuevaEntidadDialog.tsx` | `organizations` |
 
 ### DOMINIO: INTEGRATION CORE (Olas 4–8)
 

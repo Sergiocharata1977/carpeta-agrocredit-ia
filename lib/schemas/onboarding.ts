@@ -74,6 +74,18 @@ export const requestingEntityOnboardingSchema = z.object({
   }),
 })
 
+// Schema para que el admin de plataforma cree una entidad solicitante
+// (banco/financiera/agro/etc.) directamente, sin crear usuario ni membership.
+export const adminCreateRequestingEntitySchema = z.object({
+  legalName: z.string().min(3, "Razón social muy corta").max(120),
+  taxId: z.string().regex(CUIT_REGEX, "El CUIT debe tener 11 dígitos sin guiones"),
+  subtype: requestingEntitySubtypeSchema,
+  contactName: z.string().min(2).max(100).optional(),
+  contactEmail: z.string().email("Email de contacto inválido").optional().or(z.literal("")),
+  contactPhone: z.string().max(40).optional(),
+  sector: z.string().max(80).optional(),
+})
+
 // Schema para crear una empresa hija (system_user_entity) desde el dashboard
 export const addEntitySchema = z.object({
   legalName: z.string().min(3).max(120),

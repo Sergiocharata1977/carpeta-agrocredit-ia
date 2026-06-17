@@ -88,19 +88,24 @@ El contador habilitado carga la información contable, fiscal y patrimonial del 
 
 ## 4. Índice de documentos vigentes
 
+> El índice canónico, con el catálogo completo, el orden de lectura y las
+> convenciones, vive en **`reports/README.md`**. Resumen rápido:
+
 | Documento | Estado | Descripción |
 |-----------|--------|-------------|
-| `000_ESTADO_ACTUAL_PROYECTO.md` | Activo | Este documento — visión completa y reglas de negocio |
-| `004_PLAN_ONBOARDING_Y_REGISTRO.md` | **Ola 3 pendiente** | ScopeGuard, GrantStatusBanner, GrantExpiredBlocker, vista carpeta entidad |
-| `005_ROADMAP_INTEGRATION_CORE.md` | **Olas 4-9 pendientes** | API hub, webhooks, API keys, SDK, MCP Don Cándido IA |
-| `HANDOFF_ACTUAL.md` | Activo | Estado por sesión, archivos modificados, pendientes inmediatos |
+| `README.md` | 🟢 Vivo | Índice del sistema documental + orden de lectura obligatorio |
+| `000_ESTADO_ACTUAL_PROYECTO.md` | 🟢 Vivo | Este documento — visión completa y reglas de negocio |
+| `004_PLAN_ONBOARDING_Y_REGISTRO.md` | ✅ Completado | Wizards de registro, modelo unificado, acceso temporizado |
+| `005_ROADMAP_INTEGRATION_CORE.md` | 🟡 En progreso | API hub y API keys hechas; webhooks, SDK y MCP pendientes |
+| `010_FUNCIONALIDADES_ROLES_ACTUALES.md` | 🟢 Vivo | Qué hace hoy cada rol |
+| `011_PENDIENTES_PRODUCTOR_CONTADOR.md` | ✅ Completado | Experiencia productor + dashboard contador |
+| `012_PLAN_LANZAMIENTO_SEGURO_ENCRIPTACION.md` | 📐 Planificado | Cifrado V1 + aislamiento (Ola 0 ADR bloqueante) |
+| `013_AUDITORIA_LIMPIEZA_CONTROL_TECNICO_LEGAJO.md` | 🟢 Vivo | Auditoría de seguridad y deuda técnica |
+| `014_PLAN_CREDITO_HUB_IA.md` | ✅ Completado (MVP) | CreditoHub IA completo en alcance MVP |
+| `015_CHECKLIST_VERIFICACION_FRONTEND.md` | 🟢 Vivo | Checklist de verificación pantalla por pantalla |
+| `HANDOFF_ACTUAL.md` | 🟢 Vivo | Estado por sesión, archivos modificados, pendientes |
 
-**Documentos eliminados (planes completados):**
-- `001` Plan original del proyecto
-- `002` Reorganización base de datos
-- `003` Vistas por rol
-- `007` Perfil extendido productor
-- `008` ABM Clientes y Empresas
+**Números retirados (planes completados y eliminados):** `001` plan original · `002` reorganización BD · `003` vistas por rol · `006` OCR/IA EECC · `007` perfil extendido · `008` ABM clientes/empresas · `009` invitaciones por link. No reasignar.
 
 ---
 

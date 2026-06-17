@@ -28,6 +28,7 @@ export type AuditAction =
   | "user.logout"
   | "organization.created"
   | "organization.updated"
+  | "organization.requesting_entity_created"
   | "access_invitation.created"
   | "access_invitation.sent"
   | "access_invitation.approved"

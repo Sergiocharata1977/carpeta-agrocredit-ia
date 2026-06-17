@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { RoleGate } from "@/components/auth/RoleGate"
 import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Building2, CheckCircle2, Clock } from "lucide-react"
+import { Building2, CheckCircle2, Clock, Plus } from "lucide-react"
+import { NuevaEntidadDialog } from "@/components/admin/NuevaEntidadDialog"
 
 const SUBTYPE_LABELS: Record<string, string> = {
   bank: "Banco",
@@ -51,42 +53,43 @@ export default function AdminEntidadesPage() {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [subtypeFilter, setSubtypeFilter] = useState<string>("all")
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const fetchEntities = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const token = await getFreshIdToken()
+      const res = await fetch("/api/admin/organizations?type=requesting_entity", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? "No se pudieron cargar las entidades")
+
+      setEntities(
+        (json.organizations ?? []).map((data: Record<string, unknown>) => ({
+          id: String(data.id),
+          legalName: typeof data.legalName === "string" ? data.legalName : "Sin nombre",
+          taxId: typeof data.taxId === "string" ? data.taxId : "-",
+          subtype: typeof data.subtype === "string" ? data.subtype : null,
+          contactName: typeof data.contactName === "string" ? data.contactName : null,
+          contactEmail: typeof data.contactEmail === "string" ? data.contactEmail : null,
+          status: typeof data.status === "string" ? data.status : "pending",
+          createdAt: typeof data.createdAt === "string" ? data.createdAt : null,
+        })),
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudieron cargar las entidades")
+      setEntities([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    async function fetchEntities() {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const token = await getFreshIdToken()
-        const res = await fetch("/api/admin/organizations?type=requesting_entity", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const json = await res.json()
-        if (!res.ok) throw new Error(json.error ?? "No se pudieron cargar las entidades")
-
-        setEntities(
-          (json.organizations ?? []).map((data: Record<string, unknown>) => ({
-            id: String(data.id),
-            legalName: typeof data.legalName === "string" ? data.legalName : "Sin nombre",
-            taxId: typeof data.taxId === "string" ? data.taxId : "-",
-            subtype: typeof data.subtype === "string" ? data.subtype : null,
-            contactName: typeof data.contactName === "string" ? data.contactName : null,
-            contactEmail: typeof data.contactEmail === "string" ? data.contactEmail : null,
-            status: typeof data.status === "string" ? data.status : "pending",
-            createdAt: typeof data.createdAt === "string" ? data.createdAt : null,
-          })),
-        )
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudieron cargar las entidades")
-        setEntities([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchEntities()
-  }, [])
+  }, [fetchEntities])
 
   const filtered = entities.filter((e) => {
     const matchSearch =
@@ -108,19 +111,27 @@ export default function AdminEntidadesPage() {
   return (
     <RoleGate allowedRoles={["admin_platform"]}>
       <div className="p-6 space-y-6">
-        <div className="flex items-start gap-4">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
-            <Building2 className="size-6" />
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+              <Building2 className="size-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-[var(--brand-ink)]">
+                Entidades / Financistas
+              </h1>
+              <p className="mt-1 text-sm text-[var(--brand-muted)]">
+                Bancos, financieras y empresas agrocomerciales registradas en la plataforma.
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--brand-ink)]">
-              Entidades / Financistas
-            </h1>
-            <p className="mt-1 text-sm text-[var(--brand-muted)]">
-              Bancos, financieras y empresas agrocomerciales registradas en la plataforma.
-            </p>
-          </div>
+          <Button onClick={() => setDialogOpen(true)} className="shrink-0 gap-2">
+            <Plus className="size-4" />
+            Nueva entidad
+          </Button>
         </div>
+
+        <NuevaEntidadDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchEntities} />
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
@@ -175,6 +186,10 @@ export default function AdminEntidadesPage() {
             <p className="mt-1 text-xs text-[var(--brand-muted)]">
               Las entidades que se registren como banco, financiera o empresa agro apareceran aqui.
             </p>
+            <Button onClick={() => setDialogOpen(true)} variant="outline" className="mt-4 gap-2">
+              <Plus className="size-4" />
+              Crear primera entidad
+            </Button>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-[var(--brand-line)] bg-white">
