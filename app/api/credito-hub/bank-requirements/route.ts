@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server"
 import { verifyRequestSession, requireActiveOrg, requireAnyRole, isAdminPlatform, getAuthErrorResponse } from "@/lib/auth/server-session"
 import { parseRequirementsFromDocument } from "@/lib/ai/bank-requirements/parser"
-import { createRequirementTemplate, listRequirementTemplates, getRequirementTemplate } from "@/lib/services/bank-requirements"
+import { bankRequirementSchema } from "@/lib/schemas/bank-requirements"
+import { createRequirementTemplate, listRequirementTemplates, getRequirementTemplate, updateRequirementTemplate } from "@/lib/services/bank-requirements"
 import { publishRequirementTemplate } from "@/lib/services/bank-requirements"
 
 /**
@@ -60,6 +61,27 @@ export async function POST(request: NextRequest) {
         templateId,
         actorUid: session.uid,
         actorOrganizationId: session.defaultOrganizationId,
+      })
+      return Response.json({ template })
+    }
+
+    if (action === "update") {
+      const templateId = String(formData.get("templateId") ?? "")
+      if (!templateId) return Response.json({ error: "templateId requerido" }, { status: 400 })
+      const existing = await getRequirementTemplate(templateId)
+      if (!existing) return Response.json({ error: "Template no encontrado" }, { status: 404 })
+      if (!admin && existing.requestingEntityOrganizationId !== requestingEntityOrganizationId) {
+        return Response.json({ error: "No tenes permisos sobre este template" }, { status: 403 })
+      }
+      const rawRequirements = String(formData.get("requirements") ?? "[]")
+      const requirements = bankRequirementSchema.array().parse(JSON.parse(rawRequirements))
+      const template = await updateRequirementTemplate({
+        templateId,
+        actorUid: session.uid,
+        actorOrganizationId: session.defaultOrganizationId,
+        bankName: String(formData.get("bankName") ?? existing.bankName),
+        productName: String(formData.get("productName") ?? existing.productName ?? "") || undefined,
+        requirements,
       })
       return Response.json({ template })
     }

@@ -138,7 +138,7 @@ reviewedAt
 
 ## Riesgos / preguntas abiertas
 
-- **Visor de documento** sigue pendiente (placeholder en `ReviewWorkbench`) — afecta la columna "documento origen" de la sección 3.
+- **Visor de documento** resuelto en `ReviewWorkbench` con preview firmado para PDF/imagen. Para Excel/otros archivos se ofrece abrir/descargar.
 - **PDFs escaneados:** la rasterización server-side está deshabilitada en Vercel (ver fix canvas en HANDOFF). Para visión sobre escaneados usar Anthropic (bloque PDF nativo) o worker externo.
 - **Datos reales:** mantener `CREDITO_HUB_ALLOW_REAL_DATA=false` para pruebas. **No habilitar carga real masiva** hasta resolver cifrado V1 (Plan 012) o documentar una excepción explícita.
 - **Perfil por empresa:** resuelto con modelo mixto (ver sección "Secciones por carpeta").

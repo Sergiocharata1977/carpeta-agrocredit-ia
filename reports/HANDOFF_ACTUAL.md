@@ -982,3 +982,32 @@ Ejecutadas wave-by-wave con agentes paralelos de archivos disjuntos; integració
 - Visor de documento real en revisión (hoy placeholder en `ReviewWorkbench`).
 - Indicador de completitud global por cliente (hoy es por carpeta activa).
 - Auto-routing: el intake del legajo sube al titular como inbox; afinar UX cuando el documento corresponde directamente a una empresa.
+---
+
+## Cierre UX CreditoHub / Entidad / Revision (2026-06-18)
+
+Pedido del dueño antes de cargar documentacion real con un contador amigo: cerrar la UX demostrable para cumplimiento bancario, revision documental y requisitos.
+
+### Implementado
+
+- **Navegacion a Cumplimiento:** `app/app/entidad/carpetas/[targetOrgId]/page.tsx` agrega boton "Ver cumplimiento" hacia `/app/entidad/carpetas/[targetOrgId]/cumplimiento`.
+- **Visor real en Revision:** `ReviewWorkbench` reemplaza el placeholder por preview de PDF/imagen y fallback abrir/descargar para otros tipos. Nuevo endpoint `GET /api/credito-hub/review/documents/[docId]/preview?targetOrganizationId=...` emite URL firmada de 5 minutos despues de validar `assertCanManageAccountingFolder` y pertenencia del documento.
+- **Campos de revision:** `FieldReviewRow` permite seleccionar el campo/documento origen y muestra doc/pagina.
+- **Requisitos editables:** `RequirementBuilder` permite corregir requisitos IA antes de publicar (codigo, nombre, descripcion, categoria, obligatorio, periodos, vigencia, responsable, formatos y reglas), guardar borrador y publicar.
+- **Selector de template:** `ComplianceMatrix` carga templates publicados de la entidad y elimina el input manual de `requirementTemplateId`.
+- **Backend requisitos:** `bank-requirements` agrega action `update` para drafts y servicio `updateRequirementTemplate`; templates publicados no se editan desde este flujo.
+- Docs actualizados: `reports/000_ESTADO_ACTUAL_PROYECTO.md`, `reports/015_CHECKLIST_VERIFICACION_FRONTEND.md`, `reports/017_PLAN_LEGAJO_UNICO_CONTADOR.md`.
+
+### Validacion
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test`: OK (9 archivos, 138 tests).
+- `pnpm build`: OK (72 paginas generadas; incluye `/api/credito-hub/review/documents/[docId]/preview`).
+- Browser local `http://localhost:3000`: home carga, contenido visible, sin overlay de Next.
+
+### Pendientes / cuidado operativo
+
+- Antes de cargar documentos reales de varios clientes, decidir si se habilita temporalmente `CREDITO_HUB_ALLOW_REAL_DATA=true` y bajo que excepcion documentada, o cerrar primero cifrado V1 (Plan 012).
+- Validar claves IA en Vercel (`AI_PROVIDER`, `GROQ_API_KEY` y/o `ANTHROPIC_API_KEY`). Sin key, el flujo sigue en mock/demo.
+- Prueba funcional pendiente en navegador con usuario contador + entidad + documentos demo/reales autorizados.

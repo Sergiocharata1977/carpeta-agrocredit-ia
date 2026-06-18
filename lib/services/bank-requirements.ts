@@ -85,6 +85,44 @@ export async function getRequirementTemplate(templateId: string): Promise<BankRe
   return mapTemplate(snap.id, snap.data() ?? {})
 }
 
+export async function updateRequirementTemplate(input: {
+  templateId: string
+  actorUid: string
+  actorOrganizationId: string | null
+  bankName?: string
+  productName?: string
+  requirements?: BankRequirement[]
+}): Promise<BankRequirementTemplate> {
+  const db = getAdminDb()
+  const ref = db.collection(COLLECTIONS.BANK_REQUIREMENT_TEMPLATES).doc(input.templateId)
+  const snap = await ref.get()
+  if (!snap.exists) throw new Error("Template no encontrado")
+  const current = mapTemplate(snap.id, snap.data() ?? {})
+  if (current.status === "published") {
+    throw new Error("No se puede editar un template publicado")
+  }
+
+  const patch: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() }
+  if (input.bankName !== undefined) patch.bankName = input.bankName
+  if (input.productName !== undefined) patch.productName = input.productName || undefined
+  if (input.requirements !== undefined) patch.requirements = input.requirements
+
+  await ref.update(patch)
+  await writeAuditLog({
+    actorUid: input.actorUid,
+    actorOrganizationId: input.actorOrganizationId,
+    action: "bank_requirement.created",
+    targetType: "bank_requirement_template",
+    targetId: input.templateId,
+    metadata: {
+      status: "draft_updated",
+      requirementCount: input.requirements?.length ?? current.requirements.length,
+    },
+  })
+  const updated = await ref.get()
+  return mapTemplate(updated.id, updated.data() ?? {})
+}
+
 export async function publishRequirementTemplate(input: {
   templateId: string
   actorUid: string

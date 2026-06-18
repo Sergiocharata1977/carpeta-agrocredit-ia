@@ -74,7 +74,7 @@ Pantalla: Productor → pestaña **"Revisión"** (`/app/contador/productores/[id
 - [ ] "Corregir" abre input + motivo, "Guardar" persiste el valor corregido.
 - [ ] "Rechazar" descarta el campo (con motivo opcional).
 - [ ] Cada acción recalcula el perfil canónico y queda en `audit_logs`.
-- [ ] ⚠️ **Visor de documento:** el panel "Documento origen" es **placeholder** (no renderiza el PDF/imagen todavía). Pendiente.
+- [ ] ✅ **Visor de documento:** el panel "Documento origen" ya renderiza PDF/imagen con URL firmada de 5 minutos desde `review/documents/[docId]/preview`; Excel/otros ofrecen abrir/descargar.
 - [ ] Aislamiento: un contador sin vínculo con ese productor recibe error (no ve campos).
 
 ---
@@ -87,7 +87,7 @@ Pantalla: Entidad → **"Requisitos"** (`/app/entidad/requisitos`, sidebar).
 - [ ] Permite cargar Banco, Producto y subir un PDF de requisitos.
 - [ ] "Parsear PDF" muestra la propuesta de requisitos generada por IA.
 - [ ] "Publicar" cambia el template a `published`.
-- [ ] ⚠️ **Requisitos no editables:** la propuesta se muestra pero no se puede editar antes de publicar. Pendiente.
+- [ ] ✅ **Requisitos editables:** la propuesta IA se puede corregir antes de publicar: nombre, descripción, categoría, obligatorio, períodos, vigencia, responsable, formatos y reglas.
 - [ ] Aislamiento: una entidad no puede publicar/ver templates de **otra** entidad (corregido — se liga a la org de la sesión).
 
 ---
@@ -96,9 +96,9 @@ Pantalla: Entidad → **"Requisitos"** (`/app/entidad/requisitos`, sidebar).
 
 Pantalla: Entidad → carpeta autorizada → **"Cumplimiento"** (`/app/entidad/carpetas/[targetOrgId]/cumplimiento`).
 
-- [ ] ⛔ **Acceso por navegación.** HOY NO hay link a esta pantalla; solo se llega tecleando la URL. **Fix:** agregar enlace "Cumplimiento" desde la vista de carpeta de la entidad.
-- [ ] (Entrando por URL) la pantalla pide un `requirementTemplateId`.
-- [ ] ⚠️ **Hay que pegar el ID del template a mano** (no hay selector). Pendiente UX.
+- [ ] ✅ **Acceso por navegación.** La vista de carpeta de la entidad muestra el botón "Ver cumplimiento".
+- [ ] La pantalla carga los templates publicados de la entidad.
+- [ ] ✅ **Selector de template:** ya no hay que pegar el ID a mano; se elige desde un selector.
 - [ ] "Cruzar" crea la `CreditApplication` y corre el matching (`POST credit-applications` + `POST .../match`).
 - [ ] La matriz muestra cada requisito con su `MatchStatus` (badge), explicación y documento.
 - [ ] Aislamiento: la entidad solo puede cruzar legajos sobre los que tiene **grant vigente** (corregido).
@@ -121,10 +121,10 @@ Pantalla: Entidad → carpeta autorizada → **"Cumplimiento"** (`/app/entidad/c
 | # | Severidad | Qué falta | Dónde |
 |---|-----------|-----------|-------|
 | 1 | ✅ Resuelto | Procesamiento on-demand con botón "Procesar con IA" (ya no depende del cron) | `JobProgressList` + `jobs/process-now` |
-| 2 | ⛔ Bloqueante | Link de navegación a "Cumplimiento" | vista carpeta entidad |
-| 3 | ⚠️ UX | Visor real del documento en Revisión (hoy placeholder) | `ReviewWorkbench` |
-| 4 | ⚠️ UX | Requisitos editables antes de publicar | `RequirementBuilder` |
-| 5 | ⚠️ UX | Selector de template en la matriz (hoy ID a mano) | `ComplianceMatrix` |
+| 2 | ✅ Resuelto | Link de navegación a "Cumplimiento" | vista carpeta entidad |
+| 3 | ✅ Resuelto | Visor real del documento en Revisión | `ReviewWorkbench` + preview firmado |
+| 4 | ✅ Resuelto | Requisitos editables antes de publicar | `RequirementBuilder` |
+| 5 | ✅ Resuelto | Selector de template en la matriz | `ComplianceMatrix` |
 | 6 | ℹ️ Config | Clave de IA en prod (sin ella, modo mock/demo) | env |
 
 > Queda 1 bloqueante de navegación (#2). Los ⚠️ son mejoras de UX; el flujo funciona sin ellas.

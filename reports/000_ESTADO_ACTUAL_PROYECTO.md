@@ -284,7 +284,7 @@ Revision manual post-cierre. Se cerraron 3 brechas de autorizacion en rutas Cred
 Ver checklist completo en `reports/015_CHECKLIST_VERIFICACION_FRONTEND.md`.
 
 1. **Worker sin cron.** `vercel.json` solo agenda `expire-grants`. `jobs/process` no se dispara solo: los documentos cargados quedan en `queued` y el pipeline IA nunca avanza en la UI. Fix pendiente: agregar el cron (segun plan Vercel) o un disparador manual.
-2. **`cumplimiento` sin navegacion.** La ruta `/app/entidad/carpetas/[targetOrgId]/cumplimiento` existe pero ningun link la enlaza; solo se llega por URL directa.
-3. **Visor de documento es placeholder.** `ReviewWorkbench` no renderiza el PDF/imagen origen (panel informativo).
-4. **Requisitos no editables.** `RequirementBuilder` muestra la propuesta IA pero no permite editarla antes de publicar.
-5. **Matriz pide template ID a mano.** `ComplianceMatrix` requiere pegar el `requirementTemplateId`; no hay selector.
+2. **`cumplimiento` enlazado.** La vista read-only de carpeta para entidad muestra el boton "Ver cumplimiento".
+3. **Visor de documento real en revision.** `ReviewWorkbench` renderiza PDF/imagen con URL firmada por endpoint server-side validado.
+4. **Requisitos editables.** `RequirementBuilder` permite corregir la propuesta IA antes de publicar.
+5. **Matriz con selector.** `ComplianceMatrix` carga templates publicados de la entidad y ya no pide pegar el `requirementTemplateId` a mano.
