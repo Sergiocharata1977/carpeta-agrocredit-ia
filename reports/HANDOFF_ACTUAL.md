@@ -1041,9 +1041,22 @@ Pedido: implementar los pendientes marcados del analisis del proyecto, priorizan
 - `pnpm check:security-shape`: OK.
 - `pnpm test`: OK (9 archivos, 138 tests).
 
+### Continuacion 2026-06-21 - Lecturas sensibles por API
+
+- Se agregaron `GET` a APIs server-side de `periods`, `balance-sheets`, `income-statements`, `tax-documents`, `assets`, `liabilities` y `documents`.
+- Los servicios cliente leen por `authFetch` y ya no consultan Firestore directo para colecciones sensibles de legajo.
+- Las paginas de carpeta/impuestos usan `getPeriodById` en lugar de `getDoc` directo para `accounting_periods`.
+- `firestore.rules` quedo `read/write=false` para colecciones sensibles de legajo.
+- `server-folder-writes.ts` separa lectura y escritura: productor puede leer su carpeta; solo contador/admin modifica.
+
+### Validacion continuacion
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test`: OK (9 archivos, 138 tests).
+
 ### Pendientes reales
 
-- Migrar lecturas directas de Firestore de carpeta a APIs server-side; hoy se mantienen por compatibilidad para no romper dashboards.
 - Ejecutar Plan 012 cifrado V1 real antes de datos reales masivos.
 - Desplegar `firestore.rules` y `storage.rules`.
 - Prueba funcional en navegador con usuario contador + entidad + documentos autorizados.

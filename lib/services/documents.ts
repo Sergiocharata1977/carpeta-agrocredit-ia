@@ -57,14 +57,9 @@ export async function getDocumentsForPeriod(
   producerId: string,
   periodId: string
 ): Promise<DocumentMetadata[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-
-  const q = query(
-    collection(db, COLLECTIONS.DOCUMENTS),
-    where("producerId", "==", producerId),
-    where("periodId", "==", periodId)
+  const response = await authFetch(
+    `/api/folders/documents?targetOrganizationId=${encodeURIComponent(producerId)}&periodId=${encodeURIComponent(periodId)}`,
   )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as DocumentMetadata))
+  const payload = await parseApiResponse<{ documents: DocumentMetadata[] }>(response)
+  return payload.documents
 }

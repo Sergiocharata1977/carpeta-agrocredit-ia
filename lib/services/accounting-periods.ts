@@ -18,26 +18,17 @@ import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 export async function getPeriodsForProducer(
   producerId: string
 ): Promise<AccountingPeriod[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-
-  const q = query(
-    collection(db, COLLECTIONS.ACCOUNTING_PERIODS),
-    where("producerId", "==", producerId)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as AccountingPeriod))
+  const response = await authFetch(`/api/accounting/periods?targetOrganizationId=${encodeURIComponent(producerId)}`)
+  const payload = await parseApiResponse<{ periods: AccountingPeriod[] }>(response)
+  return payload.periods
 }
 
 export async function getPeriodById(
   periodId: string
 ): Promise<AccountingPeriod | null> {
-  const db = getFirebaseDb()
-  if (!db) return null
-
-  const snap = await getDoc(doc(db, COLLECTIONS.ACCOUNTING_PERIODS, periodId))
-  if (!snap.exists()) return null
-  return { id: snap.id, ...snap.data() } as AccountingPeriod
+  const response = await authFetch(`/api/accounting/periods/${periodId}`)
+  const payload = await parseApiResponse<{ period: AccountingPeriod }>(response)
+  return payload.period
 }
 
 export async function createPeriod(

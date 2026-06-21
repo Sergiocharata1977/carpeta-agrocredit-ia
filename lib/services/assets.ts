@@ -15,29 +15,20 @@ import type { Asset } from "@/types/assets"
 import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 
 export async function getAssetsForProducer(producerId: string): Promise<Asset[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-  const q = query(
-    collection(db, COLLECTIONS.ASSETS),
-    where("producerId", "==", producerId)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asset))
+  const response = await authFetch(`/api/folders/assets?targetOrganizationId=${encodeURIComponent(producerId)}`)
+  const payload = await parseApiResponse<{ assets: Asset[] }>(response)
+  return payload.assets
 }
 
 export async function getAssetsByType(
   producerId: string,
   assetType: Asset["assetType"]
 ): Promise<Asset[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-  const q = query(
-    collection(db, COLLECTIONS.ASSETS),
-    where("producerId", "==", producerId),
-    where("assetType", "==", assetType)
+  const response = await authFetch(
+    `/api/folders/assets?targetOrganizationId=${encodeURIComponent(producerId)}&assetType=${encodeURIComponent(assetType)}`,
   )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asset))
+  const payload = await parseApiResponse<{ assets: Asset[] }>(response)
+  return payload.assets
 }
 
 export async function createAsset(
@@ -73,29 +64,14 @@ export async function deleteAsset(assetId: string): Promise<void> {
 }
 
 export async function getAssetsForOrganization(organizationId: string): Promise<Asset[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-  const q = query(
-    collection(db, COLLECTIONS.ASSETS),
-    where("organizationId", "==", organizationId)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asset))
+  return getAssetsForProducer(organizationId)
 }
 
 export async function getAssetsByTypeForOrganization(
   organizationId: string,
   assetType: Asset["assetType"]
 ): Promise<Asset[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-  const q = query(
-    collection(db, COLLECTIONS.ASSETS),
-    where("organizationId", "==", organizationId),
-    where("assetType", "==", assetType)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Asset))
+  return getAssetsByType(organizationId, assetType)
 }
 
 export function getTotalAssetValue(assets: Asset[]): { ARS: number; USD: number } {

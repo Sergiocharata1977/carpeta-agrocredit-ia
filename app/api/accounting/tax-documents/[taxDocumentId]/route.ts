@@ -3,7 +3,7 @@ import { z } from "zod"
 import { verifyRequestSession, requireActiveOrg, getAuthErrorResponse } from "@/lib/auth/server-session"
 import { createTaxDocumentSchema } from "@/lib/schemas/accounting"
 import { COLLECTIONS } from "@/lib/firebase/collections"
-import { updateFolderDoc } from "@/lib/services/server-folder-writes"
+import { getFolderDoc, updateFolderDoc } from "@/lib/services/server-folder-writes"
 
 const updateTaxDocumentSchema = createTaxDocumentSchema.omit({
   producerId: true,
@@ -12,6 +12,22 @@ const updateTaxDocumentSchema = createTaxDocumentSchema.omit({
 }).partial().extend({
   validationStatus: z.enum(["draft", "pending_review", "validated", "observed", "rejected"]).optional(),
 })
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ taxDocumentId: string }> }) {
+  try {
+    const session = await verifyRequestSession(request)
+    requireActiveOrg(session)
+    const { taxDocumentId } = await params
+    const taxDocument = await getFolderDoc({
+      session,
+      collectionName: COLLECTIONS.TAX_DOCUMENTS,
+      docId: taxDocumentId,
+    })
+    return Response.json({ taxDocument })
+  } catch (error) {
+    return getAuthErrorResponse(error)
+  }
+}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taxDocumentId: string }> }) {
   try {

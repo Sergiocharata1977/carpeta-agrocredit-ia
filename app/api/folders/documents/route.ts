@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server"
 import { verifyRequestSession, requireActiveOrg, getAuthErrorResponse } from "@/lib/auth/server-session"
-import { createBalanceSheetSchema } from "@/lib/schemas/accounting"
 import { COLLECTIONS } from "@/lib/firebase/collections"
-import { addFolderDoc, listFolderDocs } from "@/lib/services/server-folder-writes"
+import { listFolderDocs } from "@/lib/services/server-folder-writes"
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,31 +12,13 @@ export async function GET(request: NextRequest) {
     if (!targetOrganizationId || !periodId) {
       return Response.json({ error: "targetOrganizationId y periodId requeridos" }, { status: 400 })
     }
-    const balanceSheets = await listFolderDocs({
+    const documents = await listFolderDocs({
       session,
-      collectionName: COLLECTIONS.BALANCE_SHEETS,
+      collectionName: COLLECTIONS.DOCUMENTS,
       targetOrganizationId,
       filters: [["periodId", "==", periodId]],
     })
-    return Response.json({ balanceSheets })
-  } catch (error) {
-    return getAuthErrorResponse(error)
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await verifyRequestSession(request)
-    requireActiveOrg(session)
-    const input = createBalanceSheetSchema.parse(await request.json())
-    const id = await addFolderDoc({
-      session,
-      collectionName: COLLECTIONS.BALANCE_SHEETS,
-      data: { ...input, validationStatus: "draft" },
-      auditAction: "balance_sheet.created",
-      targetType: "balance_sheet",
-    })
-    return Response.json({ id }, { status: 201 })
+    return Response.json({ documents })
   } catch (error) {
     return getAuthErrorResponse(error)
   }

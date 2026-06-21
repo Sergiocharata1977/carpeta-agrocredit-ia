@@ -50,7 +50,7 @@ export default function BienesPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
 
-  const organizationId = user?.defaultOrganizationId ?? ""
+  const organizationId = producerId
   const createdBy = user?.uid ?? ""
 
   const fetchData = useCallback(async () => {

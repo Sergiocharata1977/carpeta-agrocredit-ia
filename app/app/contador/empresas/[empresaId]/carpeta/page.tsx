@@ -14,6 +14,7 @@ import { StatementImportUploader } from "@/components/accounting/StatementImport
 import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { useSession } from "@/lib/auth/session"
+import { getPeriodById } from "@/lib/services/accounting-periods"
 import { getBalanceSheetsForPeriod } from "@/lib/services/balance-sheets"
 import { getIncomeStatementsForPeriod } from "@/lib/services/income-statements"
 import type { AccountingPeriod, BalanceSheet, IncomeStatement } from "@/types/accounting"
@@ -53,13 +54,7 @@ export default function EmpresaCarpetaPage({ params }: PageProps) {
     async function loadPeriodData() {
       setLoadingPeriodData(true)
       try {
-        const db = getFirebaseDb()
-        if (db) {
-          const periodSnap = await getDoc(doc(db, COLLECTIONS.ACCOUNTING_PERIODS, selectedPeriodId!))
-          if (periodSnap.exists()) {
-            setSelectedPeriod({ id: periodSnap.id, ...periodSnap.data() } as AccountingPeriod)
-          }
-        }
+        setSelectedPeriod(await getPeriodById(selectedPeriodId!))
 
         const [bs, income] = await Promise.all([
           getBalanceSheetsForPeriod(empresaId, selectedPeriodId!),

@@ -23,16 +23,11 @@ export async function getTaxDocumentsForPeriod(
   producerId: string,
   periodId: string
 ): Promise<TaxDocument[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-
-  const q = query(
-    collection(db, COLLECTIONS.TAX_DOCUMENTS),
-    where("producerId", "==", producerId),
-    where("periodId", "==", periodId)
+  const response = await authFetch(
+    `/api/accounting/tax-documents?targetOrganizationId=${encodeURIComponent(producerId)}&periodId=${encodeURIComponent(periodId)}`,
   )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as TaxDocument))
+  const payload = await parseApiResponse<{ taxDocuments: TaxDocument[] }>(response)
+  return payload.taxDocuments
 }
 
 export async function createTaxDocument(

@@ -17,6 +17,7 @@ import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { useSession } from "@/lib/auth/session"
 import { getBalanceSheetsForPeriod } from "@/lib/services/balance-sheets"
+import { getPeriodById } from "@/lib/services/accounting-periods"
 import { getIncomeStatementsForPeriod } from "@/lib/services/income-statements"
 import { getTaxDocumentsForPeriod } from "@/lib/services/tax-documents"
 import type { Producer } from "@/types/producer"
@@ -78,13 +79,7 @@ export default function CarpetaPage({ params }: CarpetaPageProps) {
     async function loadPeriodData() {
       setLoadingPeriodData(true)
       try {
-        const db = getFirebaseDb()
-        if (db) {
-          const periodSnap = await getDoc(doc(db, COLLECTIONS.ACCOUNTING_PERIODS, selectedPeriodId!))
-          if (periodSnap.exists()) {
-            setSelectedPeriod({ id: periodSnap.id, ...periodSnap.data() } as AccountingPeriod)
-          }
-        }
+        setSelectedPeriod(await getPeriodById(selectedPeriodId!))
 
         const [bs, income, taxes] = await Promise.all([
           getBalanceSheetsForPeriod(activeEntityId, selectedPeriodId!),

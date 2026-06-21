@@ -92,38 +92,31 @@ service cloud.firestore {
 
     // ─── CARPETA CONTABLE ────────────────────────────────────────────────────────
     match /accounting_periods/{docId} {
-      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId) || canReadFolderData(resource.data.organizationId);
-      allow create, update, delete: if false; // solo via Admin SDK server-side
+      allow read, write: if false; // solo via Admin SDK server-side
     }
 
     match /balance_sheets/{docId} {
-      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId) || canReadFolderData(resource.data.organizationId);
-      allow create, update, delete: if false; // solo via Admin SDK server-side
+      allow read, write: if false; // solo via Admin SDK server-side
     }
 
     match /income_statements/{docId} {
-      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId) || canReadFolderData(resource.data.organizationId);
-      allow create, update, delete: if false; // solo via Admin SDK server-side
+      allow read, write: if false; // solo via Admin SDK server-side
     }
 
     match /tax_documents/{docId} {
-      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId) || canReadFolderData(resource.data.organizationId);
-      allow create, update, delete: if false; // solo via Admin SDK server-side
+      allow read, write: if false; // solo via Admin SDK server-side
     }
 
     match /assets/{docId} {
-      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId) || canReadFolderData(resource.data.organizationId);
-      allow create, update, delete: if false; // solo via Admin SDK server-side
+      allow read, write: if false; // solo via Admin SDK server-side
     }
 
     match /liabilities/{docId} {
-      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId) || canReadFolderData(resource.data.organizationId);
-      allow create, update, delete: if false; // solo via Admin SDK server-side
+      allow read, write: if false; // solo via Admin SDK server-side
     }
 
     match /documents/{docId} {
-      allow read: if canReadFolderData(resource.data.folderOwnerOrganizationId) || canReadFolderData(resource.data.organizationId);
-      allow create, update, delete: if false; // solo via Admin SDK server-side
+      allow read, write: if false; // solo via Admin SDK server-side
     }
 
     // ─── AUTORIZACIONES ──────────────────────────────────────────────────────────

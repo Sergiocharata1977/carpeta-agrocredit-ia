@@ -10,6 +10,7 @@ import { TaxGridForm } from "@/components/accounting/TaxGridForm"
 import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { useSession } from "@/lib/auth/session"
+import { getPeriodById } from "@/lib/services/accounting-periods"
 import { getTaxDocumentsForPeriod } from "@/lib/services/tax-documents"
 import type { AccountingPeriod, TaxDocument } from "@/types/accounting"
 
@@ -40,13 +41,7 @@ export default function EmpresaImpuestosPage({ params }: PageProps) {
     async function loadData() {
       setLoadingPeriodData(true)
       try {
-        const db = getFirebaseDb()
-        if (db) {
-          const snap = await getDoc(doc(db, COLLECTIONS.ACCOUNTING_PERIODS, selectedPeriodId!))
-          if (snap.exists()) {
-            setSelectedPeriod({ id: snap.id, ...snap.data() } as AccountingPeriod)
-          }
-        }
+        setSelectedPeriod(await getPeriodById(selectedPeriodId!))
         const taxes = await getTaxDocumentsForPeriod(empresaId, selectedPeriodId!)
         setTaxDocuments(taxes)
       } catch (err) {

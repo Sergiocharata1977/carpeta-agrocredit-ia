@@ -24,27 +24,19 @@ export async function getIncomeStatementsForPeriod(
   producerId: string,
   periodId: string
 ): Promise<IncomeStatement[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-
-  const q = query(
-    collection(db, COLLECTIONS.INCOME_STATEMENTS),
-    where("producerId", "==", producerId),
-    where("periodId", "==", periodId)
+  const response = await authFetch(
+    `/api/accounting/income-statements?targetOrganizationId=${encodeURIComponent(producerId)}&periodId=${encodeURIComponent(periodId)}`,
   )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as IncomeStatement))
+  const payload = await parseApiResponse<{ incomeStatements: IncomeStatement[] }>(response)
+  return payload.incomeStatements
 }
 
 export async function getIncomeStatementById(
   id: string
 ): Promise<IncomeStatement | null> {
-  const db = getFirebaseDb()
-  if (!db) return null
-
-  const snap = await getDoc(doc(db, COLLECTIONS.INCOME_STATEMENTS, id))
-  if (!snap.exists()) return null
-  return { id: snap.id, ...snap.data() } as IncomeStatement
+  const response = await authFetch(`/api/accounting/income-statements/${id}`)
+  const payload = await parseApiResponse<{ incomeStatement: IncomeStatement }>(response)
+  return payload.incomeStatement
 }
 
 export async function createIncomeStatement(

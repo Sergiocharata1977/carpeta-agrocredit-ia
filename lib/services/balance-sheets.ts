@@ -22,27 +22,19 @@ export async function getBalanceSheetsForPeriod(
   producerId: string,
   periodId: string
 ): Promise<BalanceSheet[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-
-  const q = query(
-    collection(db, COLLECTIONS.BALANCE_SHEETS),
-    where("producerId", "==", producerId),
-    where("periodId", "==", periodId)
+  const response = await authFetch(
+    `/api/accounting/balance-sheets?targetOrganizationId=${encodeURIComponent(producerId)}&periodId=${encodeURIComponent(periodId)}`,
   )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as BalanceSheet))
+  const payload = await parseApiResponse<{ balanceSheets: BalanceSheet[] }>(response)
+  return payload.balanceSheets
 }
 
 export async function getBalanceSheetById(
   id: string
 ): Promise<BalanceSheet | null> {
-  const db = getFirebaseDb()
-  if (!db) return null
-
-  const snap = await getDoc(doc(db, COLLECTIONS.BALANCE_SHEETS, id))
-  if (!snap.exists()) return null
-  return { id: snap.id, ...snap.data() } as BalanceSheet
+  const response = await authFetch(`/api/accounting/balance-sheets/${id}`)
+  const payload = await parseApiResponse<{ balanceSheet: BalanceSheet }>(response)
+  return payload.balanceSheet
 }
 
 export async function createBalanceSheet(

@@ -2,7 +2,23 @@ import { NextRequest } from "next/server"
 import { verifyRequestSession, requireActiveOrg, getAuthErrorResponse } from "@/lib/auth/server-session"
 import { updateBalanceSheetSchema } from "@/lib/schemas/accounting"
 import { COLLECTIONS } from "@/lib/firebase/collections"
-import { updateFolderDoc } from "@/lib/services/server-folder-writes"
+import { getFolderDoc, updateFolderDoc } from "@/lib/services/server-folder-writes"
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ balanceSheetId: string }> }) {
+  try {
+    const session = await verifyRequestSession(request)
+    requireActiveOrg(session)
+    const { balanceSheetId } = await params
+    const balanceSheet = await getFolderDoc({
+      session,
+      collectionName: COLLECTIONS.BALANCE_SHEETS,
+      docId: balanceSheetId,
+    })
+    return Response.json({ balanceSheet })
+  } catch (error) {
+    return getAuthErrorResponse(error)
+  }
+}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ balanceSheetId: string }> }) {
   try {

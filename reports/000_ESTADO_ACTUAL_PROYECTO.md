@@ -316,9 +316,14 @@ Validacion:
 - `pnpm check:security-shape`: OK.
 - `pnpm test`: OK, 9 archivos / 138 tests.
 
+Continuacion aplicada:
+
+- Lecturas directas de Firestore de carpeta migradas a APIs server-side.
+- `firestore.rules` queda `read/write=false` para colecciones sensibles de legajo.
+- El helper server-side separa permisos de lectura y escritura: productor puede leer su propia carpeta; solo contador habilitado o admin puede modificar.
+
 Pendientes que siguen:
 
-- Migrar lecturas directas de Firestore de carpeta a APIs server-side para poder retirar la lectura amplia por rol contador.
 - Ejecutar Plan 012 de cifrado V1 real de archivos fuente antes de habilitar datos reales masivos.
 - Desplegar `firestore.rules` y `storage.rules`.
 - Prueba funcional en navegador con contador + entidad + documentos demo/reales autorizados.

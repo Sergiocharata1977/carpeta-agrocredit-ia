@@ -15,25 +15,13 @@ import type { Liability } from "@/types/assets"
 import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 
 export async function getLiabilitiesForProducer(producerId: string): Promise<Liability[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-  const q = query(
-    collection(db, COLLECTIONS.LIABILITIES),
-    where("producerId", "==", producerId)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Liability))
+  const response = await authFetch(`/api/folders/liabilities?targetOrganizationId=${encodeURIComponent(producerId)}`)
+  const payload = await parseApiResponse<{ liabilities: Liability[] }>(response)
+  return payload.liabilities
 }
 
 export async function getLiabilitiesForOrganization(organizationId: string): Promise<Liability[]> {
-  const db = getFirebaseDb()
-  if (!db) return []
-  const q = query(
-    collection(db, COLLECTIONS.LIABILITIES),
-    where("organizationId", "==", organizationId)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Liability))
+  return getLiabilitiesForProducer(organizationId)
 }
 
 export async function createLiability(
