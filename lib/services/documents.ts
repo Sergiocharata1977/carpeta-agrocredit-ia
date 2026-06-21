@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import type { ValidationStatus } from "@/types/accounting"
+import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 
 export interface DocumentMetadata {
   id: string
@@ -18,7 +19,7 @@ export interface DocumentMetadata {
   periodId: string
   documentType: string
   storagePath: string
-  downloadUrl: string
+  downloadUrl: string | null
   fileName: string
   fileSize: number
   mimeType: string
@@ -35,26 +36,21 @@ export async function uploadDocument(
     "id" | "storagePath" | "downloadUrl" | "createdAt"
   >
 ): Promise<DocumentMetadata> {
-  const storage = getFirebaseStorage()
-  const db = getFirebaseDb()
-  if (!storage || !db) throw new Error("Firebase no configurado")
+  const formData = new FormData()
+  formData.set("file", file)
+  formData.set("producerId", metadata.producerId)
+  formData.set("organizationId", metadata.organizationId)
+  formData.set("periodId", metadata.periodId)
+  formData.set("documentType", metadata.documentType)
+  formData.set("fileName", metadata.fileName)
+  formData.set("mimeType", metadata.mimeType)
 
-  const docId = crypto.randomUUID()
-  const storagePath = `orgs/${metadata.organizationId}/producers/${metadata.producerId}/periods/${metadata.periodId}/${metadata.documentType}/${docId}-${metadata.fileName}`
-
-  const storageRef = ref(storage, storagePath)
-  await uploadBytes(storageRef, file, { contentType: metadata.mimeType })
-  const downloadUrl = await getDownloadURL(storageRef)
-
-  const docData = {
-    ...metadata,
-    storagePath,
-    downloadUrl,
-    createdAt: serverTimestamp(),
-  }
-
-  const docRef = await addDoc(collection(db, COLLECTIONS.DOCUMENTS), docData)
-  return { id: docRef.id, ...docData, createdAt: new Date().toISOString() }
+  const response = await authFetch("/api/folders/documents/upload", {
+    method: "POST",
+    body: formData,
+  })
+  const payload = await parseApiResponse<{ document: DocumentMetadata }>(response)
+  return payload.document
 }
 
 export async function getDocumentsForPeriod(

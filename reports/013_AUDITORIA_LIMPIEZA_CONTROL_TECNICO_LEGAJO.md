@@ -9,8 +9,8 @@ Agro-Credit queda orientado comercialmente como **Legajo** y el riesgo real hoy 
 | ID | Severidad | archivo:linea | Estado | Fix / criterio de cierre |
 | --- | --- | --- | --- | --- |
 | SEG-01 | Critico | `app/api/auth/setup-claims/route.ts:21` | Corregido | El endpoint ya no permite que el propio usuario se reasigne claims. Solo `admin_platform` puede operar y el rol solicitado debe coincidir con la membership activa. Cierre: prueba negativa usuario no-admin recibe 403. |
-| SEG-02 | Alto | `firestore.rules:51`, `firestore.rules:94` | Pendiente controlado | Las rules permiten a cualquier contador leer/escribir colecciones de carpeta por rol, sin validar vinculo al productor. No se endurecio aun porque hay servicios cliente activos. Cierre: migrar CRUD de carpeta a APIs server-side y luego dejar Firestore write=false para cliente. |
-| SEG-03 | Alto | `storage.rules:26` | Pendiente controlado | Storage permite lectura directa por rol si se conoce la ruta. La vista segura ya usa endpoint con URL firmada, pero upload/lectura cliente siguen existiendo. Cierre: mover uploads/downloads a APIs con Admin SDK, grants y URLs firmadas cortas; despues `allow read, write: if false`. |
+| SEG-02 | Alto | `firestore.rules:51`, `firestore.rules:94` | Parcialmente corregido 2026-06-21 | Las escrituras de carpeta contable/documental ya pasan por APIs server-side y las rules quedaron `write=false` para `accounting_periods`, `balance_sheets`, `income_statements`, `tax_documents`, `assets`, `liabilities` y `documents`. Pendiente: migrar lecturas cliente a APIs para retirar la lectura amplia por rol contador. |
+| SEG-03 | Alto | `storage.rules:26` | Corregido 2026-06-21 | Storage de legajo y statement-imports quedo `read/write=false`; upload y descarga usan Admin SDK y URLs firmadas desde APIs. Cierre operativo: desplegar `storage.rules` y validar descarga en navegador. |
 | SEG-04 | Medio | `app/api/hub/producers/route.ts:34`, `app/api/hub/credit-folders/[producerId]/route.ts:42` | Corregido | Los endpoints hub consultaban campos legacy (`granteeOrganizationId`, `producerOrganizationId`) que no existen en el modelo canonico. Se cambio a `grantedToOrganizationId` y `targetOrganizationId`. Cierre: prueba con API key y grant aprobado devuelve productores/carpeta. |
 | SEG-05 | Medio | `app/api/cron/expire-grants/route.ts:8` | Mantener | Cron exige `CRON_SECRET` via Bearer. Cierre: verificar env en Vercel y rotacion documentada. |
 
@@ -48,8 +48,8 @@ Para Legajo, el camino mas seguro es una unica frontera server-side para datos s
 
 | Prioridad | Pendiente | Criterio de cierre |
 | --- | --- | --- |
-| P1 | Migrar CRUD de carpeta contable/documental a APIs server-side. | Ningun componente usa `addDoc`, `updateDoc`, `deleteDoc`, `uploadBytes` directo para datos de legajo. |
-| P1 | Endurecer `firestore.rules` y `storage.rules` despues de la migracion. | Colecciones de legajo y rutas `orgs/{orgId}/producers/{producerId}` quedan sin acceso directo cliente salvo excepciones documentadas. |
+| P1 | Migrar lecturas de carpeta contable/documental a APIs server-side. | Ningun componente lee colecciones sensibles de legajo directo desde Firestore; las rules pueden quitar lectura amplia por rol contador. |
+| P1 | Desplegar y validar reglas endurecidas. | `firestore.rules` y `storage.rules` desplegadas; upload/descarga por API funcionan en navegador con contador autorizado. |
 | P2 | Agregar tests negativos para `setup-claims`. | Usuario no-admin no puede cambiar su rol; admin no puede setear rol distinto a membership activa. |
 | P2 | Test de API hub con grant aprobado y vencido. | Grant vigente devuelve carpeta; grant vencido devuelve 403/lista vacia. |
 | P3 | Revisar dependencias UI no usadas y duplicacion de componentes shadcn. | Reporte de deps/componentes con accion mantener/eliminar, sin borrar hasta confirmar uso. |
@@ -57,4 +57,3 @@ Para Legajo, el camino mas seguro es una unica frontera server-side para datos s
 ## Regla anti-recaida
 
 Documentada en `CLAUDE.md`: no habilitar lectura/escritura directa por rol en Firestore/Storage para datos de legajo. El acceso de contadores y entidades debe pasar por APIs server-side con vinculo, grant, scope y expiracion validados.
-

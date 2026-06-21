@@ -1011,3 +1011,39 @@ Pedido del dueño antes de cargar documentacion real con un contador amigo: cerr
 - Antes de cargar documentos reales de varios clientes, decidir si se habilita temporalmente `CREDITO_HUB_ALLOW_REAL_DATA=true` y bajo que excepcion documentada, o cerrar primero cifrado V1 (Plan 012).
 - Validar claves IA en Vercel (`AI_PROVIDER`, `GROQ_API_KEY` y/o `ANTHROPIC_API_KEY`). Sin key, el flujo sigue en mock/demo.
 - Prueba funcional pendiente en navegador con usuario contador + entidad + documentos demo/reales autorizados.
+
+---
+
+## Cierre seguridad escrituras/uploads de legajo (2026-06-21)
+
+Pedido: implementar los pendientes marcados del analisis del proyecto, priorizando seguridad/lanzamiento.
+
+### Implementado
+
+- Mutaciones de carpeta contable/documental migradas a APIs server-side con Admin SDK:
+  - `app/api/accounting/periods/*`
+  - `app/api/accounting/balance-sheets/*`
+  - `app/api/accounting/income-statements/*`
+  - `app/api/accounting/tax-documents/*`
+  - `app/api/folders/assets/*`
+  - `app/api/folders/liabilities/*`
+  - `app/api/folders/documents/upload`
+- `lib/services/*` mantiene interfaz de cliente pero crea/actualiza/borra/sube mediante `authFetch`.
+- Nuevo helper server-side `lib/services/server-folder-writes.ts` valida `assertCanManageAccountingFolder`, escribe `folderOwnerOrganizationId`, audita y opera Storage con Admin SDK.
+- `DocumentList` descarga documentos por endpoint firmado `/api/folders/[targetOrgId]/documents/[docId]/download`.
+- `firestore.rules`: escrituras directas bloqueadas para `accounting_periods`, `balance_sheets`, `income_statements`, `tax_documents`, `assets`, `liabilities`, `documents`.
+- `storage.rules`: legajo y statement-imports quedan `read/write=false`; acceso por APIs.
+- `.env.example` y Admin SDK agregan `FIREBASE_STORAGE_BUCKET`.
+
+### Validacion
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test`: OK (9 archivos, 138 tests).
+
+### Pendientes reales
+
+- Migrar lecturas directas de Firestore de carpeta a APIs server-side; hoy se mantienen por compatibilidad para no romper dashboards.
+- Ejecutar Plan 012 cifrado V1 real antes de datos reales masivos.
+- Desplegar `firestore.rules` y `storage.rules`.
+- Prueba funcional en navegador con usuario contador + entidad + documentos autorizados.

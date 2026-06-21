@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import type { Asset } from "@/types/assets"
+import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 
 export async function getAssetsForProducer(producerId: string): Promise<Asset[]> {
   const db = getFirebaseDb()
@@ -43,34 +44,32 @@ export async function createAsset(
   data: Omit<Asset, "id" | "createdAt" | "updatedAt">,
   createdBy: string
 ): Promise<string> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-  const ref = await addDoc(collection(db, COLLECTIONS.ASSETS), {
-    ...data,
-    createdBy,
-    documentIds: data.documentIds ?? [],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  void createdBy
+  const response = await authFetch("/api/folders/assets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...data, documentIds: data.documentIds ?? [] }),
   })
-  return ref.id
+  return (await parseApiResponse<{ id: string }>(response)).id
 }
 
 export async function updateAsset(
   assetId: string,
   data: Partial<Asset>
 ): Promise<void> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-  await updateDoc(doc(db, COLLECTIONS.ASSETS, assetId), {
-    ...data,
-    updatedAt: serverTimestamp(),
+  const response = await authFetch(`/api/folders/assets/${assetId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   })
+  await parseApiResponse<{ ok: boolean }>(response)
 }
 
 export async function deleteAsset(assetId: string): Promise<void> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-  await deleteDoc(doc(db, COLLECTIONS.ASSETS, assetId))
+  const response = await authFetch(`/api/folders/assets/${assetId}`, {
+    method: "DELETE",
+  })
+  await parseApiResponse<{ ok: boolean }>(response)
 }
 
 export async function getAssetsForOrganization(organizationId: string): Promise<Asset[]> {

@@ -11,37 +11,16 @@ service firebase.storage {
       return isAuthenticated() && role in request.auth.token.get('roles', []);
     }
 
-    // Archivos fuente de importaciones OCR/IA (privados, solo lectura autenticada)
+    // Archivos fuente de importaciones OCR/IA. Se sirven por APIs server-side.
     match /orgs/{orgId}/producers/{producerId}/periods/{periodId}/statement-imports/{fileName} {
-      allow read: if isAuthenticated() && (
-        hasRole('admin_platform') ||
-        hasRole('accountant') ||
-        hasRole('accounting_firm_admin')
-      );
-      allow write: if false; // solo via Admin SDK server-side
+      allow read, write: if false;
     }
 
-    // Documentos de productores organizados por organización
-    // Ruta: orgs/{orgId}/producers/{producerId}/periods/{periodId}/{docType}/{filename}
+    // Documentos privados del legajo. Upload y descarga pasan por Admin SDK + URL firmada.
     match /orgs/{orgId}/producers/{producerId}/{allPaths=**} {
-      // Lectura: usuarios autenticados con rol relevante (validación fina server-side)
-      allow read: if isAuthenticated() && (
-        hasRole('admin_platform') ||
-        hasRole('accountant') ||
-        hasRole('accounting_firm_admin') ||
-        hasRole('producer') ||
-        hasRole('bank_user') ||
-        hasRole('agro_company_user')
-      );
-      // Escritura: solo contadores y admin (vínculo real validado server-side)
-      allow write: if isAuthenticated() && (
-        hasRole('admin_platform') ||
-        hasRole('accountant') ||
-        hasRole('accounting_firm_admin')
-      );
+      allow read, write: if false;
     }
 
-    // Denegar todo lo no declarado explícitamente
     match /{allPaths=**} {
       allow read, write: if false;
     }

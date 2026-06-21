@@ -16,6 +16,7 @@ import type {
   CreateBalanceSheetInput,
   UpdateBalanceSheetInput,
 } from "@/lib/schemas/accounting"
+import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 
 export async function getBalanceSheetsForPeriod(
   producerId: string,
@@ -48,30 +49,23 @@ export async function createBalanceSheet(
   data: CreateBalanceSheetInput,
   createdBy: string
 ): Promise<string> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-
-  const now = serverTimestamp()
-  const docRef = await addDoc(collection(db, COLLECTIONS.BALANCE_SHEETS), {
-    ...data,
-    validationStatus: "draft",
-    createdBy,
-    createdAt: now,
-    updatedAt: now,
+  void createdBy
+  const response = await authFetch("/api/accounting/balance-sheets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   })
-  return docRef.id
+  return (await parseApiResponse<{ id: string }>(response)).id
 }
 
 export async function updateBalanceSheet(
   id: string,
   data: UpdateBalanceSheetInput
 ): Promise<void> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-
-  const ref = doc(db, COLLECTIONS.BALANCE_SHEETS, id)
-  await updateDoc(ref, {
-    ...data,
-    updatedAt: serverTimestamp(),
+  const response = await authFetch(`/api/accounting/balance-sheets/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   })
+  await parseApiResponse<{ ok: boolean }>(response)
 }

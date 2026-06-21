@@ -13,6 +13,7 @@ import { getFirebaseDb } from "@/lib/firebase/config"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import type { AccountingPeriod, PeriodStatus } from "@/types/accounting"
 import type { CreateAccountingPeriodInput } from "@/lib/schemas/accounting"
+import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 
 export async function getPeriodsForProducer(
   producerId: string
@@ -43,32 +44,23 @@ export async function createPeriod(
   data: CreateAccountingPeriodInput,
   createdBy: string
 ): Promise<string> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-
-  const now = serverTimestamp()
-  const docRef = await addDoc(collection(db, COLLECTIONS.ACCOUNTING_PERIODS), {
-    ...data,
-    status: "open" as PeriodStatus,
-    closedAt: null,
-    createdBy,
-    createdAt: now,
-    updatedAt: now,
+  void createdBy
+  const response = await authFetch("/api/accounting/periods", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   })
-  return docRef.id
+  return (await parseApiResponse<{ id: string }>(response)).id
 }
 
 export async function updatePeriodStatus(
   periodId: string,
   status: PeriodStatus
 ): Promise<void> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-
-  const ref = doc(db, COLLECTIONS.ACCOUNTING_PERIODS, periodId)
-  await updateDoc(ref, {
-    status,
-    closedAt: status === "closed" ? new Date().toISOString() : null,
-    updatedAt: serverTimestamp(),
+  const response = await authFetch(`/api/accounting/periods/${periodId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
   })
+  await parseApiResponse<{ ok: boolean }>(response)
 }

@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import type { Liability } from "@/types/assets"
+import { authFetch, parseApiResponse } from "@/lib/services/api-client"
 
 export async function getLiabilitiesForProducer(producerId: string): Promise<Liability[]> {
   const db = getFirebaseDb()
@@ -39,34 +40,32 @@ export async function createLiability(
   data: Omit<Liability, "id" | "createdAt" | "updatedAt">,
   createdBy: string
 ): Promise<string> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-  const ref = await addDoc(collection(db, COLLECTIONS.LIABILITIES), {
-    ...data,
-    createdBy,
-    documentIds: data.documentIds ?? [],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  void createdBy
+  const response = await authFetch("/api/folders/liabilities", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...data, documentIds: data.documentIds ?? [] }),
   })
-  return ref.id
+  return (await parseApiResponse<{ id: string }>(response)).id
 }
 
 export async function updateLiability(
   liabilityId: string,
   data: Partial<Liability>
 ): Promise<void> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-  await updateDoc(doc(db, COLLECTIONS.LIABILITIES, liabilityId), {
-    ...data,
-    updatedAt: serverTimestamp(),
+  const response = await authFetch(`/api/folders/liabilities/${liabilityId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   })
+  await parseApiResponse<{ ok: boolean }>(response)
 }
 
 export async function deleteLiability(liabilityId: string): Promise<void> {
-  const db = getFirebaseDb()
-  if (!db) throw new Error("Firebase no configurado")
-  await deleteDoc(doc(db, COLLECTIONS.LIABILITIES, liabilityId))
+  const response = await authFetch(`/api/folders/liabilities/${liabilityId}`, {
+    method: "DELETE",
+  })
+  await parseApiResponse<{ ok: boolean }>(response)
 }
 
 export function getTotalLiabilityValue(liabilities: Liability[]): { ARS: number; USD: number } {

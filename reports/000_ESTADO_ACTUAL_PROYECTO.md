@@ -288,3 +288,37 @@ Ver checklist completo en `reports/015_CHECKLIST_VERIFICACION_FRONTEND.md`.
 3. **Visor de documento real en revision.** `ReviewWorkbench` renderiza PDF/imagen con URL firmada por endpoint server-side validado.
 4. **Requisitos editables.** `RequirementBuilder` permite corregir la propuesta IA antes de publicar.
 5. **Matriz con selector.** `ComplianceMatrix` carga templates publicados de la entidad y ya no pide pegar el `requirementTemplateId` a mano.
+
+---
+
+## Actualizacion 2026-06-21 - Cierre parcial de seguridad de legajo
+
+Se avanzo sobre los pendientes P1 de la auditoria tecnica:
+
+- Mutaciones de carpeta contable y documental migradas a APIs server-side con Firebase Admin SDK:
+  - `/api/accounting/periods`
+  - `/api/accounting/balance-sheets`
+  - `/api/accounting/income-statements`
+  - `/api/accounting/tax-documents`
+  - `/api/folders/assets`
+  - `/api/folders/liabilities`
+  - `/api/folders/documents/upload`
+- Los servicios cliente conservan la misma interfaz, pero para crear/actualizar/borrar/subir llaman APIs con token Firebase.
+- Las APIs validan sesion activa y permiso sobre carpeta con `assertCanManageAccountingFolder`; no confian en `organizationId` libre sin resolver acceso server-side.
+- `firestore.rules` deja `create/update/delete=false` para colecciones sensibles de legajo.
+- `storage.rules` queda deny-by-default para archivos de legajo; descarga y upload pasan por endpoints server-side.
+- `DocumentList` descarga por endpoint firmado, no por `downloadUrl` persistido.
+- Admin SDK ahora admite `FIREBASE_STORAGE_BUCKET`.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test`: OK, 9 archivos / 138 tests.
+
+Pendientes que siguen:
+
+- Migrar lecturas directas de Firestore de carpeta a APIs server-side para poder retirar la lectura amplia por rol contador.
+- Ejecutar Plan 012 de cifrado V1 real de archivos fuente antes de habilitar datos reales masivos.
+- Desplegar `firestore.rules` y `storage.rules`.
+- Prueba funcional en navegador con contador + entidad + documentos demo/reales autorizados.

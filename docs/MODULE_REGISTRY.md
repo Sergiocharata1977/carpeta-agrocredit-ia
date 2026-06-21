@@ -61,19 +61,19 @@
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `accounting_periods` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/accounting-periods.ts` | `accounting_periods` |
-| `balance_sheets` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/balance-sheets.ts` | `balance_sheets` |
-| `income_statements` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/income-statements.ts` | `income_statements` |
-| `tax_documents` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/tax-documents.ts` | `tax_documents` |
+| `accounting_periods` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/accounting-periods.ts` / `app/api/accounting/periods/*` | `accounting_periods` |
+| `balance_sheets` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/balance-sheets.ts` / `app/api/accounting/balance-sheets/*` | `balance_sheets` |
+| `income_statements` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/income-statements.ts` / `app/api/accounting/income-statements/*` | `income_statements` |
+| `tax_documents` | ga | `/app/contador/productores/[producerId]/carpeta` | `lib/services/tax-documents.ts` / `app/api/accounting/tax-documents/*` | `tax_documents` |
 | `documents_upload` | ga | `/app/contador/productores/[producerId]/carpeta` · `/app/contador/productores/[producerId]/documentos` | `lib/services/documents.ts` | `documents` |
 
 ### DOMINIO: PATRIMONIO
 
 | Módulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `assets_real_estate` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` | `assets` |
-| `assets_movable` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` | `assets` |
-| `liabilities` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/liabilities.ts` | `liabilities` |
+| `assets_real_estate` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` / `app/api/folders/assets/*` | `assets` |
+| `assets_movable` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/assets.ts` / `app/api/folders/assets/*` | `assets` |
+| `liabilities` | ga | `/app/contador/productores/[producerId]/bienes` | `lib/services/liabilities.ts` / `app/api/folders/liabilities/*` | `liabilities` |
 
 ### DOMINIO: AUTORIZACIONES
 

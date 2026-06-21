@@ -1,6 +1,7 @@
 "use client"
 
 import { Download } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -11,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { getIdToken } from "@/lib/firebase/auth-client"
 import type { DocumentMetadata } from "@/lib/services/documents"
 
 interface DocumentListProps {
@@ -55,6 +57,21 @@ function formatFileSize(bytes: number): string {
 }
 
 export function DocumentList({ documents }: DocumentListProps) {
+  async function downloadDocument(doc: DocumentMetadata) {
+    try {
+      const token = await getIdToken()
+      if (!token) throw new Error("Sesion requerida")
+      const res = await fetch(`/api/folders/${doc.organizationId}/documents/${doc.id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error ?? "No se pudo descargar el documento")
+      window.open(payload.url, "_blank", "noopener,noreferrer")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error al descargar")
+    }
+  }
+
   if (documents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-10 text-center">
@@ -101,12 +118,10 @@ export function DocumentList({ documents }: DocumentListProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                asChild
+                onClick={() => void downloadDocument(doc)}
               >
-                <a href={doc.downloadUrl} target="_blank" rel="noopener noreferrer">
-                  <Download className="mr-1 h-4 w-4" />
-                  Descargar
-                </a>
+                <Download className="mr-1 h-4 w-4" />
+                Descargar
               </Button>
             </TableCell>
           </TableRow>
