@@ -1058,5 +1058,20 @@ Pedido: implementar los pendientes marcados del analisis del proyecto, priorizan
 ### Pendientes reales
 
 - Ejecutar Plan 012 cifrado V1 real antes de datos reales masivos.
-- Desplegar `firestore.rules` y `storage.rules`.
 - Prueba funcional en navegador con usuario contador + entidad + documentos autorizados.
+
+### Deploy reglas Firebase 2026-06-21
+
+- `firebase deploy --only firestore:rules`: OK en `agrocredit-ia-saas`.
+- Ruleset Firestore: `1ca1043b-fc25-4c25-b195-3a43a3ab29ac`.
+- `firebase deploy --only storage`: OK en `agrocredit-ia-saas`.
+- Ruleset Storage: `d08a89d2-7ae9-4150-b751-6bef0999f214`.
+- Storage compilo con warnings por funciones no usadas (`isAuthenticated`, `hasRole`) porque las reglas quedaron deny-by-default; no bloquea.
+
+### Pendientes actualizados
+
+- Prueba funcional en navegador con contador + entidad + documentos autorizados.
+- Validar variables de entorno en Vercel: `FIREBASE_STORAGE_BUCKET`, Firebase Admin vars, `AI_PROVIDER`, `GROQ_API_KEY` y/o `ANTHROPIC_API_KEY`.
+- Mantener `CREDITO_HUB_ALLOW_REAL_DATA=false` salvo prueba controlada; para datos reales masivos cerrar primero Plan 012.
+- Ejecutar Plan 012 cifrado V1 real antes de datos reales masivos.
+- Post-MVP: expediente bancario final PDF/ZIP/JSON, mas tipos documentales, integracion bancaria viva, webhooks/SDK/MCP del Integration Core.

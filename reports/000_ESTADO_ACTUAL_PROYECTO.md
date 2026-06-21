@@ -322,8 +322,18 @@ Continuacion aplicada:
 - `firestore.rules` queda `read/write=false` para colecciones sensibles de legajo.
 - El helper server-side separa permisos de lectura y escritura: productor puede leer su propia carpeta; solo contador habilitado o admin puede modificar.
 
+Despliegue de reglas aplicado:
+
+- `firebase deploy --only firestore:rules` OK contra proyecto `agrocredit-ia-saas`.
+- Ruleset Firestore publicado: `1ca1043b-fc25-4c25-b195-3a43a3ab29ac`.
+- `firebase deploy --only storage` OK contra proyecto `agrocredit-ia-saas`.
+- Ruleset Storage publicado: `d08a89d2-7ae9-4150-b751-6bef0999f214`.
+- Storage compilo con warnings por funciones no usadas (`isAuthenticated`, `hasRole`) porque las reglas quedaron deny-by-default; no bloquean el deploy.
+
 Pendientes que siguen:
 
-- Ejecutar Plan 012 de cifrado V1 real de archivos fuente antes de habilitar datos reales masivos.
-- Desplegar `firestore.rules` y `storage.rules`.
 - Prueba funcional en navegador con contador + entidad + documentos demo/reales autorizados.
+- Validar variables de entorno en Vercel: `FIREBASE_STORAGE_BUCKET`, Firebase Admin vars, `AI_PROVIDER`, `GROQ_API_KEY` y/o `ANTHROPIC_API_KEY`.
+- Mantener `CREDITO_HUB_ALLOW_REAL_DATA=false` salvo prueba controlada; para datos reales masivos cerrar primero Plan 012.
+- Ejecutar Plan 012 de cifrado V1 real de archivos fuente antes de habilitar datos reales masivos.
+- Post-MVP: expediente bancario final PDF/ZIP/JSON, mas tipos documentales, integracion bancaria viva, webhooks/SDK/MCP del Integration Core.
