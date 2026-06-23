@@ -157,6 +157,9 @@ export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult
         defaultCurrency: "ARS",
       })
       await saveFields(fields, { actorUid: "cron", actorOrganizationId: null })
+    } else {
+      await transitionJob(job.id, "awaiting_review")
+      return { jobId: job.id, status: "awaiting_review" }
     }
 
     await transitionJob(job.id, "validating")

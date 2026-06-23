@@ -56,6 +56,23 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
     }
   }
 
+  async function retryJob(jobId: string) {
+    const token = await getIdToken()
+    if (!token) return
+    try {
+      const res = await fetch(`/api/credito-hub/jobs/${jobId}/retry`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error ?? "No se pudo reintentar")
+      toast.success("Documento reencolado")
+      await load()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error al reintentar")
+    }
+  }
+
   useEffect(() => {
     void load()
     const interval = window.setInterval(() => void load(), 4000)
@@ -81,9 +98,21 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
           <p className="text-sm text-muted-foreground">Todavia no hay jobs para este legajo.</p>
         ) : (
           jobs.map((job) => (
-            <div key={job.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-              <span className="truncate font-mono text-xs">{job.documentId}</span>
-              <Badge variant={job.status === "failed" ? "destructive" : "secondary"}>{job.status}</Badge>
+            <div key={job.id} className="space-y-1 rounded-md border px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate font-mono text-xs">{job.documentId}</span>
+                <div className="flex items-center gap-2">
+                  {job.status === "failed" ? (
+                    <Button type="button" variant="outline" size="sm" onClick={() => void retryJob(job.id)}>
+                      Reintentar
+                    </Button>
+                  ) : null}
+                  <Badge variant={job.status === "failed" ? "destructive" : "secondary"}>{job.status}</Badge>
+                </div>
+              </div>
+              {job.status === "failed" && job.error ? (
+                <p className="line-clamp-2 text-xs text-destructive">{job.error}</p>
+              ) : null}
             </div>
           ))
         )}

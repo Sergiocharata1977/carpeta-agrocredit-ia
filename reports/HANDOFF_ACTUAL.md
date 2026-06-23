@@ -1075,3 +1075,30 @@ Pedido: implementar los pendientes marcados del analisis del proyecto, priorizan
 - Mantener `CREDITO_HUB_ALLOW_REAL_DATA=false` salvo prueba controlada; para datos reales masivos cerrar primero Plan 012.
 - Ejecutar Plan 012 cifrado V1 real antes de datos reales masivos.
 - Post-MVP: expediente bancario final PDF/ZIP/JSON, mas tipos documentales, integracion bancaria viva, webhooks/SDK/MCP del Integration Core.
+
+---
+
+## Fix procesamiento Legajo IA - documentos sin extractor (2026-06-23)
+
+Pedido: revisar por que en produccion la carga masiva IA del legajo de Hector Gramaio quedaba `failed`.
+
+Diagnostico:
+
+- Job afectado: `mPCNmxZv6nWOQmlnXwrR`, documentId `168baeea-0e8a-494f-b66c-ca65b91f9642`.
+- Archivo: `Balance_Los_Senores_del_Agro.pdf`.
+- Groq clasifico el documento como `desconocido` con confianza `0.5`.
+- El worker guardo la clasificacion, pero al no tener extractor para `desconocido` intentaba transicionar `classifying -> validating`, transicion invalida en la maquina de estados, y marcaba el job como `failed`.
+
+Implementado:
+
+- `lib/credito-hub/process-jobs.ts`: si el documento no tiene extractor soportado, el job pasa de `classifying` a `awaiting_review` y queda para revision humana, en vez de fallar.
+- `components/credito-hub/JobProgressList.tsx`: muestra `job.error` cuando un job falla y agrega boton `Reintentar`.
+- `app/api/credito-hub/jobs/[jobId]/retry/route.ts`: endpoint server-side para reencolar solo jobs `failed`, validando `assertCanManageAccountingFolder` contra el legajo del job.
+- `docs/MODULE_REGISTRY.md`: ruta de retry registrada en `document_jobs`.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test __tests__/credito-hub/document-jobs.test.ts`: OK (22 tests).
+- `pnpm test`: OK (9 archivos, 138 tests).
