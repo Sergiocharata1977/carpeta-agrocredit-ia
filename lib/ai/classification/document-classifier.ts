@@ -60,6 +60,35 @@ Respondé SOLO con un objeto JSON con esta forma:
 /** Normaliza el tipo devuelto por el modelo a un valor soportado. */
 function normalizeDocumentType(raw: string): SupportedDocumentType {
   const value = (raw ?? "").trim().toLowerCase()
+  const aliases: Record<string, SupportedDocumentType> = {
+    balance: "estado_situacion_patrimonial",
+    balance_general: "estado_situacion_patrimonial",
+    balance_sheet: "estado_situacion_patrimonial",
+    estado_patrimonial: "estado_situacion_patrimonial",
+    situacion_patrimonial: "estado_situacion_patrimonial",
+    estado_de_situacion_patrimonial: "estado_situacion_patrimonial",
+    income_statement: "estado_resultados",
+    estado_de_resultados: "estado_resultados",
+    cuadro_de_resultados: "estado_resultados",
+    results_statement: "estado_resultados",
+    iva: "ddjj_iva",
+    tax_document: "ddjj_iva",
+    declaracion_iva: "ddjj_iva",
+    declaracion_jurada_iva: "ddjj_iva",
+    f931: "formulario_931",
+    form_931: "formulario_931",
+    formulario_afip_931: "formulario_931",
+    cuit: "constancia_cuit",
+    afip_constancia: "constancia_cuit",
+    bank_statement: "extracto_bancario",
+    escritura: "titulo_propiedad",
+    estatuto_social: "contrato_social",
+    contrato_societario: "contrato_social",
+    otro: "desconocido",
+    other: "desconocido",
+    unknown: "desconocido",
+  }
+  if (aliases[value]) return aliases[value]
   const match = SUPPORTED_DOCUMENT_TYPES.find((t) => t === value)
   return match ?? "desconocido"
 }

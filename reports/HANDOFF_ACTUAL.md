@@ -1148,3 +1148,32 @@ Validacion:
 Pendientes/riesgos:
 
 - El balance del ejemplo puede quedar en `Revisar` si Groq/IA lo clasifica como `desconocido` o como tipo sin extractor automatico. Eso ya no es fallo tecnico; requiere revision manual o ampliar clasificadores/extractores para ese formato concreto.
+
+### Continuacion 2026-06-25 - alias de clasificador y reproceso desde revision
+
+Motivo:
+
+- El usuario volvio a subir `Balance_Los_Senores_del_Agro.pdf` y quedo en `Revisar` con el mensaje "La IA leyo el archivo, pero no reconocio un tipo con extractor automatico".
+- Causa probable confirmada en codigo: los providers devuelven alias como `balance_sheet`, `income_statement`, `f931`, `iva`, pero `normalizeDocumentType` solo aceptaba tipos canonicos (`estado_situacion_patrimonial`, etc.). Esos alias caian a `desconocido`, por eso no se ejecutaba extractor.
+
+Implementado:
+
+- `lib/ai/classification/document-classifier.ts`: normaliza aliases de providers a tipos canonicos con extractor:
+  - `balance_sheet`, `balance_general`, etc. -> `estado_situacion_patrimonial`
+  - `income_statement`, `estado_de_resultados` -> `estado_resultados`
+  - `iva`, `tax_document`, `declaracion_jurada_iva` -> `ddjj_iva`
+  - `f931`, `form_931` -> `formulario_931`
+- `app/api/credito-hub/jobs/[jobId]/retry/route.ts`: permite reprocesar jobs en `awaiting_review`, no solo `failed`.
+- `lib/services/document-jobs.ts`: permite transicion `awaiting_review -> queued` y limpia `statusMessage`.
+- `JobProgressList`: muestra boton `Reprocesar` para jobs en `Revisar`.
+- Tests agregados en `classifier.test.ts` y `document-jobs.test.ts`.
+
+Validacion:
+
+- `pnpm test __tests__/credito-hub/classifier.test.ts __tests__/credito-hub/document-jobs.test.ts`: OK (33 tests).
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+
+Nota operativa:
+
+- Para el job que ya quedo en `Revisar`, luego del deploy no hace falta volver a subir el PDF: tocar `Reprocesar` y luego `Procesar con IA`.

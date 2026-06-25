@@ -328,6 +328,15 @@ describe("isTransitionAllowed / transitionJob", () => {
     expect(requeued.attempts).toBe(2)
     expect(requeued.error).toBeNull()
   })
+
+  it("reproceso awaiting_review -> queued incrementa attempts y limpia statusMessage", async () => {
+    const job = await enqueueJob(baseInput)
+    patchJobDirect(job.id, { status: "awaiting_review", attempts: 1, statusMessage: "revisar" })
+    const requeued = await transitionJob(job.id, "queued")
+    expect(requeued.status).toBe("queued")
+    expect(requeued.attempts).toBe(2)
+    expect(requeued.statusMessage).toBeNull()
+  })
 })
 
 describe("claimNextQueuedJob", () => {

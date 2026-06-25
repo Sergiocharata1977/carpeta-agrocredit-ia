@@ -157,9 +157,9 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
                     <p className="line-clamp-2 text-xs text-muted-foreground">{job.statusMessage ?? meta.description}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    {job.status === "failed" ? (
+                    {job.status === "failed" || job.status === "awaiting_review" ? (
                       <Button type="button" variant="outline" size="sm" onClick={() => void retryJob(job.id)}>
-                        Reintentar
+                        {job.status === "failed" ? "Reintentar" : "Reprocesar"}
                       </Button>
                     ) : null}
                     <AlertDialog>

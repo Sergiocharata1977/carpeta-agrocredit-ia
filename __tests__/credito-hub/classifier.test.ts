@@ -105,6 +105,20 @@ describe("classify (document-classifier)", () => {
     expect(out.documentType).toBe("desconocido")
   })
 
+  it("normaliza aliases de providers a tipos canonicos con extractor", async () => {
+    mockClassifyDocument.mockResolvedValue(aiResult({ documentType: "balance_sheet", confidence: 0.82 }))
+    const balance = await classify(Buffer.from("x"), "application/pdf", { fileName: "Balance_Los_Senores_del_Agro.pdf" })
+    expect(balance.documentType).toBe("estado_situacion_patrimonial")
+
+    mockClassifyDocument.mockResolvedValue(aiResult({ documentType: "income_statement", confidence: 0.81 }))
+    const income = await classify(Buffer.from("x"), "application/pdf", { fileName: "resultado.pdf" })
+    expect(income.documentType).toBe("estado_resultados")
+
+    mockClassifyDocument.mockResolvedValue(aiResult({ documentType: "f931", confidence: 0.8 }))
+    const f931 = await classify(Buffer.from("x"), "application/pdf", { fileName: "931.pdf" })
+    expect(f931.documentType).toBe("formulario_931")
+  })
+
   it("clampea confidence fuera de rango", async () => {
     mockClassifyDocument.mockResolvedValue(aiResult({ confidence: 1.5 }))
     const high = await classify(Buffer.from("x"), "image/png")

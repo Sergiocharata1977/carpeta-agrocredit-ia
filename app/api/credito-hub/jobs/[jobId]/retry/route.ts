@@ -16,8 +16,8 @@ export async function POST(
 
     await assertCanManageAccountingFolder(session, job.folderOwnerOrganizationId)
 
-    if (job.status !== "failed") {
-      return Response.json({ error: "Solo se pueden reintentar jobs fallidos" }, { status: 400 })
+    if (job.status !== "failed" && job.status !== "awaiting_review") {
+      return Response.json({ error: "Solo se pueden reprocesar jobs fallidos o en revision" }, { status: 400 })
     }
 
     const retried = await transitionJob(job.id, "queued")

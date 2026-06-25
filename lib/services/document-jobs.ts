@@ -52,7 +52,7 @@ const ALLOWED_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
     "stalled",
   ],
   // awaiting_review espera intervención manual del contador.
-  awaiting_review: ["extracting", "validating", "completed", "partially_completed", "failed"],
+  awaiting_review: ["queued", "extracting", "validating", "completed", "partially_completed", "failed"],
   // stalled vuelve a la cola o muere.
   stalled: ["queued", "preprocessing", "failed"],
   // Terminales: solo failed admite reintento (re-encolar).
@@ -282,7 +282,7 @@ export interface TransitionOptions {
 /**
  * Transiciona un job a nextStatus validando que la transición esté permitida.
  * - Lanza si el job no existe o la transición es inválida.
- * - Reintento (failed -> queued): incrementa attempts.
+ * - Reintento (failed/awaiting_review -> queued): incrementa attempts y limpia mensajes.
  * - failed: setea error y emite audit document.job_failed.
  */
 export async function transitionJob(
@@ -311,7 +311,7 @@ export async function transitionJob(
     updatedAt: FieldValue.serverTimestamp(),
   }
 
-  const isRetry = current === "failed" && nextStatus === "queued"
+  const isRetry = (current === "failed" || current === "awaiting_review") && nextStatus === "queued"
   if (isRetry) {
     update.attempts = FieldValue.increment(1)
     // Reintento limpia el error previo y el lease.
