@@ -109,7 +109,7 @@
 |---|---|---|---|---|
 | `credito_hub_plan` | ga | `/app/contador/productores/[producerId]/legajo` - `/app/contador/productores/[producerId]/revision` - `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `reports/014_PLAN_CREDITO_HUB_IA.md` - `docs/credito-hub/*` | - |
 | `ai_provider_router` | beta | `/app/admin/ia` | `lib/ai/*` (Groq · Anthropic · xAI · Mock) - `lib/ai/provider-config.ts` - `app/api/admin/ai-config/*` | `platform_settings` |
-| `document_jobs` | beta | `/app/contador/productores/[producerId]/legajo` | `app/api/credito-hub/intake` - `app/api/credito-hub/jobs` - `app/api/credito-hub/jobs/process` - `app/api/credito-hub/jobs/process-now` - `app/api/credito-hub/jobs/[jobId]/retry` - `lib/services/document-jobs.ts` | `document_jobs` |
+| `document_jobs` | beta | `/app/contador/productores/[producerId]/legajo` | `app/api/credito-hub/intake` - `app/api/credito-hub/jobs` - `app/api/credito-hub/jobs/process` - `app/api/credito-hub/jobs/process-now` - `app/api/credito-hub/jobs/[jobId]` - `app/api/credito-hub/jobs/[jobId]/retry` - `lib/services/document-jobs.ts` | `document_jobs` |
 | `document_classification` | beta | - | `lib/ai/classification/document-classifier.ts` - `lib/services/document-classification.ts` | `document_classifications` |
 | `extracted_fields` | beta | `/app/contador/productores/[producerId]/revision` | `lib/ai/extraction/extractors.ts` - `lib/services/extracted-fields.ts` - `app/api/credito-hub/review/*` | `extracted_fields` |
 | `canonical_credit_profiles` | beta | `/app/contador/productores/[producerId]/revision` | `lib/services/canonical-profile.ts` - `app/api/credito-hub/canonical-profile/[targetOrganizationId]` | `canonical_credit_profiles` |

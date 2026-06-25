@@ -103,6 +103,22 @@ export interface EnqueueJobInput {
   createdByOrganizationId: string
 }
 
+export async function findReusableJob(
+  folderOwnerOrganizationId: string,
+  fileHash: string,
+): Promise<DocumentJob | null> {
+  const snap = await getAdminDb()
+    .collection(COLLECTIONS.DOCUMENT_JOBS)
+    .where("folderOwnerOrganizationId", "==", folderOwnerOrganizationId)
+    .where("fileHash", "==", fileHash)
+    .get()
+
+  const existing = snap.docs.find(
+    (d) => (d.data().status as JobStatus) !== "failed",
+  )
+  return existing ? mapJob(existing.id, existing.data()) : null
+}
+
 /**
  * Crea un job en estado "queued". Idempotente: si ya existe un job NO fallido
  * (estado != "failed") con el mismo fileHash + folderOwnerOrganizationId, lo
@@ -113,17 +129,8 @@ export async function enqueueJob(input: EnqueueJobInput): Promise<DocumentJob> {
   const col = db.collection(COLLECTIONS.DOCUMENT_JOBS)
 
   // Idempotencia: buscar job existente no-fallido con mismo hash + legajo.
-  const existingSnap = await col
-    .where("folderOwnerOrganizationId", "==", input.folderOwnerOrganizationId)
-    .where("fileHash", "==", input.fileHash)
-    .get()
-
-  const existing = existingSnap.docs.find(
-    (d) => (d.data().status as JobStatus) !== "failed",
-  )
-  if (existing) {
-    return mapJob(existing.id, existing.data())
-  }
+  const existing = await findReusableJob(input.folderOwnerOrganizationId, input.fileHash)
+  if (existing) return existing
 
   const ref = col.doc()
   const now = FieldValue.serverTimestamp()
@@ -139,6 +146,7 @@ export async function enqueueJob(input: EnqueueJobInput): Promise<DocumentJob> {
     leaseExpiresAt: null,
     provider: input.provider,
     error: null,
+    statusMessage: null,
     fileHash: input.fileHash,
     encryptionStatus: input.encryptionStatus ?? "plaintext",
     createdBy: input.createdBy,
@@ -165,6 +173,70 @@ export async function enqueueJob(input: EnqueueJobInput): Promise<DocumentJob> {
   return mapJob(created.id, created.data() ?? {})
 }
 
+export interface DeleteDocumentJobOptions {
+  actorUid: string
+  actorOrganizationId: string | null
+}
+
+export async function deleteDocumentJob(
+  jobId: string,
+  options: DeleteDocumentJobOptions,
+): Promise<{ job: DocumentJob; documentDeleted: boolean }> {
+  const db = getAdminDb()
+  const job = await getJob(jobId)
+  if (!job) {
+    throw new Error(`document-jobs: job ${jobId} no existe`)
+  }
+
+  const documentRef = db.collection(COLLECTIONS.DOCUMENTS).doc(job.documentId)
+  const documentSnap = await documentRef.get()
+  const document = documentSnap.exists ? documentSnap.data() ?? {} : null
+
+  await deleteQueryDocs(db, COLLECTIONS.EXTRACTED_FIELDS, "documentId", job.documentId)
+  await deleteQueryDocs(db, COLLECTIONS.DOCUMENT_CLASSIFICATIONS, "documentId", job.documentId)
+  await deleteQueryDocs(db, COLLECTIONS.DOCUMENT_ROUTING_DECISIONS, "documentId", job.documentId)
+
+  if (document?.storagePath) {
+    try {
+      const { getAdminStorage } = await import("@/lib/firebase/admin-sdk")
+      await getAdminStorage().bucket().file(String(document.storagePath)).delete({ ignoreNotFound: true })
+    } catch (error) {
+      console.warn("[document-jobs] No se pudo borrar archivo de Storage", error)
+    }
+  }
+
+  if (documentSnap.exists) {
+    await documentRef.delete()
+  }
+  await db.collection(COLLECTIONS.DOCUMENT_JOBS).doc(jobId).delete()
+
+  await writeAuditLog({
+    actorUid: options.actorUid,
+    actorOrganizationId: options.actorOrganizationId,
+    action: "document.job_deleted",
+    targetType: "document_job",
+    targetId: jobId,
+    metadata: {
+      folderOwnerOrganizationId: job.folderOwnerOrganizationId,
+      documentId: job.documentId,
+      previousStatus: job.status,
+      documentDeleted: documentSnap.exists,
+    },
+  })
+
+  return { job, documentDeleted: documentSnap.exists }
+}
+
+async function deleteQueryDocs(
+  db: Firestore,
+  collectionName: string,
+  field: string,
+  value: string,
+): Promise<void> {
+  const snap = await db.collection(collectionName).where(field, "==", value).get()
+  await Promise.all(snap.docs.map((doc) => doc.ref.delete()))
+}
+
 // ─── getJob / listJobs ────────────────────────────────────────────────────────
 
 export async function getJob(jobId: string): Promise<DocumentJob | null> {
@@ -182,7 +254,17 @@ export async function listJobs(
     .collection(COLLECTIONS.DOCUMENT_JOBS)
     .where("folderOwnerOrganizationId", "==", folderOwnerOrganizationId)
     .get()
-  return snap.docs.map((d) => mapJob(d.id, d.data()))
+  const jobs = snap.docs.map((d) => mapJob(d.id, d.data()))
+  const enriched = await Promise.all(
+    jobs.map(async (job) => {
+      const doc = await db.collection(COLLECTIONS.DOCUMENTS).doc(job.documentId).get()
+      return {
+        ...job,
+        fileName: doc.exists ? String(doc.data()?.fileName ?? "") || null : null,
+      }
+    }),
+  )
+  return enriched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }
 
 // ─── transitionJob ────────────────────────────────────────────────────────────
@@ -234,6 +316,7 @@ export async function transitionJob(
     update.attempts = FieldValue.increment(1)
     // Reintento limpia el error previo y el lease.
     update.error = null
+    update.statusMessage = null
     update.claimedBy = null
     update.claimedAt = null
     update.leaseExpiresAt = null
@@ -241,6 +324,7 @@ export async function transitionJob(
 
   if (nextStatus === "failed") {
     update.error = options.error ?? "unknown error"
+    update.statusMessage = null
   }
 
   await ref.update(update)

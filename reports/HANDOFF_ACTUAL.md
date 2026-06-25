@@ -1102,3 +1102,49 @@ Validacion:
 - `pnpm check:security-shape`: OK.
 - `pnpm test __tests__/credito-hub/document-jobs.test.ts`: OK (22 tests).
 - `pnpm test`: OK (9 archivos, 138 tests).
+
+---
+
+## Fix UX carga/procesamiento Legajo IA - estados, duplicados y borrado (2026-06-25)
+
+Pedido: al cargar el balance `Balance_Los_Senores_del_Agro.pdf`, el usuario no entendia si el proceso estaba activo, fallido o esperando revision; ademas no podia eliminar el documento/job anterior.
+
+Diagnostico:
+
+- El fix anterior ya evitaba que documentos sin extractor pasen a `failed`, pero la UI seguia mostrando estados tecnicos (`awaiting_review`, `failed`) sin explicacion operativa.
+- El job viejo fallido seguia visible y solo permitia reintentar, no eliminar.
+- Si se subia el mismo archivo otra vez, `enqueueJob` reutilizaba el job existente por `fileHash`, pero el intake ya habia guardado otra copia del documento antes de detectar el duplicado.
+
+Implementado:
+
+- `JobProgressList` ahora muestra estado legible por paso: En cola, Preparando, Clasificando, Extrayendo, Validando, Revisar, Fallido, Pausado, Parcial y Completo.
+- Cada job muestra nombre de archivo cuando existe, intentos, proveedor, documentId y mensaje explicativo.
+- Los jobs fallidos muestran error humanizado para la transicion vieja invalida.
+- Se agrego accion de eliminar job/documento desde la UI con confirmacion. Bloquea eliminacion mientras el job esta activo.
+- Nuevo `DELETE /api/credito-hub/jobs/[jobId]`: valida `assertCanManageAccountingFolder`, borra job, documento fuente, archivo Storage y derivados (`extracted_fields`, `document_classifications`, `document_routing_decisions`), y audita `document.job_deleted`.
+- `intake` detecta duplicados por `fileHash + folderOwnerOrganizationId` antes de guardar en Storage/Firestore, evitando documentos fuente huerfanos.
+- `MassUploadDropzone` informa cuando el archivo ya estaba cargado y se reutilizo el procesamiento existente.
+- `process-jobs` deja `statusMessage` claro cuando no hay extractor automatico o cuando hay campos listos para revision.
+- `docs/MODULE_REGISTRY.md` registra la ruta `app/api/credito-hub/jobs/[jobId]`.
+
+Archivos principales:
+
+- `components/credito-hub/JobProgressList.tsx`
+- `components/credito-hub/MassUploadDropzone.tsx`
+- `app/api/credito-hub/intake/route.ts`
+- `app/api/credito-hub/jobs/[jobId]/route.ts`
+- `lib/services/document-jobs.ts`
+- `lib/credito-hub/process-jobs.ts`
+- `types/credito-hub.ts`
+- `types/audit.ts`
+- `docs/MODULE_REGISTRY.md`
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `pnpm check:security-shape`: OK.
+- `pnpm test __tests__/credito-hub/document-jobs.test.ts`: OK (22 tests).
+
+Pendientes/riesgos:
+
+- El balance del ejemplo puede quedar en `Revisar` si Groq/IA lo clasifica como `desconocido` o como tipo sin extractor automatico. Eso ya no es fallo tecnico; requiere revision manual o ampliar clasificadores/extractores para ese formato concreto.

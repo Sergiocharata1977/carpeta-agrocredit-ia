@@ -7,7 +7,7 @@ import { COLLECTIONS } from "@/lib/firebase/collections"
 import { writeAuditLog } from "@/lib/firebase/audit"
 import { verifyRequestSession, requireActiveOrg, getAuthErrorResponse } from "@/lib/auth/server-session"
 import { assertCanManageAccountingFolder } from "@/lib/auth/accounting-access"
-import { enqueueJob } from "@/lib/services/document-jobs"
+import { enqueueJob, findReusableJob } from "@/lib/services/document-jobs"
 import {
   MAX_FILE_SIZE_EXCEL,
   MAX_FILE_SIZE_PDF_IMG,
@@ -106,12 +106,21 @@ export async function POST(request: NextRequest) {
     const bucket = getAdminStorage().bucket()
     const jobIds: string[] = []
     const documents: string[] = []
+    const duplicateJobIds: string[] = []
 
     for (const file of files) {
       const validationError = validateFile(file.name, file.mimeType, file.buffer.length)
       if (validationError) return Response.json({ error: validationError }, { status: 400 })
 
       const fileHash = createHash("sha256").update(file.buffer).digest("hex")
+      const reusableJob = await findReusableJob(folderOwnerOrganizationId, fileHash)
+      if (reusableJob) {
+        jobIds.push(reusableJob.id)
+        documents.push(reusableJob.documentId)
+        duplicateJobIds.push(reusableJob.id)
+        continue
+      }
+
       const documentId = randomUUID()
       const storagePath = `orgs/${folderOwnerOrganizationId}/producers/${targetOrganizationId}/credito-hub/${documentId}-${safeName(file.name)}`
       await bucket.file(storagePath).save(file.buffer, { contentType: file.mimeType, resumable: false })
@@ -155,7 +164,7 @@ export async function POST(request: NextRequest) {
       documents.push(documentId)
     }
 
-    return Response.json({ jobIds, documentIds: documents }, { status: 201 })
+    return Response.json({ jobIds, documentIds: documents, duplicateJobIds }, { status: 201 })
   } catch (error) {
     return getAuthErrorResponse(error)
   }

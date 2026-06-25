@@ -158,7 +158,12 @@ export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult
       })
       await saveFields(fields, { actorUid: "cron", actorOrganizationId: null })
     } else {
-      await transitionJob(job.id, "awaiting_review")
+      await transitionJob(job.id, "awaiting_review", {
+        patch: {
+          statusMessage:
+            "La IA leyo el archivo, pero no reconocio un tipo con extractor automatico. Revisalo manualmente en Revision.",
+        },
+      })
       return { jobId: job.id, status: "awaiting_review" }
     }
 
@@ -172,7 +177,14 @@ export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult
         })
       }
     }
-    await transitionJob(job.id, "awaiting_review")
+    await transitionJob(job.id, "awaiting_review", {
+      patch: {
+        statusMessage:
+          fields.length > 0
+            ? "La IA extrajo datos. Revisalos y confirmalos antes de certificar el legajo."
+            : "La IA proceso el archivo, pero no encontro campos confiables para completar automaticamente.",
+      },
+    })
     return { jobId: job.id, status: "awaiting_review" }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error desconocido"

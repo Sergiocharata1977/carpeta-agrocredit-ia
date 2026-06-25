@@ -32,7 +32,13 @@ export function MassUploadDropzone({ targetOrganizationId, onUploaded }: MassUpl
       })
       const payload = await res.json()
       if (!res.ok) throw new Error(payload.error ?? "No se pudo encolar la carga")
-      toast.success(`${payload.jobIds?.length ?? 0} documento(s) encolados`)
+      const total = payload.jobIds?.length ?? 0
+      const duplicates = payload.duplicateJobIds?.length ?? 0
+      if (duplicates > 0) {
+        toast.info(`${duplicates} archivo(s) ya estaban cargados. Se reutilizo el procesamiento existente.`)
+      } else {
+        toast.success(`${total} documento(s) encolados`)
+      }
       setFiles([])
       onUploaded?.()
     } catch (error) {

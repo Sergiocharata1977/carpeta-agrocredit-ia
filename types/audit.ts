@@ -6,6 +6,7 @@ export type AuditAction =
   | "accountant_link.updated"
   | "document.uploaded"
   | "document.deleted"
+  | "document.job_deleted"
   | "accounting_period.created"
   | "accounting_period.updated"
   | "balance_sheet.created"

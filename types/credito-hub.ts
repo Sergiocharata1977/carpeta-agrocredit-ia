@@ -28,6 +28,7 @@ export interface DocumentJob {
   folderOwnerOrganizationId: string
   accountingFirmId: string | null
   documentId: string
+  fileName?: string | null
   status: JobStatus
   attempts: number
   maxAttempts: number
@@ -37,6 +38,7 @@ export interface DocumentJob {
   leaseExpiresAt?: string | null
   provider: string
   error?: string | null
+  statusMessage?: string | null
   fileHash: string
   encryptionStatus: EncryptionStatus
   createdBy: string
