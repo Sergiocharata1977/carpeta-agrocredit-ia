@@ -1184,3 +1184,13 @@ Nota operativa:
 - Los jobs en `awaiting_review/failed` muestran `Reprocesar con IA`, que reencola y dispara el procesamiento en una sola accion.
 - `intake` y `retry` guardan en el job el proveedor activo real de `platform_settings/ai` o `AI_PROVIDER`, para que el texto `Proveedor` no quede desfasado al cambiar de Groq a Claude.
 - Validacion: `pnpm type-check` OK y `pnpm test __tests__/credito-hub/document-jobs.test.ts` OK (23 tests).
+
+### Continuacion 2026-06-25 - fallback por contenido/nombre para balances
+
+- Se verifico localmente `Balance_Los_Senores_del_Agro.pdf`: PDF digital legible, 11 paginas, ~14.900 caracteres, incluye "ESTADO DE SITUACION PATRIMONIAL" y rubros contables.
+- Se verifico localmente `Manual_Visual_Sistema_Interno_Agro_Biciuffa.pdf`: PDF digital legible, 8 paginas.
+- `document-classifier` ahora, si el provider devuelve `unknown/desconocido`, infiere tipo por nombre de archivo y texto PDF:
+  - `Balance_*`, `estados contables`, `estado de situacion patrimonial`, `activo corriente`, `pasivo corriente`, `patrimonio neto` -> `estado_situacion_patrimonial`.
+  - Tambien infiere resultados, IVA y F.931 por patrones basicos.
+- El mensaje para documentos sin extractor automatico se cambio para no sugerir falso bloqueo de lectura.
+- Validacion: `pnpm test __tests__/credito-hub/classifier.test.ts __tests__/credito-hub/document-jobs.test.ts` OK (35 tests), `pnpm type-check` OK, `pnpm check:security-shape` OK.

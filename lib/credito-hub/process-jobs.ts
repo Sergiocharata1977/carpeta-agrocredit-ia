@@ -161,7 +161,7 @@ export async function processClaimedJob(job: DocumentJob): Promise<ProcessResult
       await transitionJob(job.id, "awaiting_review", {
         patch: {
           statusMessage:
-            "La IA leyo el archivo, pero no reconocio un tipo con extractor automatico. Revisalo manualmente en Revision.",
+            "La IA leyo el archivo, pero no encontro un extractor automatico seguro para este tipo. Podes revisar campos manualmente o eliminarlo y subirlo como documento de respaldo.",
         },
       })
       return { jobId: job.id, status: "awaiting_review" }

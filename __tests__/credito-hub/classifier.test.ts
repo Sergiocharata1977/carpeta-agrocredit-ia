@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { AIClassificationResult, AIProvider } from "@/lib/ai/AIProvider"
 
 // ─── Mock de resolveAIProvider para inyectar un provider controlado ───────────
-const mockClassifyDocument = vi.fn()
+const { mockClassifyDocument, mockExtractPdfText } = vi.hoisted(() => ({
+  mockClassifyDocument: vi.fn(),
+  mockExtractPdfText: vi.fn(),
+}))
 
 vi.mock("@/lib/ai/provider-config", () => ({
   resolveAIProvider: async (): Promise<AIProvider> => ({
@@ -11,6 +14,10 @@ vi.mock("@/lib/ai/provider-config", () => ({
     extractStructured: vi.fn(),
     complete: vi.fn(),
   }),
+}))
+
+vi.mock("@/lib/ai/pdf-to-images", () => ({
+  extractPdfText: mockExtractPdfText,
 }))
 
 // ─── Mock del Admin SDK + audit para el servicio (sin tocar Firestore real) ───
@@ -62,6 +69,7 @@ function aiResult(overrides: Partial<AIClassificationResult> = {}): AIClassifica
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockExtractPdfText.mockResolvedValue({ text: "", pageCount: 1, hasUsableText: false })
   // Cadena por defecto del Admin SDK: collection().add() y collection().where().get()
   mockGet.mockResolvedValue({ empty: true, docs: [] })
   mockWhere.mockReturnValue({ get: mockGet })
@@ -117,6 +125,30 @@ describe("classify (document-classifier)", () => {
     mockClassifyDocument.mockResolvedValue(aiResult({ documentType: "f931", confidence: 0.8 }))
     const f931 = await classify(Buffer.from("x"), "application/pdf", { fileName: "931.pdf" })
     expect(f931.documentType).toBe("formulario_931")
+  })
+
+  it("infiere balance por nombre de archivo si el provider devuelve unknown", async () => {
+    mockClassifyDocument.mockResolvedValue(aiResult({ documentType: "unknown", confidence: 0.2 }))
+
+    const out = await classify(Buffer.from("x"), "application/pdf", { fileName: "Balance_Los_Senores_del_Agro.pdf" })
+
+    expect(out.documentType).toBe("estado_situacion_patrimonial")
+    expect(out.confidence).toBe(0.75)
+    expect(out.needsReview).toBe(false)
+  })
+
+  it("infiere balance por texto del PDF si el provider devuelve desconocido", async () => {
+    mockClassifyDocument.mockResolvedValue(aiResult({ documentType: "desconocido", confidence: 0.3 }))
+    mockExtractPdfText.mockResolvedValue({
+      text: "LOS SEÑORES DEL AGRO S.A. 1. ESTADO DE SITUACIÓN PATRIMONIAL ACTIVO CORRIENTE PASIVO CORRIENTE PATRIMONIO NETO",
+      pageCount: 11,
+      hasUsableText: true,
+    })
+
+    const out = await classify(Buffer.from("%PDF"), "application/pdf", { fileName: "documento.pdf" })
+
+    expect(out.documentType).toBe("estado_situacion_patrimonial")
+    expect(out.needsReview).toBe(false)
   })
 
   it("clampea confidence fuera de rango", async () => {
