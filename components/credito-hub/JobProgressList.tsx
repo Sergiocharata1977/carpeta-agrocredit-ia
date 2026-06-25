@@ -35,6 +35,7 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
   const [jobs, setJobs] = useState<DocumentJob[]>([])
   const [loading, setLoading] = useState(false)
   const [processing, setProcessing] = useState(false)
+  const [processingJobId, setProcessingJobId] = useState<string | null>(null)
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -54,10 +55,11 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
 
   const pendingCount = jobs.filter((j) => j.status === "queued" || j.status === "stalled").length
 
-  async function processWithAI() {
+  async function processWithAI(options: { jobId?: string; successPrefix?: string } = {}) {
     const token = await getIdToken()
     if (!token) return
     setProcessing(true)
+    setProcessingJobId(options.jobId ?? null)
     try {
       const res = await fetch("/api/credito-hub/jobs/process-now", {
         method: "POST",
@@ -71,19 +73,22 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
       if (failed > 0) {
         toast.error(`${failed} documento(s) fallaron. Revisa el detalle en la lista.`)
       } else {
-        toast.success(done > 0 ? `${done} documento(s) procesados por la IA` : "No habia documentos pendientes")
+        const prefix = options.successPrefix ? `${options.successPrefix}: ` : ""
+        toast.success(done > 0 ? `${prefix}${done} documento(s) procesados por la IA` : "No habia documentos pendientes")
       }
       await load()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al procesar")
     } finally {
       setProcessing(false)
+      setProcessingJobId(null)
     }
   }
 
-  async function retryJob(jobId: string) {
+  async function retryJob(jobId: string, shouldProcess = false) {
     const token = await getIdToken()
     if (!token) return
+    setProcessingJobId(jobId)
     try {
       const res = await fetch(`/api/credito-hub/jobs/${jobId}/retry`, {
         method: "POST",
@@ -91,10 +96,16 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
       })
       const payload = await res.json()
       if (!res.ok) throw new Error(payload.error ?? "No se pudo reintentar")
+      if (shouldProcess) {
+        await processWithAI({ jobId, successPrefix: "Reproceso" })
+        return
+      }
       toast.success("Documento reencolado")
       await load()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al reintentar")
+    } finally {
+      if (!shouldProcess) setProcessingJobId(null)
     }
   }
 
@@ -129,7 +140,7 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Procesamiento</h2>
         <div className="flex items-center gap-2">
-          <Button type="button" size="sm" onClick={processWithAI} disabled={processing || pendingCount === 0}>
+          <Button type="button" size="sm" onClick={() => void processWithAI()} disabled={processing || pendingCount === 0}>
             <Sparkles className="mr-2 h-4 w-4" />
             {processing ? "Procesando..." : `Procesar con IA${pendingCount > 0 ? ` (${pendingCount})` : ""}`}
           </Button>
@@ -157,9 +168,26 @@ export function JobProgressList({ targetOrganizationId }: JobProgressListProps) 
                     <p className="line-clamp-2 text-xs text-muted-foreground">{job.statusMessage ?? meta.description}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    {job.status === "queued" || job.status === "stalled" ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => void processWithAI({ jobId: job.id })}
+                      >
+                        {processingJobId === job.id ? "Procesando..." : "Procesar ahora"}
+                      </Button>
+                    ) : null}
                     {job.status === "failed" || job.status === "awaiting_review" ? (
-                      <Button type="button" variant="outline" size="sm" onClick={() => void retryJob(job.id)}>
-                        {job.status === "failed" ? "Reintentar" : "Reprocesar"}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={processingJobId === job.id}
+                        onClick={() => void retryJob(job.id, true)}
+                      >
+                        {processingJobId === job.id ? "Procesando..." : "Reprocesar con IA"}
                       </Button>
                     ) : null}
                     <AlertDialog>

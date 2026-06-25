@@ -8,6 +8,7 @@ import { writeAuditLog } from "@/lib/firebase/audit"
 import { verifyRequestSession, requireActiveOrg, getAuthErrorResponse } from "@/lib/auth/server-session"
 import { assertCanManageAccountingFolder } from "@/lib/auth/accounting-access"
 import { enqueueJob, findReusableJob } from "@/lib/services/document-jobs"
+import { getActiveProviderName } from "@/lib/ai/provider-config"
 import {
   MAX_FILE_SIZE_EXCEL,
   MAX_FILE_SIZE_PDF_IMG,
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
     const jobIds: string[] = []
     const documents: string[] = []
     const duplicateJobIds: string[] = []
+    const activeProviderName = (await getActiveProviderName()) || "mock"
 
     for (const file of files) {
       const validationError = validateFile(file.name, file.mimeType, file.buffer.length)
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
         folderOwnerOrganizationId,
         accountingFirmId,
         documentId,
-        provider: process.env.AI_PROVIDER ?? "mock",
+        provider: activeProviderName,
         fileHash,
         encryptionStatus: "plaintext",
         createdBy: session.uid,

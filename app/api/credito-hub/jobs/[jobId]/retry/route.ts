@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { assertCanManageAccountingFolder } from "@/lib/auth/accounting-access"
 import { getAuthErrorResponse, requireActiveOrg, verifyRequestSession } from "@/lib/auth/server-session"
+import { getActiveProviderName } from "@/lib/ai/provider-config"
 import { getJob, transitionJob } from "@/lib/services/document-jobs"
 
 export async function POST(
@@ -20,7 +21,8 @@ export async function POST(
       return Response.json({ error: "Solo se pueden reprocesar jobs fallidos o en revision" }, { status: 400 })
     }
 
-    const retried = await transitionJob(job.id, "queued")
+    const provider = (await getActiveProviderName()) || "mock"
+    const retried = await transitionJob(job.id, "queued", { patch: { provider } })
     return Response.json({ job: retried })
   } catch (error) {
     return getAuthErrorResponse(error)

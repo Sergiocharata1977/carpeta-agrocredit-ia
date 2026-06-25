@@ -1177,3 +1177,10 @@ Validacion:
 Nota operativa:
 
 - Para el job que ya quedo en `Revisar`, luego del deploy no hace falta volver a subir el PDF: tocar `Reprocesar` y luego `Procesar con IA`.
+
+### Ajuste UX 2026-06-25 - reproceso en una sola accion
+
+- `JobProgressList`: los jobs en `queued/stalled` muestran `Procesar ahora` en la propia fila.
+- Los jobs en `awaiting_review/failed` muestran `Reprocesar con IA`, que reencola y dispara el procesamiento en una sola accion.
+- `intake` y `retry` guardan en el job el proveedor activo real de `platform_settings/ai` o `AI_PROVIDER`, para que el texto `Proveedor` no quede desfasado al cambiar de Groq a Claude.
+- Validacion: `pnpm type-check` OK y `pnpm test __tests__/credito-hub/document-jobs.test.ts` OK (23 tests).
