@@ -2,8 +2,31 @@
 
 **Fecha:** 2026-05-29  
 **Proyecto:** `Agro-Credit` / `carpeta-agrocredit-ia`  
+**Ruta local vigente:** `C:\Users\Usuario\Documents\Proyectos\carpeta-agrocredit-ia`  
+**Repo remoto:** `https://github.com/Sergiocharata1977/carpeta-agrocredit-ia`  
+**Vercel:** proyecto `agrocredit-hub`, dominio `carpeta-agrocredit-ia.vercel.app`  
 **Stack:** Next.js App Router + Firebase + TypeScript  
 **Estado real:** OCR/IA EECC e invitaciones por link implementados v1. Los planes MD 006 y 009 fueron eliminados a pedido del usuario.
+
+---
+
+## Actualizacion local Codex 2026-07-01
+
+- Repo clonado en `C:\Users\Usuario\Documents\Proyectos\carpeta-agrocredit-ia` desde `https://github.com/Sergiocharata1977/carpeta-agrocredit-ia`.
+- Proyecto Vercel identificado: `agrocredit-hub`; dominio publico: `carpeta-agrocredit-ia.vercel.app`.
+- Dependencias instaladas con `pnpm install`.
+- Validacion local: `pnpm type-check` OK.
+- Nota de riesgo: Vercel aparece configurado con Node 24.x, pero `package.json` declara `node >=20 <23`; revisar antes del proximo deploy si vuelve a fallar build.
+
+## Asistente lateral operativo Codex 2026-07-01
+
+- Plan creado: `reports/018_PLAN_ASISTENTE_LATERAL_OPERATIVO.md`.
+- Se reemplazo el modal `LegajoAssistantChat` por `components/credito-hub/LegajoAssistantPanel.tsx`, un panel lateral integrado estilo Platform 12 que empuja/contrae la pantalla del legajo.
+- La pagina `app/app/contador/clientes/[clientId]/legajo/page.tsx` ya no muestra el bloque central viejo de carga IA; el chat concentra consulta, adjuntos, procesamiento y documentos sin asignar.
+- El panel puede adjuntar PDF, imagen, Excel, Word y ZIP usando el intake existente (`app/api/credito-hub/intake`) y deja los archivos en `document_jobs` para procesamiento/revision.
+- Se eliminaron los componentes sin uso `components/credito-hub/LegajoAssistantChat.tsx` y `components/credito-hub/CarpetaUploadSection.tsx`.
+- Limite de seguridad vigente: el chat no aplica datos finales sin revision; la insercion en base contable/perfil sigue pasando por los flujos de revision/aplicacion con auditoria.
+- Validacion: `pnpm type-check` OK.
 
 ---
 

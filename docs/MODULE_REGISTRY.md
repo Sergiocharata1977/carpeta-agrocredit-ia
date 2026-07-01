@@ -107,6 +107,7 @@
 
 | Modulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
+| `legajo_assistant_panel` | beta | panel lateral integrado en `/app/contador/clientes/[clientId]/legajo` | `app/api/credito-hub/assistant/[targetOrganizationId]` - `app/api/credito-hub/intake` - `app/api/credito-hub/jobs/process-now` - `lib/credito-hub/assistant-context.ts` - `components/credito-hub/LegajoAssistantPanel.tsx` | `document_jobs` |
 | `credito_hub_plan` | ga | `/app/contador/productores/[producerId]/legajo` - `/app/contador/productores/[producerId]/revision` - `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `reports/014_PLAN_CREDITO_HUB_IA.md` - `docs/credito-hub/*` | - |
 | `ai_provider_router` | beta | `/app/admin/ia` | `lib/ai/*` (Groq · Anthropic · xAI · Mock) - `lib/ai/provider-config.ts` - `app/api/admin/ai-config/*` | `platform_settings` |
 | `document_jobs` | beta | `/app/contador/productores/[producerId]/legajo` | `app/api/credito-hub/intake` - `app/api/credito-hub/jobs` - `app/api/credito-hub/jobs/process` - `app/api/credito-hub/jobs/process-now` - `app/api/credito-hub/jobs/[jobId]` - `app/api/credito-hub/jobs/[jobId]/retry` - `lib/services/document-jobs.ts` | `document_jobs` |
@@ -116,8 +117,8 @@
 | `bank_requirements` | beta | `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `app/api/credito-hub/bank-requirements/*` - `lib/services/bank-requirements.ts` - `lib/services/requirement-matching.ts` | `bank_requirement_templates` - `requirement_matches` |
 | `credit_applications` | beta | `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `app/api/credito-hub/credit-applications` - `lib/services/credit-applications.ts` | `credit_applications` |
 | `legajo_unico_contador` | beta | `/app/contador/clientes/[clientId]/legajo` | (shell; reusa entities + folders status) | `organizations` |
-| `legajo_assistant` | beta | (modal en legajo) | `app/api/credito-hub/assistant/[targetOrganizationId]` · `lib/credito-hub/assistant-context.ts` · `components/credito-hub/LegajoAssistantChat.tsx` | (solo lectura) |
-| `legajo_routing` | beta | (en legajo) | `app/api/credito-hub/routing/[rootOrganizationId]/*` · `lib/services/document-routing.ts` · `lib/credito-hub/folder-routing.ts` · `components/credito-hub/{CarpetaUploadSection,UnassignedDocsTray}.tsx` | `document_routing_decisions` |
+| `legajo_assistant` | beta | legacy reemplazado por `legajo_assistant_panel` | `app/api/credito-hub/assistant/[targetOrganizationId]` - `lib/credito-hub/assistant-context.ts` | (solo lectura) |
+| `legajo_routing` | beta | (en panel lateral del legajo) | `app/api/credito-hub/routing/[rootOrganizationId]/*` · `lib/services/document-routing.ts` · `lib/credito-hub/folder-routing.ts` · `components/credito-hub/UnassignedDocsTray.tsx` | `document_routing_decisions` |
 | `legajo_review` | beta | (en legajo) | `components/credito-hub/CarpetaReviewSection.tsx` (reusa `ReviewWorkbench`) | `extracted_fields` |
 | `legajo_certification` | beta | (en legajo) | `app/api/credito-hub/certification/[targetOrganizationId]` · `lib/services/folder-certification.ts` · `lib/credito-hub/folder-fingerprint.ts` · `components/credito-hub/{CertificationBadge,CertifyFolderButton}.tsx` | `folder_certifications` |
 

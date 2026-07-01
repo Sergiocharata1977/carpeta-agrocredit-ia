@@ -53,7 +53,7 @@ export function MassUploadDropzone({ targetOrganizationId, onUploaded }: MassUpl
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">Carga masiva IA</h2>
-          <p className="text-sm text-muted-foreground">PDF, imagen, Excel o ZIP. Se encola para procesamiento async.</p>
+          <p className="text-sm text-muted-foreground">PDF, imagen, Excel, Word o ZIP. Se encola para procesamiento async.</p>
         </div>
         <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
           <FolderUp className="mr-2 h-4 w-4" />
@@ -64,7 +64,7 @@ export function MassUploadDropzone({ targetOrganizationId, onUploaded }: MassUpl
         ref={inputRef}
         type="file"
         multiple
-        accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.zip"
+        accept=".pdf,.xls,.xlsx,.doc,.docx,.jpg,.jpeg,.png,.webp,.zip"
         className="hidden"
         onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
       />

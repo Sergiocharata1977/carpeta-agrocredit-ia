@@ -22,6 +22,8 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/webp",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ])
 
 function safeName(name: string): string {
@@ -30,6 +32,10 @@ function safeName(name: string): string {
 
 function isExcel(mimeType: string): boolean {
   return mimeType.includes("excel") || mimeType.includes("spreadsheetml")
+}
+
+function isOfficeText(mimeType: string): boolean {
+  return mimeType.includes("msword") || mimeType.includes("wordprocessingml")
 }
 
 function isZip(file: File): boolean {
@@ -44,12 +50,14 @@ function inferMimeType(name: string, fallback: string): string {
   if (lower.endsWith(".webp")) return "image/webp"
   if (lower.endsWith(".xls")) return "application/vnd.ms-excel"
   if (lower.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  if (lower.endsWith(".doc")) return "application/msword"
+  if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   return fallback || "application/octet-stream"
 }
 
 function validateFile(name: string, mimeType: string, size: number): string | null {
   if (!ALLOWED_MIME_TYPES.has(mimeType)) return `Tipo no permitido: ${name}`
-  const max = isExcel(mimeType) ? MAX_FILE_SIZE_EXCEL : MAX_FILE_SIZE_PDF_IMG
+  const max = isExcel(mimeType) || isOfficeText(mimeType) ? MAX_FILE_SIZE_EXCEL : MAX_FILE_SIZE_PDF_IMG
   if (size > max) return `Archivo muy grande: ${name}`
   return null
 }

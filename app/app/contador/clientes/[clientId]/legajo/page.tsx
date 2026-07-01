@@ -3,20 +3,11 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { getDoc, doc } from "firebase/firestore"
-import {
-  Bot,
-  Building2,
-  CheckCircle2,
-  Circle,
-  CircleDashed,
-  UserRound,
-} from "lucide-react"
+import { Bot, Building2, CheckCircle2, Circle, CircleDashed, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { LegajoAssistantChat } from "@/components/credito-hub/LegajoAssistantChat"
-import { CarpetaUploadSection } from "@/components/credito-hub/CarpetaUploadSection"
-import { UnassignedDocsTray } from "@/components/credito-hub/UnassignedDocsTray"
+import { LegajoAssistantPanel } from "@/components/credito-hub/LegajoAssistantPanel"
 import { CarpetaReviewSection } from "@/components/credito-hub/CarpetaReviewSection"
 import { CertificationBadge } from "@/components/credito-hub/CertificationBadge"
 import { CertifyFolderButton } from "@/components/credito-hub/CertifyFolderButton"
@@ -53,7 +44,7 @@ type SectionState = "complete" | "partial" | "empty"
 
 async function authHeaders(): Promise<Record<string, string>> {
   const token = await getFreshIdToken()
-  if (!token) throw new Error("No se pudo validar la sesión")
+  if (!token) throw new Error("No se pudo validar la sesion")
   return { Authorization: `Bearer ${token}` }
 }
 
@@ -128,7 +119,7 @@ export default function LegajoUnicoPage({ params }: PageProps) {
       const data = await res.json().catch(() => null)
       if (res.ok) setStatus(data as FolderStatus)
     } catch {
-      // silencioso: la UI muestra "sin datos"
+      // Informativo: la UI muestra "sin datos".
     } finally {
       setStatusLoading(false)
     }
@@ -172,7 +163,12 @@ export default function LegajoUnicoPage({ params }: PageProps) {
       ...base,
       { key: "contable", label: "Contable (balance, resultados, impuestos)", state: contable, href: `/app/contador/empresas/${activeOrgId}/carpeta` },
       { key: "patrimonio", label: "Patrimonio (bienes y deudas)", state: patrimonio, href: `/app/contador/empresas/${activeOrgId}/bienes` },
-      { key: "documentos", label: "Documentos", state: documentos, href: activeCarpeta?.isTitular ? `/app/contador/productores/${clientId}/documentos` : `/app/contador/empresas/${activeOrgId}` },
+      {
+        key: "documentos",
+        label: "Documentos",
+        state: documentos,
+        href: activeCarpeta?.isTitular ? `/app/contador/productores/${clientId}/documentos` : `/app/contador/empresas/${activeOrgId}`,
+      },
     ]
   }, [status, activeCarpeta, activeOrgId, clientId])
 
@@ -193,121 +189,112 @@ export default function LegajoUnicoPage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Legajo · {client?.legalName ?? "Cliente"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {client?.taxId ? `CUIT ${client.taxId} · ` : ""}Carga y certificación por el contador.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => setAssistantOpen(true)}>
-            <Bot className="h-4 w-4 text-[#0369a1]" />
-            Asistente IA
-          </Button>
+    <div className="flex items-start gap-4 p-4 lg:p-6">
+      <div className={`min-w-0 flex-1 transition-all duration-300 ${assistantOpen ? "lg:max-w-[calc(100%-436px)]" : ""}`}>
+        <div className="mx-auto max-w-5xl space-y-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Legajo · {client?.legalName ?? "Cliente"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {client?.taxId ? `CUIT ${client.taxId} · ` : ""}Carga y certificacion por el contador.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant={assistantOpen ? "default" : "outline"} className="gap-2" onClick={() => setAssistantOpen((value) => !value)}>
+                <Bot className="h-4 w-4" />
+                IA
+              </Button>
+              {activeCarpeta && (
+                <CertifyFolderButton
+                  targetOrganizationId={activeCarpeta.orgId}
+                  onCertified={() => setCertRefresh((n) => n + 1)}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 border-b">
+            {carpetas.map((c) => {
+              const active = c.orgId === activeOrgId
+              return (
+                <button
+                  key={c.orgId}
+                  type="button"
+                  onClick={() => setActiveOrgId(c.orgId)}
+                  className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                      ? "border-[#0369a1] text-[#0369a1]"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {c.isTitular ? <UserRound className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
+                  {c.isTitular ? "Titular" : c.label}
+                </button>
+              )
+            })}
+            <Link
+              href={`/app/contador/clientes/${clientId}`}
+              className="-mb-px border-b-2 border-transparent px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              + Empresa
+            </Link>
+          </div>
+
+          <div className="rounded-xl border bg-card">
+            <div className="flex items-center justify-between border-b px-5 py-3">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">{activeCarpeta?.label}</span>
+                {activeCarpeta?.taxId && (
+                  <span className="text-xs text-muted-foreground">CUIT {activeCarpeta.taxId}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {activeCarpeta && (
+                  <CertificationBadge targetOrganizationId={activeCarpeta.orgId} refreshKey={certRefresh} />
+                )}
+                <span className="text-sm font-medium text-muted-foreground">
+                  {statusLoading ? "..." : `${percent}% completo`}
+                </span>
+              </div>
+            </div>
+
+            <div className="divide-y">
+              {sections.map((s) => (
+                <Link
+                  key={s.key}
+                  href={s.href}
+                  className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-muted/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <SectionIcon state={s.state} />
+                    <span className="text-sm">{s.label}</span>
+                  </div>
+                  <span className="text-xs font-medium text-[#0369a1]">Abrir -&gt;</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
           {activeCarpeta && (
-            <CertifyFolderButton
-              targetOrganizationId={activeCarpeta.orgId}
-              onCertified={() => setCertRefresh((n) => n + 1)}
-            />
+            <div className="rounded-xl border bg-card p-5">
+              <CarpetaReviewSection targetOrganizationId={activeCarpeta.orgId} />
+            </div>
           )}
         </div>
       </div>
 
-      {/* Carga única con IA (la IA reparte por CUIT) */}
-      <div className="space-y-3 rounded-xl border bg-card p-5">
-        <CarpetaUploadSection
-          targetOrganizationId={clientId}
-          onUploaded={() => loadStatus(activeOrgId)}
-        />
-        <UnassignedDocsTray
-          rootOrganizationId={clientId}
-          carpetas={carpetas.map((c) => ({ orgId: c.orgId, label: c.isTitular ? "Titular" : c.label }))}
-          onAssigned={() => loadStatus(activeOrgId)}
-        />
-      </div>
-
-      {/* Pestañas por carpeta */}
-      <div className="flex flex-wrap gap-2 border-b">
-        {carpetas.map((c) => {
-          const active = c.orgId === activeOrgId
-          return (
-            <button
-              key={c.orgId}
-              type="button"
-              onClick={() => setActiveOrgId(c.orgId)}
-              className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-                active
-                  ? "border-[#0369a1] text-[#0369a1]"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {c.isTitular ? <UserRound className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
-              {c.isTitular ? "Titular" : c.label}
-            </button>
-          )
-        })}
-        <Link
-          href={`/app/contador/clientes/${clientId}`}
-          className="-mb-px border-b-2 border-transparent px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-        >
-          + Empresa
-        </Link>
-      </div>
-
-      {/* Carpeta activa */}
-      <div className="rounded-xl border bg-card">
-        <div className="flex items-center justify-between border-b px-5 py-3">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">{activeCarpeta?.label}</span>
-            {activeCarpeta?.taxId && (
-              <span className="text-xs text-muted-foreground">CUIT {activeCarpeta.taxId}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {activeCarpeta && (
-              <CertificationBadge targetOrganizationId={activeCarpeta.orgId} refreshKey={certRefresh} />
-            )}
-            <span className="text-sm font-medium text-muted-foreground">
-              {statusLoading ? "…" : `${percent}% completo`}
-            </span>
-          </div>
-        </div>
-
-        <div className="divide-y">
-          {sections.map((s) => (
-            <Link
-              key={s.key}
-              href={s.href}
-              className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-muted/40"
-            >
-              <div className="flex items-center gap-3">
-                <SectionIcon state={s.state} />
-                <span className="text-sm">{s.label}</span>
-              </div>
-              <span className="text-xs font-medium text-[#0369a1]">Abrir →</span>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Revisión de campos de la carpeta activa */}
       {activeCarpeta && (
-        <div className="rounded-xl border bg-card p-5">
-          <CarpetaReviewSection targetOrganizationId={activeCarpeta.orgId} />
-        </div>
-      )}
-
-      {activeCarpeta && (
-        <LegajoAssistantChat
+        <LegajoAssistantPanel
           open={assistantOpen}
           onOpenChange={setAssistantOpen}
           targetOrganizationId={activeCarpeta.orgId}
+          rootOrganizationId={clientId}
           clientName={activeCarpeta.label}
+          carpetas={carpetas.map((c) => ({ orgId: c.orgId, label: c.isTitular ? "Titular" : c.label }))}
+          onUploaded={() => loadStatus(activeOrgId)}
+          onAssigned={() => loadStatus(activeOrgId)}
         />
       )}
     </div>
