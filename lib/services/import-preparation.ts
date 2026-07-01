@@ -38,7 +38,8 @@ export async function prepareImportFromIntent(
   // Paso 1: Si relatedCompany no existe y usuario quiere crear → action "create_related_company"
   if (
     resolvedEntities.relatedCompany?.status === "not_found" ||
-    resolvedEntities.relatedCompany?.status === "new_to_create"
+    resolvedEntities.relatedCompany?.status === "new_to_create" ||
+    (intent.intent === "create_related_company" && !resolvedEntities.relatedCompany && extractedData.company?.name)
   ) {
     const companyName = resolvedEntities.relatedCompany?.name || extractedData.company?.name || "Nueva Empresa"
     const cuit = resolvedEntities.relatedCompany?.taxId || extractedData.company?.cuit || ""

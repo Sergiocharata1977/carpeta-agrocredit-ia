@@ -3,7 +3,8 @@ import { getAdminDb } from "@/lib/firebase/admin-sdk"
 import { COLLECTIONS } from "@/lib/firebase/collections"
 import { verifyRequestSession, requireActiveOrg, getAuthErrorResponse } from "@/lib/auth/server-session"
 import { assertCanManageAccountingFolder } from "@/lib/auth/accounting-access"
-import { getFieldsByOwner } from "@/lib/services/extracted-fields"
+import { getFieldsByDocument, getFieldsByOwner } from "@/lib/services/extracted-fields"
+import { getClassificationByDocument } from "@/lib/services/document-classification"
 
 export async function GET(
   request: NextRequest,
@@ -14,6 +15,18 @@ export async function GET(
     requireActiveOrg(session)
     const { targetOrganizationId } = await params
     const { folderOwnerOrganizationId } = await assertCanManageAccountingFolder(session, targetOrganizationId)
+    const documentId = request.nextUrl.searchParams.get("documentId")
+    if (documentId) {
+      const fields = await getFieldsByDocument(documentId)
+      const classification = await getClassificationByDocument(documentId)
+      const db = getAdminDb()
+      const documentSnap = await db.collection(COLLECTIONS.DOCUMENTS).doc(documentId).get()
+      const document = documentSnap.exists ? { id: documentSnap.id, ...documentSnap.data() } : null
+      if (document && (document as { folderOwnerOrganizationId?: string }).folderOwnerOrganizationId !== folderOwnerOrganizationId) {
+        return Response.json({ error: "Documento fuera del legajo activo" }, { status: 403 })
+      }
+      return Response.json({ fields, classification, document })
+    }
     const fields = (await getFieldsByOwner(folderOwnerOrganizationId)).filter(
       (field) => field.reviewStatus === "PENDING" || field.confidence < 0.7,
     )

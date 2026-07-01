@@ -56,6 +56,20 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
     }))
   }, [])
 
+  function inferCompanyNameFromFileName(fileName: string): string | undefined {
+    const base = fileName
+      .replace(/\.[^.]+$/, "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\bbalance\b/gi, "")
+      .replace(/\bestados?\s+contables?\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim()
+    if (base.length < 3) return undefined
+    return base
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+
   const uploadDocument = useCallback(
     async (file: File) => {
       if (context.state !== AssistantConversationState.idle) return
@@ -112,6 +126,7 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
         const activeStatuses = new Set(["queued", "preprocessing", "classifying", "extracting", "validating", "processing"])
         let jobStatus = "processing"
         let attempts = 0
+        let retriedEmptyReview = false
         let extractedData: ExtractedDocumentData | null = null
 
         while (activeStatuses.has(jobStatus) && attempts < 30) {
@@ -138,24 +153,66 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
             ) {
               // Cargar campos extraídos via review endpoint
               const fieldsRes = await fetch(
-                `/api/credito-hub/review/${encodeURIComponent(targetOrganizationId)}`,
+                `/api/credito-hub/review/${encodeURIComponent(targetOrganizationId)}?documentId=${encodeURIComponent(documentId)}`,
                 { headers: { Authorization: `Bearer ${token}` } }
               )
               const fieldsData = await fieldsRes.json().catch(() => ({ fields: [] }))
+              const classification = fieldsData.classification
               // Filtrar solo los campos de este documento
               const docFields = (fieldsData.fields ?? []).filter(
                 (f: any) => f.documentId === documentId
               )
+              const documentType = String(classification?.documentType ?? "other").toLowerCase()
+              const isEmptyReview =
+                currentJob.status === "awaiting_review" &&
+                docFields.length === 0 &&
+                (!classification || documentType === "other" || documentType === "unknown" || documentType === "desconocido")
+
+              if (isEmptyReview && !retriedEmptyReview) {
+                retriedEmptyReview = true
+                attempts = 0
+                addMessage(
+                  "assistant",
+                  "El documento quedo en revision sin datos utiles. Lo reproceso una vez con la configuracion actual antes de pedirte que decidas."
+                )
+
+                const retryRes = await fetch(`/api/credito-hub/jobs/${encodeURIComponent(jobId)}/retry`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}` },
+                })
+                const retryData = await retryRes.json().catch(() => ({}))
+                if (!retryRes.ok) throw new Error(retryData.error ?? "No se pudo reprocesar el documento")
+
+                const retryProcessRes = await fetch("/api/credito-hub/jobs/process-now", {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ targetOrganizationId }),
+                })
+                const retryProcessData = await retryProcessRes.json().catch(() => ({}))
+                if (!retryProcessRes.ok) {
+                  throw new Error(retryProcessData.error ?? "No se pudo relanzar el procesamiento")
+                }
+
+                jobStatus = "processing"
+                continue
+              }
+
+              const inferredCompanyName = classification?.issuer ?? inferCompanyNameFromFileName(file.name)
 
               extractedData = {
                 documentId,
-                documentType: currentJob.detectedType ?? "other",
+                documentType: classification?.documentType ?? "other",
                 fileName: file.name,
-                confidence: currentJob.confidence ?? 0.75,
+                confidence: classification?.confidence ?? 0.75,
                 fields: docFields,
-                company: currentJob.company,
-                period: currentJob.period,
-                issueDate: currentJob.issueDate,
+                company: inferredCompanyName
+                  ? { name: inferredCompanyName, cuit: classification?.cuit }
+                  : undefined,
+                period: classification?.period ? { start: classification.period, end: classification.period } : undefined,
+                issueDate: classification?.issueDate,
               }
 
               break
@@ -266,6 +323,16 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
           status: "prepared",
         }
 
+        const meaningfulActions = pendingImport.actions.filter((action) => action.type !== "link_document")
+        if (meaningfulActions.length === 0) {
+          addMessage(
+            "assistant",
+            "Pude vincular el documento al legajo, pero no detecté empresa ni campos suficientes para crear una empresa o cargar datos contables. Necesito que me indiques la empresa o que revisemos el documento antes de guardar."
+          )
+          transition(AssistantConversationState.awaiting_user_intent, { pendingImport: undefined })
+          return
+        }
+
         const actionsSummary = pendingImport.actions.length > 0
           ? pendingImport.actions.map((a) => `- ${a.type}: ${a.targetEntityName}`).join("\n")
           : "- Operación sin acciones detalladas"
@@ -364,6 +431,16 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
         preparedByUid: "current-user", // Será llenado por API
         preparedByOrganizationId: targetOrganizationId,
         status: "prepared",
+      }
+
+      const meaningfulActions = pendingImport.actions.filter((action) => action.type !== "link_document")
+      if (meaningfulActions.length === 0) {
+        addMessage(
+          "assistant",
+          "Pude vincular el documento al legajo, pero no detecté empresa ni campos suficientes para crear una empresa o cargar datos contables. Necesito que me indiques la empresa o que revisemos el documento antes de guardar."
+        )
+        transition(AssistantConversationState.awaiting_user_intent, { pendingImport: undefined })
+        return
       }
 
       const actionsSummary = pendingImport.actions.map((a) => `- ${a.type}: ${a.targetEntityName}`).join("\n")
