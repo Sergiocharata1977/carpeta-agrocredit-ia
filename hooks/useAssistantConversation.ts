@@ -86,9 +86,14 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
         if (!intakeRes.ok) throw new Error(intakeData.error ?? "No se pudo subir el archivo")
 
         const jobIds = intakeData.jobIds ?? []
+        const documentIds = intakeData.documentIds ?? []
         if (jobIds.length === 0) throw new Error("No se encoló ningún trabajo")
+        if (documentIds.length === 0) throw new Error("No se pudo identificar el documento subido")
+        const jobId = jobIds[0]
+        const documentId = documentIds[0]
 
-        transition(AssistantConversationState.processing, { documentId: jobIds[0] })
+        addMessage("assistant", "Ya subí el archivo. Ahora lo estoy clasificando y extrayendo datos.")
+        transition(AssistantConversationState.processing, { documentId })
 
         // Procesar documento
         const processRes = await fetch("/api/credito-hub/jobs/process-now", {
@@ -104,11 +109,12 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
         if (!processRes.ok) throw new Error(processData.error ?? "No se pudo procesar el documento")
 
         // Esperar a que el job se complete
+        const activeStatuses = new Set(["queued", "preprocessing", "classifying", "extracting", "validating", "processing"])
         let jobStatus = "processing"
         let attempts = 0
         let extractedData: ExtractedDocumentData | null = null
 
-        while (jobStatus === "processing" && attempts < 30) {
+        while (activeStatuses.has(jobStatus) && attempts < 30) {
           await new Promise((resolve) => setTimeout(resolve, 1000))
           attempts++
 
@@ -117,12 +123,19 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
           })
 
           const statusData = await statusRes.json().catch(() => ({}))
-          const currentJob = (statusData.jobs ?? []).find((j: any) => j.id === jobIds[0])
+          const currentJob = (statusData.jobs ?? []).find((j: any) => j.id === jobId)
 
           if (currentJob) {
             jobStatus = currentJob.status
+            if (attempts === 1 || attempts % 5 === 0) {
+              addMessage("assistant", `Sigo procesando el documento. Estado actual: ${currentJob.status}.`)
+            }
 
-            if (currentJob.status === "completed" || currentJob.status === "awaiting_review") {
+            if (
+              currentJob.status === "completed" ||
+              currentJob.status === "awaiting_review" ||
+              currentJob.status === "partially_completed"
+            ) {
               // Cargar campos extraídos via review endpoint
               const fieldsRes = await fetch(
                 `/api/credito-hub/review/${encodeURIComponent(targetOrganizationId)}`,
@@ -131,11 +144,11 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
               const fieldsData = await fieldsRes.json().catch(() => ({ fields: [] }))
               // Filtrar solo los campos de este documento
               const docFields = (fieldsData.fields ?? []).filter(
-                (f: any) => f.documentId === jobIds[0]
+                (f: any) => f.documentId === documentId
               )
 
               extractedData = {
-                documentId: jobIds[0],
+                documentId,
                 documentType: currentJob.detectedType ?? "other",
                 fileName: file.name,
                 confidence: currentJob.confidence ?? 0.75,
@@ -156,11 +169,11 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
 
         addMessage(
           "assistant",
-          `Document analizado:\n- Tipo: ${extractedData.documentType}\n- Empresa: ${extractedData.company?.name ?? "No detectada"}\n- CUIT: ${extractedData.company?.cuit ?? "N/A"}\n- Confianza: ${Math.round(extractedData.confidence * 100)}%`
+          `Documento analizado:\n- Tipo: ${extractedData.documentType}\n- Empresa: ${extractedData.company?.name ?? "No detectada"}\n- CUIT: ${extractedData.company?.cuit ?? "N/A"}\n- Confianza: ${Math.round(extractedData.confidence * 100)}%\n\n¿Qué querés hacer con este documento? Podés elegir una opción o escribirme con tus palabras.`
         )
 
         transition(AssistantConversationState.document_analyzed, {
-          documentId: jobIds[0],
+          documentId,
           fileName: file.name,
           extractedData,
           detectedType: extractedData.documentType as any,
@@ -392,6 +405,28 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
 
       addMessage("assistant", "Operación confirmada. Ejecutando...")
       transition(AssistantConversationState.executing_import)
+
+      const executeRes = await fetch("/api/credito-hub/assistant/execute-import", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          operationId: context.pendingImport.operationId,
+        }),
+      })
+
+      const executeData = await executeRes.json().catch(() => ({}))
+      if (!executeRes.ok) throw new Error(executeData.error ?? "No se pudo ejecutar la operaciÃ³n")
+
+      addMessage(
+        "assistant",
+        `Listo. GuardÃ© la carga confirmada.\n- Empresa: ${context.detectedCompany?.name ?? "N/A"}\n- Campos detectados: ${context.extractedData?.fields.length ?? 0}\n\nPodÃ©s subir otro documento o seguir consultando.`
+      )
+
+      transition(AssistantConversationState.completed, { pendingImport: undefined })
+      toast.success("Documento cargado exitosamente")
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido"
       addMessage("assistant", `Error al confirmar: ${message}`)

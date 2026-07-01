@@ -61,6 +61,26 @@ export function AssistantConversationFlow({
     }
   }
 
+  const MessageThread = ({ maxHeight = "max-h-[240px]" }: { maxHeight?: string }) => {
+    if (context.messages.length === 0) return null
+    return (
+      <div ref={scrollRef} className={`${maxHeight} space-y-3 overflow-y-auto pr-2`}>
+        {context.messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`rounded-lg px-3 py-2 text-sm ${
+              msg.role === "user"
+                ? "ml-8 bg-[#4f46e5] text-white"
+                : "mr-8 whitespace-pre-wrap bg-[#1f2937] text-slate-100"
+            }`}
+          >
+            {msg.content}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   // idle: esperando archivo
   if (context.state === AssistantConversationState.idle) {
     return (
@@ -92,9 +112,12 @@ export function AssistantConversationFlow({
   // uploading: progreso de carga
   if (context.state === AssistantConversationState.uploading) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-[#4f46e5]" />
-        <p className="text-sm text-slate-400">Subiendo archivo...</p>
+      <div className="space-y-4">
+        <MessageThread />
+        <div className="flex flex-col items-center justify-center gap-4 px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#4f46e5]" />
+          <p className="text-sm text-slate-400">Subiendo archivo...</p>
+        </div>
       </div>
     )
   }
@@ -102,11 +125,14 @@ export function AssistantConversationFlow({
   // processing: leyendo documento
   if (context.state === AssistantConversationState.processing) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-[#4f46e5]" />
-        <p className="text-center text-sm text-slate-400">
-          Estoy leyendo el documento con IA...
-        </p>
+      <div className="space-y-4">
+        <MessageThread />
+        <div className="flex flex-col items-center justify-center gap-4 px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#4f46e5]" />
+          <p className="text-center text-sm text-slate-400">
+            Estoy leyendo el documento con IA...
+          </p>
+        </div>
       </div>
     )
   }
@@ -115,6 +141,7 @@ export function AssistantConversationFlow({
   if (context.state === AssistantConversationState.document_analyzed) {
     return (
       <div className="space-y-4">
+        <MessageThread />
         <div className="rounded-lg border border-[#334155] bg-[#182235] p-4">
           <h4 className="font-semibold text-white">Documento analizado</h4>
           <dl className="mt-3 space-y-2 text-sm">
@@ -216,11 +243,14 @@ export function AssistantConversationFlow({
   // resolving_entities: buscando entidades
   if (context.state === AssistantConversationState.resolving_entities) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-[#4f46e5]" />
-        <p className="text-center text-sm text-slate-400">
-          Buscando entidades...
-        </p>
+      <div className="space-y-4">
+        <MessageThread />
+        <div className="flex flex-col items-center justify-center gap-4 px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#4f46e5]" />
+          <p className="text-center text-sm text-slate-400">
+            Buscando entidades...
+          </p>
+        </div>
       </div>
     )
   }
@@ -303,6 +333,7 @@ export function AssistantConversationFlow({
   if (context.state === AssistantConversationState.awaiting_confirmation) {
     return (
       <div className="space-y-4">
+        <MessageThread />
         <div className="rounded-lg border border-[#334155] bg-[#182235] p-4">
           <h4 className="mb-3 font-semibold text-white">Resumen de operación</h4>
           {context.pendingImport?.actions && (
@@ -341,11 +372,14 @@ export function AssistantConversationFlow({
   // executing_import: guardando
   if (context.state === AssistantConversationState.executing_import) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-        <p className="text-center text-sm text-slate-400">
-          Guardando datos...
-        </p>
+      <div className="space-y-4">
+        <MessageThread />
+        <div className="flex flex-col items-center justify-center gap-4 px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+          <p className="text-center text-sm text-slate-400">
+            Guardando datos...
+          </p>
+        </div>
       </div>
     )
   }
@@ -354,6 +388,7 @@ export function AssistantConversationFlow({
   if (context.state === AssistantConversationState.completed) {
     return (
       <div className="space-y-4">
+        <MessageThread />
         <div className="rounded-lg border border-green-600/30 bg-green-600/10 p-4">
           <div className="flex items-start gap-2">
             <CheckCircle className="mt-1 h-5 w-5 text-green-600 shrink-0" />
@@ -395,6 +430,7 @@ export function AssistantConversationFlow({
   if (context.state === AssistantConversationState.error) {
     return (
       <div className="space-y-4">
+        <MessageThread />
         <div className="rounded-lg border border-red-600/30 bg-red-600/10 p-4">
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-1 h-5 w-5 text-red-600 shrink-0" />
