@@ -9,6 +9,7 @@
 
 import { resolveAIProvider } from "@/lib/ai/provider-config"
 import { extractPdfText } from "@/lib/ai/pdf-to-images"
+import { extractIssuerFromText } from "@/lib/ai/classification/issuer-extraction"
 import type { AIClassificationHints } from "@/lib/ai/AIProvider"
 import type { DocumentClassification } from "@/types/credito-hub"
 
@@ -100,9 +101,9 @@ function normalizeDocumentType(raw: string): SupportedDocumentType {
 }
 
 async function inferDocumentTypeFromContent(
-  buffer: Buffer,
   mimeType: string,
   hints?: AIClassificationHints,
+  pdfText?: string,
 ): Promise<SupportedDocumentType | null> {
   const fileName = normalizeText(hints?.fileName ?? "")
   if (/balance|estado[_\s-]*situacion[_\s-]*patrimonial|estados?[_\s-]*contables?/.test(fileName)) {
@@ -120,23 +121,18 @@ async function inferDocumentTypeFromContent(
 
   if (mimeType !== "application/pdf") return null
 
-  try {
-    const pdf = await extractPdfText(buffer)
-    const text = normalizeText(pdf.text.slice(0, 6000))
-    if (/estado\s+de\s+situacion\s+patrimonial|activo\s+corriente|pasivo\s+corriente|patrimonio\s+neto/.test(text)) {
-      return "estado_situacion_patrimonial"
-    }
-    if (/estado\s+de\s+resultados|ventas\s+netas|resultado\s+del\s+ejercicio|costo\s+de\s+los\s+bienes\s+vendidos/.test(text)) {
-      return "estado_resultados"
-    }
-    if (/declaracion\s+jurada\s+de\s+iva|debito\s+fiscal|credito\s+fiscal|f\.?\s*2002/.test(text)) {
-      return "ddjj_iva"
-    }
-    if (/formulario\s+931|f\.?\s*931|aportes\s+y\s+contribuciones|seguridad\s+social/.test(text)) {
-      return "formulario_931"
-    }
-  } catch {
-    return null
+  const text = normalizeText((pdfText ?? "").slice(0, 6000))
+  if (/estado\s+de\s+situacion\s+patrimonial|activo\s+corriente|pasivo\s+corriente|patrimonio\s+neto/.test(text)) {
+    return "estado_situacion_patrimonial"
+  }
+  if (/estado\s+de\s+resultados|ventas\s+netas|resultado\s+del\s+ejercicio|costo\s+de\s+los\s+bienes\s+vendidos/.test(text)) {
+    return "estado_resultados"
+  }
+  if (/declaracion\s+jurada\s+de\s+iva|debito\s+fiscal|credito\s+fiscal|f\.?\s*2002/.test(text)) {
+    return "ddjj_iva"
+  }
+  if (/formulario\s+931|f\.?\s*931|aportes\s+y\s+contribuciones|seguridad\s+social/.test(text)) {
+    return "formulario_931"
   }
 
   return null
@@ -161,11 +157,23 @@ export async function classify(
 
   const confidence = clampConfidence(result.confidence)
   let documentType = normalizeDocumentType(result.documentType)
+  const needsPdfFallback = mimeType === "application/pdf" && (documentType === "desconocido" || !result.issuer || !result.cuit)
+  let pdfText: string | undefined
+  if (needsPdfFallback) {
+    try {
+      const pdf = await extractPdfText(buffer)
+      pdfText = pdf.text
+    } catch {
+      pdfText = undefined
+    }
+  }
+
   const inferredDocumentType =
     documentType === "desconocido"
-      ? await inferDocumentTypeFromContent(buffer, mimeType, hints)
+      ? await inferDocumentTypeFromContent(mimeType, hints, pdfText)
       : null
   if (inferredDocumentType) documentType = inferredDocumentType
+  const issuerFallback = pdfText ? extractIssuerFromText(pdfText) : {}
 
   const output: ClassifierOutput = {
     documentType,
@@ -179,6 +187,8 @@ export async function classify(
   if (result.issueDate) output.issueDate = result.issueDate
   if (result.expiryDate) output.expiryDate = result.expiryDate
   if (result.issuer) output.issuer = result.issuer
+  else if (issuerFallback.issuer) output.issuer = issuerFallback.issuer
+  if (!output.cuit && issuerFallback.cuit) output.cuit = issuerFallback.cuit
 
   return output
 }

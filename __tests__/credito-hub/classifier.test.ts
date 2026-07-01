@@ -151,6 +151,51 @@ describe("classify (document-classifier)", () => {
     expect(out.needsReview).toBe(false)
   })
 
+  it("completa issuer y CUIT desde el texto del PDF si el provider no los devuelve", async () => {
+    mockClassifyDocument.mockResolvedValue(
+      aiResult({ documentType: "other", confidence: 0.3, issuer: undefined, cuit: undefined }),
+    )
+    mockExtractPdfText.mockResolvedValue({
+      text: [
+        "LOS SE\u00d1ORES DEL AGRO S.A.",
+        "Estados contables ficticios",
+        "CUIT ficticio 30-99999999-7",
+        "Estado de situacion patrimonial activo corriente pasivo corriente patrimonio neto",
+        "LOS SE\u00d1ORES DEL AGRO S.A.",
+      ].join("\n"),
+      pageCount: 11,
+      hasUsableText: true,
+    })
+
+    const out = await classify(Buffer.from("%PDF"), "application/pdf", { fileName: "Balance_Los_Senores_del_Agro.pdf" })
+
+    expect(out.documentType).toBe("estado_situacion_patrimonial")
+    expect(out.issuer).toBe("Los Se\u00f1ores del Agro S.A.")
+    expect(out.cuit).toBe("30-99999999-7")
+    expect(out.needsReview).toBe(false)
+  })
+
+  it("no pisa issuer y CUIT cuando el provider ya los devuelve", async () => {
+    mockClassifyDocument.mockResolvedValue(
+      aiResult({
+        documentType: "estado_situacion_patrimonial",
+        confidence: 0.9,
+        issuer: "Empresa IA S.A.",
+        cuit: "30-11111111-1",
+      }),
+    )
+    mockExtractPdfText.mockResolvedValue({
+      text: "LOS SE\u00d1ORES DEL AGRO S.A. CUIT 30-99999999-7",
+      pageCount: 1,
+      hasUsableText: true,
+    })
+
+    const out = await classify(Buffer.from("%PDF"), "application/pdf", { fileName: "balance.pdf" })
+
+    expect(out.issuer).toBe("Empresa IA S.A.")
+    expect(out.cuit).toBe("30-11111111-1")
+  })
+
   it("clampea confidence fuera de rango", async () => {
     mockClassifyDocument.mockResolvedValue(aiResult({ confidence: 1.5 }))
     const high = await classify(Buffer.from("x"), "image/png")
