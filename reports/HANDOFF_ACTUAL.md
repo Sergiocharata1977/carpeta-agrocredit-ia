@@ -28,6 +28,12 @@
 - Limite de seguridad vigente: el chat no aplica datos finales sin revision; la insercion en base contable/perfil sigue pasando por los flujos de revision/aplicacion con auditoria.
 - Validacion: `pnpm type-check` OK.
 
+### Correccion inmediata 2026-07-01
+
+- El panel IA ahora tambien esta montado en `/app/contador/clientes`, no solo dentro de `/app/contador/clientes/[clientId]/legajo`.
+- En la lista de clientes, el panel permite elegir cliente activo y abre el chat/contexto para ese legajo.
+- Validacion: `pnpm type-check` OK; `GET http://127.0.0.1:3000/app/contador/clientes` 200 OK.
+
 ---
 
 ## Fix deploy Vercel 2026-06-17 - pdf-to-img/canvas

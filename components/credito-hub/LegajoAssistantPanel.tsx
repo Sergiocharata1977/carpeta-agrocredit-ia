@@ -1,16 +1,8 @@
 "use client"
 
+import type React from "react"
 import { useRef, useState } from "react"
-import {
-  AlertTriangle,
-  Bot,
-  FileUp,
-  PanelRightClose,
-  Send,
-  Sparkles,
-  Upload,
-  X,
-} from "lucide-react"
+import { AlertTriangle, Bot, FileUp, PanelRightClose, Send, Sparkles, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { JobProgressList } from "@/components/credito-hub/JobProgressList"
@@ -20,10 +12,11 @@ import { getFreshIdToken, getIdToken } from "@/lib/firebase/auth-client"
 interface LegajoAssistantPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  targetOrganizationId: string
-  rootOrganizationId: string
+  targetOrganizationId?: string | null
+  rootOrganizationId?: string | null
   clientName?: string
-  carpetas: Array<{ orgId: string; label: string }>
+  carpetas?: Array<{ orgId: string; label: string }>
+  contextSelector?: React.ReactNode
   onUploaded?: () => void
   onAssigned?: () => void
 }
@@ -47,7 +40,8 @@ export function LegajoAssistantPanel({
   targetOrganizationId,
   rootOrganizationId,
   clientName,
-  carpetas,
+  carpetas = [],
+  contextSelector,
   onUploaded,
   onAssigned,
 }: LegajoAssistantPanelProps) {
@@ -59,10 +53,18 @@ export function LegajoAssistantPanel({
   const [mockNotice, setMockNotice] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const hasTarget = Boolean(targetOrganizationId)
 
   async function send(text: string) {
     const message = text.trim()
     if (!message || loading) return
+    if (!targetOrganizationId) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Primero elegi un cliente para que pueda leer su legajo." },
+      ])
+      return
+    }
 
     const history = messages.slice(-8)
     setMessages((prev) => [...prev, { role: "user", content: message }])
@@ -71,14 +73,11 @@ export function LegajoAssistantPanel({
     try {
       const token = await getFreshIdToken()
       if (!token) throw new Error("No se pudo validar la sesion")
-      const res = await fetch(
-        `/api/credito-hub/assistant/${encodeURIComponent(targetOrganizationId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ message, history }),
-        },
-      )
+      const res = await fetch(`/api/credito-hub/assistant/${encodeURIComponent(targetOrganizationId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message, history }),
+      })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error ?? "No se pudo consultar al asistente")
       setMockNotice(Boolean(data.isMock))
@@ -96,6 +95,10 @@ export function LegajoAssistantPanel({
 
   async function uploadFiles() {
     if (files.length === 0 || uploading) return
+    if (!targetOrganizationId) {
+      toast.error("Elegi un cliente antes de subir archivos")
+      return
+    }
     setUploading(true)
     try {
       const token = await getIdToken()
@@ -157,7 +160,7 @@ export function LegajoAssistantPanel({
               <Bot className="h-4 w-4 text-[#a5b4fc]" />
               IA contextual
             </div>
-            <p className="mt-1 text-xs text-slate-400">{clientName ?? "Legajo"} · panel operativo</p>
+            <p className="mt-1 text-xs text-slate-400">{clientName ?? "Sin cliente seleccionado"} · panel operativo</p>
           </div>
           <Button
             type="button"
@@ -181,13 +184,20 @@ export function LegajoAssistantPanel({
           <p className="mt-2 text-xs leading-relaxed text-slate-300">
             Lee el legajo abierto, detecta faltantes, encola documentos y ayuda a preparar la informacion para revision.
           </p>
+          {contextSelector && <div className="mt-3">{contextSelector}</div>}
+          {!hasTarget && (
+            <p className="mt-3 rounded-md border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-xs text-amber-100">
+              Elegi un cliente para activar chat, adjuntos y procesamiento.
+            </p>
+          )}
           <div className="mt-3 space-y-2">
             {SUGGESTED.map((q) => (
               <button
                 key={q}
                 type="button"
+                disabled={!hasTarget}
                 onClick={() => void send(q)}
-                className="flex w-full items-center justify-between rounded-md border border-[#334155] px-3 py-2 text-left text-xs font-semibold text-white transition hover:bg-[#243149]"
+                className="flex w-full items-center justify-between rounded-md border border-[#334155] px-3 py-2 text-left text-xs font-semibold text-white transition hover:bg-[#243149] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {q}
                 <span className="text-slate-400">›</span>
@@ -237,6 +247,7 @@ export function LegajoAssistantPanel({
               size="sm"
               className="border-[#475569] bg-transparent text-white hover:bg-white/10"
               onClick={() => fileRef.current?.click()}
+              disabled={!hasTarget}
             >
               <FileUp className="mr-2 h-4 w-4" />
               Elegir
@@ -265,7 +276,7 @@ export function LegajoAssistantPanel({
                   </button>
                 </div>
               ))}
-              <Button type="button" className="w-full bg-[#4f46e5] hover:bg-[#4338ca]" onClick={uploadFiles} disabled={uploading}>
+              <Button type="button" className="w-full bg-[#4f46e5] hover:bg-[#4338ca]" onClick={uploadFiles} disabled={uploading || !hasTarget}>
                 <Upload className="mr-2 h-4 w-4" />
                 {uploading ? "Encolando..." : "Encolar y leer con IA"}
               </Button>
@@ -274,15 +285,19 @@ export function LegajoAssistantPanel({
         </section>
 
         <div className="rounded-lg bg-white text-slate-950">
-          <JobProgressList targetOrganizationId={targetOrganizationId} />
+          {targetOrganizationId ? (
+            <JobProgressList targetOrganizationId={targetOrganizationId} />
+          ) : (
+            <div className="rounded-lg border p-4 text-sm text-slate-600">Sin cliente seleccionado.</div>
+          )}
         </div>
 
         <div className="rounded-lg bg-white text-slate-950">
-          <UnassignedDocsTray
-            rootOrganizationId={rootOrganizationId}
-            carpetas={carpetas}
-            onAssigned={onAssigned}
-          />
+          {rootOrganizationId ? (
+            <UnassignedDocsTray rootOrganizationId={rootOrganizationId} carpetas={carpetas} onAssigned={onAssigned} />
+          ) : (
+            <div className="rounded-lg border p-4 text-sm text-slate-600">Sin documentos para asignar.</div>
+          )}
         </div>
       </div>
 
