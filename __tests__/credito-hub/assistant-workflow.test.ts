@@ -194,7 +194,7 @@ describe("Assistant Workflow", () => {
       },
     }
 
-    const pendingOp = await prepareBalanceImport(fakeDb, "doc-123", extractedData, "org-root", "org-company-123")
+    const pendingOp = await prepareBalanceImport(fakeDb as any, "doc-123", extractedData, "org-root", "org-company-123")
 
     expect(pendingOp.status).toBe("prepared")
     expect(pendingOp.operationId).toBeTruthy()
@@ -225,10 +225,10 @@ describe("Assistant Workflow", () => {
       status: "prepared",
     }
 
-    const result = await executeConfirmedImport(fakeDb, "op-123", pendingOp, "user-1", "org-root")
+    const result = await executeConfirmedImport(fakeDb as any, "op-123", pendingOp, "user-1", "org-root")
 
     expect(result.success).toBe(false)
-    expect(result.errors?.some((e) => e.includes("confirmed"))).toBe(true)
+    expect(result.errors?.some((e) => e.includes("confirmada") || e.includes("confirmed"))).toBe(true)
   })
 
   it("should execute only after explicit confirmation", async () => {
@@ -256,11 +256,16 @@ describe("Assistant Workflow", () => {
       status: "confirmed",
     }
 
-    const result = await executeConfirmedImport(fakeDb, "op-123", pendingOp, "user-1", "org-root")
+    const doc = fakeDb.collection("assistant_pending_imports").doc(pendingOp.operationId)
+    await doc.set(pendingOp as any)
+
+    const result = await executeConfirmedImport(fakeDb as any, "op-123", pendingOp, "user-1", "org-root")
 
     expect(result.success).toBe(true)
 
-    const assistantExecutedLogs = auditCalls.filter((c) => c.action === "assistant.import_executed")
+    // Audit logs are written directly to Firestore, not via writeAuditLog mock
+    const auditLogs = Array.from(store.col("audit_logs").values())
+    const assistantExecutedLogs = auditLogs.filter((c) => c.action === "assistant.import_executed")
     expect(assistantExecutedLogs.length).toBeGreaterThan(0)
   })
 
@@ -281,7 +286,7 @@ describe("Assistant Workflow", () => {
     const doc = fakeDb.collection("assistant_pending_imports").doc(pendingOp.operationId)
     await doc.set(pendingOp as any)
 
-    await cancelImportOperation(fakeDb, "op-123", "User canceled", "user-1")
+    await cancelImportOperation(fakeDb as any, "op-123", "User canceled", "user-1")
 
     const canceled = await doc.get()
     expect((canceled.data() as any).status).toBe("canceled")
@@ -306,7 +311,7 @@ describe("Assistant Workflow", () => {
     await doc.set(pendingOp as any)
 
     try {
-      await cancelImportOperation(fakeDb, "op-123", "User canceled", "user-1")
+      await cancelImportOperation(fakeDb as any, "op-123", "User canceled", "user-1")
       expect.fail("Should have thrown error")
     } catch (error) {
       expect((error as Error).message).toContain("executed")
@@ -329,10 +334,11 @@ describe("Assistant Workflow", () => {
     const doc = fakeDb.collection("assistant_pending_imports").doc(pendingOp.operationId)
     await doc.set(pendingOp as any)
 
-    auditCalls.length = 0
-    await markImportOperationConfirmed(fakeDb, "op-123", "user-1")
+    await markImportOperationConfirmed(fakeDb as any, "op-123", "user-1")
 
-    const confirmedLogs = auditCalls.filter((c) => c.action === "assistant.import_confirmed")
+    // Audit logs are written directly to Firestore, not via writeAuditLog mock
+    const auditLogs = Array.from(store.col("audit_logs").values())
+    const confirmedLogs = auditLogs.filter((c) => c.action === "assistant.import_confirmed")
     expect(confirmedLogs.length).toBe(1)
     expect(confirmedLogs[0].targetId).toBe("op-123")
   })
