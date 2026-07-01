@@ -139,7 +139,7 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
                 documentType: currentJob.detectedType ?? "other",
                 fileName: file.name,
                 confidence: currentJob.confidence ?? 0.75,
-                fields: fieldsData.fields ?? [],
+                fields: docFields,
                 company: currentJob.company,
                 period: currentJob.period,
                 issueDate: currentJob.issueDate,
