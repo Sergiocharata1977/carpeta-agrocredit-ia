@@ -1,12 +1,39 @@
 # Handoff Actual - AgroCredit IA
 
-**Fecha:** 2026-05-29  
+**Última actualización:** 2026-07-01  
 **Proyecto:** `Agro-Credit` / `carpeta-agrocredit-ia`  
 **Ruta local vigente:** `C:\Users\Usuario\Documents\Proyectos\carpeta-agrocredit-ia`  
 **Repo remoto:** `https://github.com/Sergiocharata1977/carpeta-agrocredit-ia`  
 **Vercel:** proyecto `agrocredit-hub`, dominio `carpeta-agrocredit-ia.vercel.app`  
 **Stack:** Next.js App Router + Firebase + TypeScript  
 **Estado real:** OCR/IA EECC e invitaciones por link implementados v1. Los planes MD 006 y 009 fueron eliminados a pedido del usuario.
+
+---
+
+## Cambios de esta sesión — Plan 019: Asistente Documental Conversacional (2026-07-01)
+
+**Plan creado:** `reports/019_PLAN_ASISTENTE_DOCUMENTAL_CONVERSACIONAL.md`
+
+**Análisis realizado:** El chat IA actual (Plan 018) es una interfaz visual mejorada, pero todavía no es un asistente transaccional.
+
+Estado ANTES del plan:
+- Upload automático de documento.
+- Procesamiento y clasificación IA automática.
+- NO hay máquina de estados interna.
+- NO hay resolución de entidades en base.
+- NO hay confirmación obligatoria.
+- NO hay preparación de operación pendiente.
+- IA escribe directo (cuando lo hace).
+
+Estado DESPUÉS del plan (ejecutable):
+- Ola 0: Tipos, estados internos, funciones puras backend.
+- Ola 1: Motor de intención + resolución de entidades.
+- Ola 2: Preparación de importación + vista previa.
+- Ola 3: Confirmación obligatoria + ejecución controlada.
+- Ola 4: Integración en flujo conversacional limpio.
+- Ola 5: Tests de aislamiento y auditoría.
+
+**Próximo:** Invocar skill `/plan-olas` para ejecutar las olas de forma ordenada.
 
 ---
 

@@ -36,6 +36,8 @@ Al retomar el proyecto o iniciar una sesión (`protocolo`, `cargar contexto`):
 | 015 | `015_CHECKLIST_VERIFICACION_FRONTEND.md` | Checklist | 🟢 Vivo | Verificación pantalla por pantalla de los flujos (alta AFIP, Legajo IA, revisión, requisitos, cumplimiento) con bloqueantes marcados. |
 | 016 | `016_INFORMACION_CARGA_CLIENTE.md` | Referencia | 🟢 Vivo | Inventario completo de la información que debe cargar un cliente y sus empresas (datos personales, perfil, contable, patrimonio, documentos), relevado de todos los formularios y schemas. |
 | 017 | `017_PLAN_LEGAJO_UNICO_CONTADOR.md` | Plan | 🟡 En progreso | Legajo único operado por el contador: pestañas por carpeta, carga única con auto-routing por IA, revisión embebida, certificación profesional con sello y asistente IA contextual. Olas 1-6 implementadas. |
+| 018 | `018_PLAN_ASISTENTE_LATERAL_OPERATIVO.md` | Plan | ✅ Completado | Panel lateral integrado (tipo Platform 12) para asistente IA conversacional. Reemplaza modal popup anterior. |
+| 019 | `019_PLAN_ASISTENTE_DOCUMENTAL_CONVERSACIONAL.md` | Plan | 📐 Planificado | Asistente transaccional de carga: leer → extraer → preguntar → preparar → confirmar → ejecutar. Olas 0-5, ejecutables. |
 
 **Leyenda de estado:** 🟢 Vivo (se mantiene actualizado) · ✅ Completado · 🟡 En progreso · 📐 Planificado (no implementado).
 
