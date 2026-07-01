@@ -30,7 +30,7 @@ export class AnthropicProvider implements AIProvider {
 
   constructor(model?: string) {
     this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    this.model = model ?? process.env.CLAUDE_MODEL ?? "claude-haiku-4-5"
+    this.model = model ?? process.env.CLAUDE_MODEL ?? "claude-haiku-4-5-20251001"
   }
 
   private buildContentBlock(

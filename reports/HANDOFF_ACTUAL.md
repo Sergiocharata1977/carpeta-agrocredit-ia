@@ -34,6 +34,14 @@
 - En la lista de clientes, el panel permite elegir cliente activo y abre el chat/contexto para ese legajo.
 - Validacion: `pnpm type-check` OK; `GET http://127.0.0.1:3000/app/contador/clientes` 200 OK.
 
+### Correccion global IA 2026-07-01
+
+- El asistente se movio al shell global: `components/layout/AppShell.tsx` monta `components/credito-hub/GlobalLegajoAssistant.tsx`.
+- Resultado: el boton/panel IA aparece en todas las pantallas privadas bajo `/app`, no solo en clientes o legajo.
+- El selector global detecta el legajo por ruta (`/app/contador/clientes/[id]`, `/legajo`, `/productores/[id]`, `/empresas/[id]`, `/app/entidad/carpetas/[id]`) o permite elegir cliente desde la lista del contador.
+- Se corrigio el modelo Claude invalido `claude-haiku-4-5`: el default ahora es `claude-haiku-4-5-20251001`, igual al patron vigente en `01-9001app`.
+- Vercel `agrocredit-hub`: `CLAUDE_MODEL=claude-haiku-4-5-20251001` seteado en Production y Development.
+
 ---
 
 ## Fix deploy Vercel 2026-06-17 - pdf-to-img/canvas

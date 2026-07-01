@@ -3,11 +3,10 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { getDoc, doc } from "firebase/firestore"
-import { Bot, Building2, CheckCircle2, Circle, CircleDashed, UserRound } from "lucide-react"
+import { Building2, CheckCircle2, Circle, CircleDashed, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { LegajoAssistantPanel } from "@/components/credito-hub/LegajoAssistantPanel"
 import { CarpetaReviewSection } from "@/components/credito-hub/CarpetaReviewSection"
 import { CertificationBadge } from "@/components/credito-hub/CertificationBadge"
 import { CertifyFolderButton } from "@/components/credito-hub/CertifyFolderButton"
@@ -58,7 +57,6 @@ export default function LegajoUnicoPage({ params }: PageProps) {
   const [status, setStatus] = useState<FolderStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [statusLoading, setStatusLoading] = useState(false)
-  const [assistantOpen, setAssistantOpen] = useState(false)
   const [certRefresh, setCertRefresh] = useState(0)
 
   const loadCarpetas = useCallback(async () => {
@@ -189,8 +187,7 @@ export default function LegajoUnicoPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex items-start gap-4 p-4 lg:p-6">
-      <div className={`min-w-0 flex-1 transition-all duration-300 ${assistantOpen ? "lg:max-w-[calc(100%-436px)]" : ""}`}>
+    <div className="p-4 lg:p-6">
         <div className="mx-auto max-w-5xl space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -202,10 +199,6 @@ export default function LegajoUnicoPage({ params }: PageProps) {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant={assistantOpen ? "default" : "outline"} className="gap-2" onClick={() => setAssistantOpen((value) => !value)}>
-                <Bot className="h-4 w-4" />
-                IA
-              </Button>
               {activeCarpeta && (
                 <CertifyFolderButton
                   targetOrganizationId={activeCarpeta.orgId}
@@ -283,20 +276,6 @@ export default function LegajoUnicoPage({ params }: PageProps) {
             </div>
           )}
         </div>
-      </div>
-
-      {activeCarpeta && (
-        <LegajoAssistantPanel
-          open={assistantOpen}
-          onOpenChange={setAssistantOpen}
-          targetOrganizationId={activeCarpeta.orgId}
-          rootOrganizationId={clientId}
-          clientName={activeCarpeta.label}
-          carpetas={carpetas.map((c) => ({ orgId: c.orgId, label: c.isTitular ? "Titular" : c.label }))}
-          onUploaded={() => loadStatus(activeOrgId)}
-          onAssigned={() => loadStatus(activeOrgId)}
-        />
-      )}
     </div>
   )
 }

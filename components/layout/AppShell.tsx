@@ -5,6 +5,7 @@ import { useEffect } from "react"
 import { AuthGuard } from "@/components/auth/AuthGuard"
 import { AppHeader } from "@/components/layout/AppHeader"
 import { AppSidebar } from "@/components/layout/AppSidebar"
+import { GlobalLegajoAssistant } from "@/components/credito-hub/GlobalLegajoAssistant"
 import { useSession } from "@/lib/auth/session"
 
 function resolveRoleTheme(roles: string[]): string {
@@ -36,6 +37,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <GlobalLegajoAssistant />
     </div>
   )
 }

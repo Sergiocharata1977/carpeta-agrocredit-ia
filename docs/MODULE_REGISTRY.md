@@ -107,7 +107,7 @@
 
 | Modulo | Estado | Ruta frontend | Servicio | Colecciones |
 |---|---|---|---|---|
-| `legajo_assistant_panel` | beta | panel lateral integrado en `/app/contador/clientes/[clientId]/legajo` | `app/api/credito-hub/assistant/[targetOrganizationId]` - `app/api/credito-hub/intake` - `app/api/credito-hub/jobs/process-now` - `lib/credito-hub/assistant-context.ts` - `components/credito-hub/LegajoAssistantPanel.tsx` | `document_jobs` |
+| `legajo_assistant_panel` | beta | panel lateral global en `AppShell` para pantallas `/app/*` | `app/api/credito-hub/assistant/[targetOrganizationId]` - `app/api/credito-hub/intake` - `app/api/credito-hub/jobs/process-now` - `lib/credito-hub/assistant-context.ts` - `components/credito-hub/{GlobalLegajoAssistant,LegajoAssistantPanel}.tsx` | `document_jobs` |
 | `credito_hub_plan` | ga | `/app/contador/productores/[producerId]/legajo` - `/app/contador/productores/[producerId]/revision` - `/app/entidad/requisitos` - `/app/entidad/carpetas/[targetOrgId]/cumplimiento` | `reports/014_PLAN_CREDITO_HUB_IA.md` - `docs/credito-hub/*` | - |
 | `ai_provider_router` | beta | `/app/admin/ia` | `lib/ai/*` (Groq · Anthropic · xAI · Mock) - `lib/ai/provider-config.ts` - `app/api/admin/ai-config/*` | `platform_settings` |
 | `document_jobs` | beta | `/app/contador/productores/[producerId]/legajo` | `app/api/credito-hub/intake` - `app/api/credito-hub/jobs` - `app/api/credito-hub/jobs/process` - `app/api/credito-hub/jobs/process-now` - `app/api/credito-hub/jobs/[jobId]` - `app/api/credito-hub/jobs/[jobId]/retry` - `lib/services/document-jobs.ts` | `document_jobs` |

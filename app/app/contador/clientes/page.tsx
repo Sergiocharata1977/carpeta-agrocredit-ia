@@ -7,7 +7,6 @@ import { getFreshIdToken } from "@/lib/firebase/auth-client"
 import { ProducerTable } from "@/components/producers/ProducerTable"
 import { ProducerCard } from "@/components/producers/ProducerCard"
 import { NuevoProductorDialog } from "@/components/producers/NuevoProductorDialog"
-import { LegajoAssistantPanel } from "@/components/credito-hub/LegajoAssistantPanel"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -18,7 +17,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from "@/components/ui/empty"
-import { AlertCircle, Bot, LayoutGrid, LayoutList, Plus, Users } from "lucide-react"
+import { AlertCircle, LayoutGrid, LayoutList, Plus, Users } from "lucide-react"
 import type { Producer } from "@/types/producer"
 
 type ViewMode = "list" | "grid"
@@ -32,8 +31,6 @@ export default function ClientesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [showDialog, setShowDialog] = useState(false)
   const [search, setSearch] = useState("")
-  const [assistantOpen, setAssistantOpen] = useState(false)
-  const [assistantTargetId, setAssistantTargetId] = useState<string | null>(null)
 
   const fetchClientes = useCallback(async () => {
     if (!user) {
@@ -78,13 +75,11 @@ export default function ClientesPage() {
       p.legalName.toLowerCase().includes(search.toLowerCase()) ||
       p.taxId.includes(search),
   )
-  const assistantClient = filtered.find((p) => p.id === assistantTargetId) ?? filtered[0] ?? null
 
   const isLoading = sessionLoading || loadingData
 
   return (
-    <div className="flex items-start gap-4 p-4 lg:p-6">
-      <div className={`min-w-0 flex-1 space-y-6 transition-all duration-300 ${assistantOpen ? "lg:max-w-[calc(100%-436px)]" : ""}`}>
+    <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
@@ -93,10 +88,6 @@ export default function ClientesPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant={assistantOpen ? "default" : "outline"} onClick={() => setAssistantOpen((value) => !value)}>
-              <Bot className="mr-2 h-4 w-4" />
-              IA
-            </Button>
             <Button onClick={() => setShowDialog(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Cliente
@@ -172,37 +163,6 @@ export default function ClientesPage() {
         open={showDialog}
         onOpenChange={setShowDialog}
         onSuccess={fetchClientes}
-      />
-      </div>
-
-      <LegajoAssistantPanel
-        open={assistantOpen}
-        onOpenChange={setAssistantOpen}
-        targetOrganizationId={assistantClient?.id ?? null}
-        rootOrganizationId={assistantClient?.id ?? null}
-        clientName={assistantClient?.legalName}
-        carpetas={assistantClient ? [{ orgId: assistantClient.id, label: assistantClient.legalName }] : []}
-        contextSelector={
-          <label className="block text-xs font-semibold text-slate-200">
-            Cliente activo
-            <select
-              value={assistantClient?.id ?? ""}
-              onChange={(event) => setAssistantTargetId(event.target.value || null)}
-              className="mt-1 w-full rounded-md border border-[#334155] bg-[#111827] px-3 py-2 text-xs text-white outline-none focus:border-[#818cf8]"
-            >
-              {filtered.length === 0 ? (
-                <option value="">Sin clientes</option>
-              ) : (
-                filtered.map((producer) => (
-                  <option key={producer.id} value={producer.id}>
-                    {producer.legalName}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
-        }
-        onUploaded={fetchClientes}
       />
     </div>
   )
