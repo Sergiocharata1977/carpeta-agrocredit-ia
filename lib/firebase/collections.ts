@@ -34,6 +34,8 @@ export const COLLECTIONS = {
   REQUIREMENT_MATCHES: "requirement_matches",
   DOCUMENT_ROUTING_DECISIONS: "document_routing_decisions",
   FOLDER_CERTIFICATIONS: "folder_certifications",
+  // Asistente conversacional (Ola 1-6)
+  ASSISTANT_PENDING_IMPORTS: "assistant_pending_imports",
 } as const
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS]
