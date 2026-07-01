@@ -73,9 +73,7 @@ export function GlobalLegajoAssistant() {
       open={open}
       onOpenChange={setOpen}
       targetOrganizationId={activeId}
-      rootOrganizationId={activeId}
       clientName={clientName}
-      carpetas={activeId ? [{ orgId: activeId, label: clientName ?? "Legajo" }] : []}
       contextSelector={
         canManageLegajos ? (
           <label className="block text-xs font-semibold text-slate-200">
@@ -102,7 +100,6 @@ export function GlobalLegajoAssistant() {
         ) : undefined
       }
       onUploaded={fetchClientes}
-      onAssigned={fetchClientes}
     />
   )
 }

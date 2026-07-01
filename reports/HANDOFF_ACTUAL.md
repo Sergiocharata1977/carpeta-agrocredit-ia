@@ -1231,3 +1231,31 @@ Nota operativa:
   - Tambien infiere resultados, IVA y F.931 por patrones basicos.
 - El mensaje para documentos sin extractor automatico se cambio para no sugerir falso bloqueo de lectura.
 - Validacion: `pnpm test __tests__/credito-hub/classifier.test.ts __tests__/credito-hub/document-jobs.test.ts` OK (35 tests), `pnpm type-check` OK, `pnpm check:security-shape` OK.
+
+### Continuacion 2026-07-01 - chat conversacional sin formularios operativos
+
+Pedido:
+
+- El chat global no debe mostrar formularios internos de `Procesamiento` ni `Sin asignar`.
+- Debe quedar solo la carga de archivos.
+- Al subir un documento, el sistema debe leerlo automaticamente y luego preguntar por chat que quiere hacer el usuario.
+- Las opciones deben sentirse conversacionales, no como formularios prearmados.
+
+Implementado:
+
+- `LegajoAssistantPanel` ya no renderiza `JobProgressList` ni `UnassignedDocsTray` dentro del chat.
+- Al subir archivos desde el chat:
+  - Encola los documentos con `POST /api/credito-hub/intake`.
+  - Dispara lectura inmediata con `POST /api/credito-hub/jobs/process-now`.
+  - Agrega mensajes al hilo del chat con el estado de lectura.
+  - Muestra acciones dinamicas posteriores: `Ingresar en este legajo`, `Crear empresa vinculada`, `Solo resumir`.
+- `GlobalLegajoAssistant` limpia props que solo existian para esos formularios internos.
+
+Validacion:
+
+- `pnpm type-check`: OK.
+- `GET http://127.0.0.1:3000/app/contador/clientes`: 200.
+
+Nota operativa:
+
+- La escritura final en base de datos debe quedar con confirmacion explicita del usuario y apoyarse en el flujo de revision/guardado existente, para evitar aplicar datos contables sin control humano.

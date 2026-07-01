@@ -5,25 +5,26 @@ import { useRef, useState } from "react"
 import { AlertTriangle, Bot, FileUp, PanelRightClose, Send, Sparkles, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { JobProgressList } from "@/components/credito-hub/JobProgressList"
-import { UnassignedDocsTray } from "@/components/credito-hub/UnassignedDocsTray"
 import { getFreshIdToken, getIdToken } from "@/lib/firebase/auth-client"
 
 interface LegajoAssistantPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   targetOrganizationId?: string | null
-  rootOrganizationId?: string | null
   clientName?: string
-  carpetas?: Array<{ orgId: string; label: string }>
   contextSelector?: React.ReactNode
   onUploaded?: () => void
-  onAssigned?: () => void
 }
 
 interface ChatMessage {
   role: "user" | "assistant"
   content: string
+}
+
+interface ConversationAction {
+  id: string
+  label: string
+  prompt: string
 }
 
 const SUGGESTED = [
@@ -34,18 +35,36 @@ const SUGGESTED = [
   "Riesgos y alertas",
 ]
 
+const POST_UPLOAD_ACTIONS: ConversationAction[] = [
+  {
+    id: "enter-active-folder",
+    label: "Ingresar en este legajo",
+    prompt:
+      "Quiero ingresar este documento en el legajo activo. Mostrame primero que datos detectaste y pedime confirmacion antes de guardar.",
+  },
+  {
+    id: "create-related-company",
+    label: "Crear empresa vinculada",
+    prompt:
+      "Quiero usar este documento para crear o completar una empresa vinculada al cliente activo. Decime que empresa detectaste, que datos faltan y pedime confirmacion.",
+  },
+  {
+    id: "summarize-document",
+    label: "Solo resumir",
+    prompt: "Resumi el documento que acabo de subir y decime que informacion importante encontraste.",
+  },
+]
+
 export function LegajoAssistantPanel({
   open,
   onOpenChange,
   targetOrganizationId,
-  rootOrganizationId,
   clientName,
-  carpetas = [],
   contextSelector,
   onUploaded,
-  onAssigned,
 }: LegajoAssistantPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [actions, setActions] = useState<ConversationAction[]>([])
   const [input, setInput] = useState("")
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
@@ -67,6 +86,7 @@ export function LegajoAssistantPanel({
     }
 
     const history = messages.slice(-8)
+    setActions([])
     setMessages((prev) => [...prev, { role: "user", content: message }])
     setInput("")
     setLoading(true)
@@ -103,9 +123,25 @@ export function LegajoAssistantPanel({
     try {
       const token = await getIdToken()
       if (!token) throw new Error("Sesion no disponible")
+      const uploadedCount = files.length
       const data = new FormData()
       data.set("targetOrganizationId", targetOrganizationId)
       files.forEach((file) => data.append("files", file))
+      setActions([])
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "user",
+          content:
+            uploadedCount === 1
+              ? `Subi el archivo ${files[0]?.name ?? "seleccionado"}.`
+              : `Subi ${uploadedCount} archivos para leer.`,
+        },
+        {
+          role: "assistant",
+          content: "Archivo recibido. Lo estoy leyendo con IA para que despues me digas que queres hacer con el.",
+        },
+      ])
       const res = await fetch("/api/credito-hub/intake", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "x-staging-data": "true" },
@@ -120,14 +156,27 @@ export function LegajoAssistantPanel({
           ? `${duplicates} archivo(s) ya estaban cargados. Se reutilizo el procesamiento.`
           : `${total} documento(s) encolados`,
       )
+      const processRes = await fetch("/api/credito-hub/jobs/process-now", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ targetOrganizationId }),
+      })
+      const processPayload = await processRes.json().catch(() => ({}))
+      if (!processRes.ok) throw new Error(processPayload.error ?? "No se pudo leer el documento con IA")
+      const processed = Array.isArray(processPayload.processed) ? processPayload.processed : []
+      const failed = processed.filter((item: { status?: string }) => item.status === "failed").length
+      const done = processed.length - failed
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
-            "Recibi los archivos y los deje en procesamiento. Cuando termine, revisa los campos extraidos antes de aplicarlos a la base.",
+            failed > 0
+              ? `Lei ${done} documento(s), pero ${failed} tuvieron error. Que queres hacer con lo que pude procesar?`
+              : `Ya lei ${done || total || uploadedCount} documento(s). Que queres hacer con el documento?`,
         },
       ])
+      setActions(POST_UPLOAD_ACTIONS)
       setFiles([])
       onUploaded?.()
     } catch (error) {
@@ -160,7 +209,7 @@ export function LegajoAssistantPanel({
               <Bot className="h-4 w-4 text-[#a5b4fc]" />
               IA contextual
             </div>
-            <p className="mt-1 text-xs text-slate-400">{clientName ?? "Sin cliente seleccionado"} · panel operativo</p>
+            <p className="mt-1 text-xs text-slate-400">{clientName ?? "Sin cliente seleccionado"} - panel operativo</p>
           </div>
           <Button
             type="button"
@@ -200,7 +249,7 @@ export function LegajoAssistantPanel({
                 className="flex w-full items-center justify-between rounded-md border border-[#334155] px-3 py-2 text-left text-xs font-semibold text-white transition hover:bg-[#243149] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {q}
-                <span className="text-slate-400">›</span>
+                <span className="text-slate-400">&gt;</span>
               </button>
             ))}
           </div>
@@ -234,6 +283,22 @@ export function LegajoAssistantPanel({
           )}
           {loading && <p className="text-xs text-slate-400">Pensando...</p>}
         </div>
+
+        {actions.length > 0 && (
+          <div className="space-y-2">
+            {actions.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                onClick={() => void send(action.prompt)}
+                disabled={loading || !hasTarget}
+                className="w-full rounded-lg border border-[#334155] bg-[#4f46e5] px-3 py-2 text-left text-xs font-semibold text-white transition hover:bg-[#4338ca] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <section className="rounded-lg border border-[#334155] bg-[#111827] p-3">
           <div className="flex items-center justify-between gap-3">
@@ -278,27 +343,11 @@ export function LegajoAssistantPanel({
               ))}
               <Button type="button" className="w-full bg-[#4f46e5] hover:bg-[#4338ca]" onClick={uploadFiles} disabled={uploading || !hasTarget}>
                 <Upload className="mr-2 h-4 w-4" />
-                {uploading ? "Encolando..." : "Encolar y leer con IA"}
+                {uploading ? "Leyendo..." : "Subir y leer con IA"}
               </Button>
             </div>
           )}
         </section>
-
-        <div className="rounded-lg bg-white text-slate-950">
-          {targetOrganizationId ? (
-            <JobProgressList targetOrganizationId={targetOrganizationId} />
-          ) : (
-            <div className="rounded-lg border p-4 text-sm text-slate-600">Sin cliente seleccionado.</div>
-          )}
-        </div>
-
-        <div className="rounded-lg bg-white text-slate-950">
-          {rootOrganizationId ? (
-            <UnassignedDocsTray rootOrganizationId={rootOrganizationId} carpetas={carpetas} onAssigned={onAssigned} />
-          ) : (
-            <div className="rounded-lg border p-4 text-sm text-slate-600">Sin documentos para asignar.</div>
-          )}
-        </div>
       </div>
 
       <form
