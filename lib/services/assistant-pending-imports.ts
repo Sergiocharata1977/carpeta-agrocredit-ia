@@ -7,6 +7,20 @@ import type { Firestore } from "firebase-admin/firestore"
 
 type Database = Firestore
 
+function withoutUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => withoutUndefined(item)) as T
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, withoutUndefined(item)]),
+    ) as T
+  }
+  return value
+}
+
 // ─── GUARDAR OPERACIÓN PREPARADA ──────────────────────────────────────────────
 
 /**
@@ -33,8 +47,9 @@ export async function savePreparedImportOperation(
   const preparedTime = new Date(pendingOp.preparedAt).getTime()
   const expiresTime = new Date(pendingOp.expiresAt).getTime()
   const maxTtl = 24 * 60 * 60 * 1000
+  const clockSkewToleranceMs = 60 * 1000
 
-  if (expiresTime - preparedTime > maxTtl) {
+  if (expiresTime - preparedTime > maxTtl + clockSkewToleranceMs) {
     throw new Error("TTL no puede exceder 24 horas")
   }
 
@@ -43,10 +58,10 @@ export async function savePreparedImportOperation(
     .collection("assistant_pending_imports")
     .doc(pendingOp.operationId)
 
-  await pendingRef.set({
+  await pendingRef.set(withoutUndefined({
     ...pendingOp,
     status: "prepared",
-  })
+  }))
 
   // Auditar creación
   await db.collection("audit_logs").add({

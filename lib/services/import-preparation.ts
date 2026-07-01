@@ -134,7 +134,7 @@ export async function prepareImportFromIntent(
   const operation: PendingImportOperation = {
     operationId,
     folderOwnerOrganizationId,
-    accountingFirmId: resolvedEntities.accountingFirm?.id,
+    accountingFirmId: resolvedEntities.accountingFirm?.id ?? null,
     documentId,
     actions,
     preparedAt: now,
