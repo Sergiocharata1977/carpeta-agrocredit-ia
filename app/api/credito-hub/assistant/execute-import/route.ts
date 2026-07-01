@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     return Response.json({
       success: true,
       createdEntityIds: result.createdEntityIds,
+      executedActions: result.executedActions,
     })
   } catch (error) {
     console.error("[execute-import]", error)

@@ -95,6 +95,7 @@ class FakeQuery {
     const map = store.col(this.colName)
     const results = Array.from(map.entries()).filter(([, d]) => this.matches(d))
     return {
+      empty: results.length === 0,
       docs: results.slice(0, this.limitN ?? results.length).map(([id, data]) => ({
         id,
         data: () => data,
@@ -262,6 +263,9 @@ describe("Assistant Workflow", () => {
     const result = await executeConfirmedImport(fakeDb as any, "op-123", pendingOp, "user-1", "org-root")
 
     expect(result.success).toBe(true)
+    expect(result.executedActions.some((action) => action.type === "load_balance")).toBe(true)
+    expect(store.col("accounting_periods").size).toBe(1)
+    expect(store.col("balance_sheets").size).toBe(1)
 
     // Audit logs are written directly to Firestore, not via writeAuditLog mock
     const auditLogs = Array.from(store.col("audit_logs").values())

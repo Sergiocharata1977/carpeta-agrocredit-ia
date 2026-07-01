@@ -48,6 +48,7 @@ export interface AssistantContext {
   userIntent?: ParsedUserIntent
   resolvedEntity?: ResolvedEntity
   pendingImport?: PendingImportOperation
+  executionSummary?: string[]
   error?: string
   messages: AssistantMessage[]
 }

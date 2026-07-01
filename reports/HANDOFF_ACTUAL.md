@@ -37,6 +37,19 @@ Estado DESPUÉS del plan (ejecutable):
 
 ---
 
+## Correccion Codex 2026-07-01 - ejecucion real del asistente documental
+
+- Se corrigio `executeConfirmedImport`: ahora ejecuta acciones reales del asistente y devuelve `executedActions`.
+- Acciones cubiertas: `create_related_company`, `associate_related_company`, `load_balance`, `link_document`, `update_canonical_profile`.
+- `load_balance` crea periodo fiscal si falta y escribe un borrador en `balance_sheets` con `validationStatus: draft`, vinculado al documento.
+- El endpoint `POST /api/credito-hub/assistant/execute-import` devuelve el resumen real de acciones ejecutadas.
+- El chat muestra el resumen real de operacion y conserva la conversacion por legajo en `localStorage` al recargar.
+- Se agrego limpieza del chat desde estado completado para iniciar otra carga.
+- Validacion: `pnpm type-check` OK; `pnpm test __tests__/credito-hub/assistant-workflow.test.ts __tests__/credito-hub/assistant-security.test.ts` OK (29 tests).
+- Pendiente recomendado: reemplazar persistencia local por coleccion server-side `assistant_conversations` si se necesita historial multi-dispositivo/auditable.
+
+---
+
 ## Actualizacion local Codex 2026-07-01
 
 - Repo clonado en `C:\Users\Usuario\Documents\Proyectos\carpeta-agrocredit-ia` desde `https://github.com/Sergiocharata1977/carpeta-agrocredit-ia`.

@@ -2,6 +2,12 @@
 // Operaciones controladas: prepare (sin escribir) → confirm → execute (con transacción)
 
 import { getAdminDb } from "@/lib/firebase/admin-sdk"
+import { COLLECTIONS } from "@/lib/firebase/collections"
+import {
+  DEFAULT_BALANCE_SHEET_DETAILS,
+  calculateBalanceTotals,
+  type BalanceSheetDetails,
+} from "@/lib/accounting/statement-fields"
 import type {
   PendingImportOperation,
   PendingAction,
@@ -11,6 +17,15 @@ import { randomUUID } from "node:crypto"
 import type { Firestore } from "firebase-admin/firestore"
 
 type Database = Firestore
+
+interface ExecutedActionSummary {
+  type: PendingAction["type"]
+  targetEntityName: string
+  targetEntityId?: string
+  createdId?: string
+  status: "executed" | "skipped"
+  message: string
+}
 
 // ─── PREPARACIÓN DE IMPORTACIÓN ────────────────────────────────────────────────
 
@@ -171,67 +186,159 @@ export async function executeConfirmedImport(
   pendingOp: PendingImportOperation,
   actorUid: string,
   actorOrgId: string,
-): Promise<{ success: boolean; createdEntityIds: string[]; errors?: string[] }> {
-  // Validar que está confirmada
+): Promise<{ success: boolean; createdEntityIds: string[]; executedActions: ExecutedActionSummary[]; errors?: string[] }> {
   if (pendingOp.status !== "confirmed") {
     return {
       success: false,
       createdEntityIds: [],
-      errors: [`Operación no está confirmada. Estado actual: ${pendingOp.status}`],
+      executedActions: [],
+      errors: [`Operacion no esta confirmada. Estado actual: ${pendingOp.status}`],
     }
   }
 
   try {
     const createdEntityIds: string[] = []
+    const executedActions: ExecutedActionSummary[] = []
+    const createdCompanyIdsByName = new Map<string, string>()
     const now = new Date().toISOString()
 
-    // Ejecutar cada acción secuencialmente
-    // NOTA: Implementación final debe usar transacción para atomicidad
     for (const action of pendingOp.actions) {
       if (action.type === "create_related_company") {
-        // Crear empresa
-        const newOrgRef = db.collection("organizations").doc()
+        const newOrgRef = db.collection(COLLECTIONS.ORGANIZATIONS).doc()
         await newOrgRef.set({
           type: "system_user_entity",
           parentOrganizationId: pendingOp.folderOwnerOrganizationId,
           legalName: action.targetEntityName,
-          taxId: (action.payload.cuit as string) || "",
+          taxId: stringPayload(action.payload.cuit) || "",
           status: "active",
           createdBy: actorUid,
           createdAt: now,
           updatedAt: now,
         })
         createdEntityIds.push(newOrgRef.id)
+        createdCompanyIdsByName.set(normalizeKey(action.targetEntityName), newOrgRef.id)
+        executedActions.push({
+          type: action.type,
+          targetEntityName: action.targetEntityName,
+          targetEntityId: newOrgRef.id,
+          createdId: newOrgRef.id,
+          status: "executed",
+          message: `Empresa creada: ${action.targetEntityName}`,
+        })
+        continue
       }
-      // Otras acciones se implementarían aquí (load_balance, link_document, etc.)
+
+      if (action.type === "associate_related_company") {
+        const companyId = action.targetEntityId || stringPayload(action.payload.companyId)
+        if (companyId) {
+          executedActions.push({
+            type: action.type,
+            targetEntityName: action.targetEntityName,
+            targetEntityId: companyId,
+            status: "executed",
+            message: `Empresa asociada: ${action.targetEntityName}`,
+          })
+        }
+        continue
+      }
+
+      if (action.type === "load_balance") {
+        const targetEntityId =
+          action.targetEntityId ||
+          createdCompanyIdsByName.get(normalizeKey(action.targetEntityName)) ||
+          pendingOp.folderOwnerOrganizationId
+        const fields = getActionFields(action)
+        const periodId = await ensureAccountingPeriod(db, targetEntityId, action, actorUid, now)
+        const balanceId = await createDraftBalanceSheet(db, {
+          action,
+          actorUid,
+          documentId: pendingOp.documentId,
+          fields,
+          now,
+          periodId,
+          targetEntityId,
+        })
+        createdEntityIds.push(balanceId)
+        executedActions.push({
+          type: action.type,
+          targetEntityName: action.targetEntityName,
+          targetEntityId,
+          createdId: balanceId,
+          status: "executed",
+          message: `Balance borrador creado para ${action.targetEntityName}`,
+        })
+        continue
+      }
+
+      if (action.type === "link_document") {
+        const documentId = stringPayload(action.payload.documentId) || pendingOp.documentId
+        const targetEntityId =
+          createdCompanyIdsByName.get(normalizeKey(action.targetEntityName)) ||
+          createdEntityIds[0] ||
+          pendingOp.folderOwnerOrganizationId
+        await db.collection(COLLECTIONS.DOCUMENTS).doc(documentId).update({
+          linkedToOrganizationId: targetEntityId,
+          linkedAt: now,
+          updatedAt: now,
+        })
+        executedActions.push({
+          type: action.type,
+          targetEntityName: action.targetEntityName,
+          targetEntityId,
+          status: "executed",
+          message: `Documento vinculado: ${action.targetEntityName}`,
+        })
+        continue
+      }
+
+      if (action.type === "update_canonical_profile") {
+        const profileRef = await getCanonicalProfileRef(db, pendingOp.folderOwnerOrganizationId)
+        await profileRef.set(
+            {
+              folderOwnerOrganizationId: pendingOp.folderOwnerOrganizationId,
+              identity: {
+                cuit: stringPayload(action.payload.cuit) || "",
+                legalName: stringPayload(action.payload.companyName) || action.targetEntityName,
+              },
+              lastAssistantOperationId: operationId,
+              updatedAt: now,
+            },
+            { merge: true },
+          )
+        executedActions.push({
+          type: action.type,
+          targetEntityName: action.targetEntityName,
+          targetEntityId: profileRef.id,
+          status: "executed",
+          message: `Perfil crediticio actualizado: ${action.targetEntityName}`,
+        })
+      }
     }
 
-    // Marcar operación como executed
-    const pendingImportRef = db.collection("assistant_pending_imports").doc(operationId)
+    const pendingImportRef = db.collection(COLLECTIONS.ASSISTANT_PENDING_IMPORTS).doc(operationId)
     await pendingImportRef.update({
       status: "executed",
       executedAt: now,
+      executedActions,
     })
 
-    // Auditar
-    await db.collection("audit_logs").add({
+    await db.collection(COLLECTIONS.AUDIT_LOGS).add({
       action: "assistant.import_executed",
       actorUid,
       actorOrganizationId: actorOrgId,
       targetType: "pending_import_operation",
       targetId: operationId,
-      metadata: { createdEntityIds },
+      metadata: { createdEntityIds, executedActions },
       createdAt: now,
     })
 
-    return { success: true, createdEntityIds }
+    return { success: true, createdEntityIds, executedActions }
   } catch (error) {
     return {
       success: false,
       createdEntityIds: [],
-      errors: [
-        error instanceof Error ? error.message : "Error desconocido al ejecutar",
-      ],
+      executedActions: [],
+      errors: [error instanceof Error ? error.message : "Error desconocido al ejecutar"],
     }
   }
 }
@@ -241,6 +348,176 @@ export async function executeConfirmedImport(
 /**
  * Cancela una operación pendiente.
  */
+function normalizeKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+}
+
+function stringPayload(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined
+}
+
+function numericValue(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/\./g, "").replace(",", "."))
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return 0
+}
+
+function getActionFields(action: PendingAction): Array<Record<string, unknown>> {
+  const raw = action.payload.extractedFields ?? action.payload.fields
+  return Array.isArray(raw)
+    ? raw.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+    : []
+}
+
+function getFieldCode(field: Record<string, unknown>): string {
+  return typeof field.fieldCode === "string" ? field.fieldCode : ""
+}
+
+function getFieldAmount(field: Record<string, unknown>): number {
+  if ("normalizedValue" in field) return numericValue(field.normalizedValue)
+  if ("value" in field) return numericValue(field.value)
+  if ("rawValue" in field) return numericValue(field.rawValue)
+  return 0
+}
+
+function setDetail(
+  details: BalanceSheetDetails,
+  path: keyof BalanceSheetDetails,
+  field: string,
+  value: number,
+) {
+  ;(details[path] as Record<string, number>)[field] = value
+}
+
+function buildBalanceDetails(fields: Array<Record<string, unknown>>): BalanceSheetDetails {
+  const details: BalanceSheetDetails = JSON.parse(JSON.stringify(DEFAULT_BALANCE_SHEET_DETAILS))
+  for (const field of fields) {
+    const code = normalizeKey(getFieldCode(field)).replace(/[^a-z0-9]/g, "")
+    const value = getFieldAmount(field)
+    if (!value) continue
+
+    if (code.includes("cashandbanks") || code.includes("cajaybancos")) setDetail(details, "currentAssets", "cashAndBanks", value)
+    else if (code.includes("temporaryinvestments") || code.includes("inversionestemporarias")) setDetail(details, "currentAssets", "temporaryInvestments", value)
+    else if (code.includes("inventories") || code.includes("bienesdecambio")) setDetail(details, "currentAssets", "inventories", value)
+    else if (code.includes("tradereceivables") || code.includes("creditosporventas")) setDetail(details, "currentAssets", "tradeReceivables", value)
+    else if (code.includes("activocorriente") || code.includes("currentassets")) setDetail(details, "currentAssets", "otherAssets", value)
+    else if (code.includes("propertyplantequipment") || code.includes("bienesdeuso")) setDetail(details, "nonCurrentAssets", "propertyPlantEquipment", value)
+    else if (code.includes("activonocorriente") || code.includes("noncurrentassets")) setDetail(details, "nonCurrentAssets", "otherAssets", value)
+    else if (code.includes("loans") || code.includes("prestamos")) setDetail(details, "currentLiabilities", "loans", value)
+    else if (code.includes("commercialdebts") || code.includes("deudascomerciales")) setDetail(details, "currentLiabilities", "commercialDebts", value)
+    else if (code.includes("taxliabilities") || code.includes("cargasfiscales")) setDetail(details, "currentLiabilities", "taxLiabilities", value)
+    else if (code.includes("pasivocorriente") || code.includes("currentliabilities")) setDetail(details, "currentLiabilities", "otherDebts", value)
+    else if (code.includes("pasivonocorriente") || code.includes("noncurrentliabilities")) setDetail(details, "nonCurrentLiabilities", "otherDebts", value)
+  }
+  return details
+}
+
+function getEquityTotal(fields: Array<Record<string, unknown>>): number {
+  const field = fields.find((item) => {
+    const code = normalizeKey(getFieldCode(item)).replace(/[^a-z0-9]/g, "")
+    return code.includes("equity") || code.includes("patrimonioneto")
+  })
+  return field ? getFieldAmount(field) : 0
+}
+
+function inferYear(action: PendingAction): number {
+  const period = action.payload.period
+  if (period && typeof period === "object") {
+    const start = (period as { start?: unknown }).start
+    const end = (period as { end?: unknown }).end
+    const value = typeof end === "string" ? end : typeof start === "string" ? start : ""
+    const year = Number(value.match(/\d{4}/)?.[0])
+    if (Number.isInteger(year)) return year
+  }
+  return new Date().getFullYear()
+}
+
+async function ensureAccountingPeriod(
+  db: Database,
+  targetEntityId: string,
+  action: PendingAction,
+  actorUid: string,
+  now: string,
+): Promise<string> {
+  const year = inferYear(action)
+  const existing = await db
+    .collection(COLLECTIONS.ACCOUNTING_PERIODS)
+    .where("producerId", "==", targetEntityId)
+    .where("year", "==", year)
+    .where("periodType", "==", "fiscal_year")
+    .limit(1)
+    .get()
+  if (!existing.empty) return existing.docs[0].id
+
+  const ref = db.collection(COLLECTIONS.ACCOUNTING_PERIODS).doc()
+  await ref.set({
+    producerId: targetEntityId,
+    organizationId: targetEntityId,
+    year,
+    periodType: "fiscal_year",
+    label: `Ejercicio ${year}`,
+    status: "open",
+    closedAt: null,
+    createdAt: now,
+    updatedAt: now,
+    createdBy: actorUid,
+  })
+  return ref.id
+}
+
+async function createDraftBalanceSheet(
+  db: Database,
+  params: {
+    action: PendingAction
+    actorUid: string
+    documentId: string
+    fields: Array<Record<string, unknown>>
+    now: string
+    periodId: string
+    targetEntityId: string
+  },
+): Promise<string> {
+  const details = buildBalanceDetails(params.fields)
+  const equityTotal = getEquityTotal(params.fields)
+  const totals = calculateBalanceTotals(details, equityTotal)
+  const ref = db.collection(COLLECTIONS.BALANCE_SHEETS).doc()
+  await ref.set({
+    producerId: params.targetEntityId,
+    organizationId: params.targetEntityId,
+    folderOwnerOrganizationId: params.targetEntityId,
+    periodId: params.periodId,
+    details,
+    assetsTotal: totals.assetsTotal,
+    liabilitiesTotal: totals.liabilitiesTotal,
+    equityTotal: totals.equityTotal,
+    currency: "ARS",
+    validationStatus: "draft",
+    observations: `Creado desde asistente IA. Revisar importacion ${params.action.actionId}.`,
+    documentIds: [params.documentId],
+    createdBy: params.actorUid,
+    createdAt: params.now,
+    updatedAt: params.now,
+  })
+  return ref.id
+}
+
+async function getCanonicalProfileRef(db: Database, folderOwnerOrganizationId: string) {
+  const snap = await db
+    .collection(COLLECTIONS.CANONICAL_CREDIT_PROFILES)
+    .where("folderOwnerOrganizationId", "==", folderOwnerOrganizationId)
+    .limit(1)
+    .get()
+  if (!snap.empty) return snap.docs[0].ref
+  return db.collection(COLLECTIONS.CANONICAL_CREDIT_PROFILES).doc()
+}
+
 export async function cancelImportOperation(
   db: Database,
   operationId: string,

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import type {
   AssistantContext,
@@ -26,10 +26,37 @@ interface UseAssistantConversationReturn {
 }
 
 export function useAssistantConversation(targetOrganizationId: string): UseAssistantConversationReturn {
+  const storageKey = `credito-hub-assistant:${targetOrganizationId}`
+  const hydratedRef = useRef(false)
   const [context, setContext] = useState<AssistantContext>({
     state: AssistantConversationState.idle,
     messages: [],
   })
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(storageKey)
+      if (raw) {
+        const saved = JSON.parse(raw) as AssistantContext
+        if (saved?.state && Array.isArray(saved.messages)) {
+          setContext(saved)
+        }
+      }
+    } catch {
+      // Persistencia auxiliar: si falla, el chat arranca limpio.
+    } finally {
+      hydratedRef.current = true
+    }
+  }, [storageKey])
+
+  useEffect(() => {
+    if (!hydratedRef.current) return
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(context))
+    } catch {
+      // No bloquea la operacion si el navegador no permite localStorage.
+    }
+  }, [context, storageKey])
 
   // Transiciones de estado
   const transition = useCallback((newState: AssistantConversationState, update?: Partial<AssistantContext>) => {
@@ -495,14 +522,16 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
       })
 
       const executeData = await executeRes.json().catch(() => ({}))
-      if (!executeRes.ok) throw new Error(executeData.error ?? "No se pudo ejecutar la operaciÃ³n")
+      if (!executeRes.ok) throw new Error(executeData.error ?? "No se pudo ejecutar la operacion")
+
+      const executionSummary = buildExecutionSummary(executeData.executedActions)
 
       addMessage(
         "assistant",
-        `Listo. GuardÃ© la carga confirmada.\n- Empresa: ${context.detectedCompany?.name ?? "N/A"}\n- Campos detectados: ${context.extractedData?.fields.length ?? 0}\n\nPodÃ©s subir otro documento o seguir consultando.`
+        `Listo. Operacion ejecutada:\n${executionSummary.map((line) => `- ${line}`).join("\n")}\n\nCampos detectados: ${context.extractedData?.fields.length ?? 0}.`
       )
 
-      transition(AssistantConversationState.completed, { pendingImport: undefined })
+      transition(AssistantConversationState.completed, { pendingImport: undefined, executionSummary })
       toast.success("Documento cargado exitosamente")
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido"
@@ -530,14 +559,15 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
       })
 
       const executeData = await executeRes.json().catch(() => ({}))
-      if (!executeRes.ok) throw new Error(executeData.error ?? "No se pudo ejecutar la operación")
+      if (!executeRes.ok) throw new Error(executeData.error ?? "No se pudo ejecutar la operacion")
+      const executionSummary = buildExecutionSummary(executeData.executedActions)
 
       addMessage(
         "assistant",
-        `Listo! Se cargó:\n- Empresa: ${context.detectedCompany?.name ?? "N/A"}\n- Campos: ${context.extractedData?.fields.length ?? 0}\n\n¿Querés subir otro o volver?`
+        `Listo. Operacion ejecutada:\n${executionSummary.map((line) => `- ${line}`).join("\n")}\n\nCampos: ${context.extractedData?.fields.length ?? 0}.`
       )
 
-      transition(AssistantConversationState.completed, { pendingImport: undefined })
+      transition(AssistantConversationState.completed, { pendingImport: undefined, executionSummary })
       toast.success("Documento cargado exitosamente")
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido"
@@ -547,7 +577,22 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
   }, [context, transition, addMessage])
 
   const cancelImport = useCallback(async () => {
-    if (!context.pendingImport) return
+    if (!context.pendingImport) {
+      transition(AssistantConversationState.idle, {
+        documentId: undefined,
+        fileName: undefined,
+        extractedData: undefined,
+        detectedType: undefined,
+        detectedCompany: undefined,
+        userIntent: undefined,
+        resolvedEntity: undefined,
+        pendingImport: undefined,
+        executionSummary: undefined,
+        error: undefined,
+        messages: [],
+      })
+      return
+    }
 
     try {
       const token = await getFreshIdToken()
@@ -576,6 +621,7 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
         userIntent: undefined,
         resolvedEntity: undefined,
         pendingImport: undefined,
+        executionSummary: undefined,
         error: undefined,
       })
     } catch (error) {
@@ -595,4 +641,21 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
     executeImport,
     cancelImport,
   }
+}
+
+function buildExecutionSummary(executedActions: unknown): string[] {
+  if (!Array.isArray(executedActions) || executedActions.length === 0) {
+    return ["La API confirmo la ejecucion, pero no devolvio detalle de acciones"]
+  }
+
+  return executedActions
+    .map((action) => {
+      if (!action || typeof action !== "object") return null
+      const message = (action as { message?: unknown }).message
+      if (typeof message === "string" && message.trim()) return message.trim()
+      const type = (action as { type?: unknown }).type
+      const name = (action as { targetEntityName?: unknown }).targetEntityName
+      return `${String(type ?? "accion")}: ${String(name ?? "sin nombre")}`
+    })
+    .filter((line): line is string => Boolean(line))
 }

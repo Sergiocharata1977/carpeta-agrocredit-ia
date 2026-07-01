@@ -395,6 +395,12 @@ export function AssistantConversationFlow({
             <div>
               <h4 className="font-semibold text-green-300">Carga completada</h4>
               <dl className="mt-2 space-y-1 text-sm text-green-200/80">
+                {context.executionSummary?.map((line) => (
+                  <div key={line} className="flex gap-2">
+                    <dt className="sr-only">Accion</dt>
+                    <dd>{line}</dd>
+                  </div>
+                ))}
                 <div className="flex justify-between">
                   <dt>Empresa:</dt>
                   <dd>{context.detectedCompany?.name ?? "N/A"}</dd>
@@ -409,7 +415,7 @@ export function AssistantConversationFlow({
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => void onMessage("Subir otro")}
+            onClick={() => void onCancel()}
             className="flex-1 bg-[#4f46e5] hover:bg-[#4338ca]"
           >
             Subir otro
