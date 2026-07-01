@@ -225,24 +225,29 @@ export function AssistantConversationFlow({
     )
   }
 
-  // preparing_import: preparando carga
+  // preparing_import: preparando carga (estado transitorio, muestra spinner)
   if (context.state === AssistantConversationState.preparing_import) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-[#334155] bg-[#182235] p-4">
-          <h4 className="font-semibold text-white">Preparando carga...</h4>
-          {context.pendingImport?.actions && (
-            <ul className="mt-3 space-y-2 text-sm">
-              {context.pendingImport.actions.map((action) => (
-                <li key={action.actionId} className="flex items-start gap-2 text-slate-400">
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#4f46e5]" />
-                  <span>
-                    {action.type}: {action.targetEntityName}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+        {context.messages.length > 0 && (
+          <div className="max-h-[200px] space-y-3 overflow-y-auto pr-2">
+            {context.messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`rounded-lg px-3 py-2 text-sm ${
+                  msg.role === "user"
+                    ? "ml-8 bg-[#4f46e5] text-white"
+                    : "mr-8 whitespace-pre-wrap bg-[#1f2937] text-slate-100"
+                }`}
+              >
+                {msg.content}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center gap-3 rounded-lg border border-[#334155] bg-[#182235] p-4">
+          <Loader2 className="h-5 w-5 animate-spin text-[#4f46e5]" />
+          <h4 className="font-semibold text-white">Preparando operación...</h4>
         </div>
       </div>
     )

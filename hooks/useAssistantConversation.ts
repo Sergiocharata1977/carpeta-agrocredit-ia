@@ -219,6 +219,51 @@ export function useAssistantConversation(targetOrganizationId: string): UseAssis
           userIntent: parsedIntent,
           resolvedEntity: resolvedEntities.relatedCompany,
         })
+
+        // Auto-avanzar: llamar a prepare-import y pasar a awaiting_confirmation
+        addMessage("assistant", "Preparando operación...")
+
+        const prepareRes = await fetch("/api/credito-hub/assistant/prepare-import", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            documentId: context.documentId,
+            userIntent: parsedIntent,
+            resolvedEntities: {
+              relatedCompany: resolvedEntities.relatedCompany,
+            },
+          }),
+        })
+
+        const prepareData = await prepareRes.json().catch(() => ({}))
+        if (!prepareRes.ok) throw new Error(prepareData.error ?? "No se pudo preparar la carga")
+
+        const pendingImport: PendingImportOperation = {
+          operationId: prepareData.operationId,
+          folderOwnerOrganizationId: targetOrganizationId,
+          documentId: context.documentId!,
+          actions: prepareData.pendingActions ?? [],
+          preparedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          preparedByUid: "current-user",
+          preparedByOrganizationId: targetOrganizationId,
+          status: "prepared",
+        }
+
+        const actionsSummary = pendingImport.actions.length > 0
+          ? pendingImport.actions.map((a) => `- ${a.type}: ${a.targetEntityName}`).join("\n")
+          : "- Operación sin acciones detalladas"
+
+        addMessage(
+          "assistant",
+          `Operación preparada:\n\n${actionsSummary}\n\n¿Confirmas para ejecutar?`,
+          "confirm"
+        )
+
+        transition(AssistantConversationState.awaiting_confirmation, { pendingImport })
       } catch (error) {
         const message = error instanceof Error ? error.message : "Error desconocido"
         addMessage("assistant", `Error: ${message}`)
