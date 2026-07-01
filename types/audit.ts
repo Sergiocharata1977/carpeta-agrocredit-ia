@@ -64,6 +64,16 @@ export type AuditAction =
   | "document.routing_reassigned"
   | "folder.certified"
   | "folder.certification_invalidated"
+  // Asistente conversacional (Ola 1-6)
+  | "assistant.conversation_started"
+  | "assistant.document_uploaded"
+  | "assistant.extraction_completed"
+  | "assistant.intent_parsed"
+  | "assistant.entity_resolved"
+  | "assistant.import_prepared"
+  | "assistant.import_confirmed"
+  | "assistant.import_executed"
+  | "assistant.import_canceled"
   // Plataforma
   | "ai_provider.changed"
 
